@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SofaStream.Domain", "SofaStream.Domain\SofaStream.Domain.csproj", "{C7695109-CDB1-4CE5-806B-4D757DCB01F6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SofaStream.Application", "SofaStream.Application\SofaStream.Application.csproj", "{A4C76388-BA42-4761-B10B-BB12B01CE6F7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{C7695109-CDB1-4CE5-806B-4D757DCB01F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C7695109-CDB1-4CE5-806B-4D757DCB01F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C7695109-CDB1-4CE5-806B-4D757DCB01F6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A4C76388-BA42-4761-B10B-BB12B01CE6F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A4C76388-BA42-4761-B10B-BB12B01CE6F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A4C76388-BA42-4761-B10B-BB12B01CE6F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A4C76388-BA42-4761-B10B-BB12B01CE6F7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
