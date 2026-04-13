@@ -4,8 +4,19 @@ using SofaStream.Domain.Entities;
 
 namespace SofaStream.Application.Rooms.Commands.ChangePlaybackState;
 
+/// <summary>
+/// Handles the execution of a <see cref="ChangePlaybackStateCommand"/>.
+/// Validates user permissions and coordinates the update of the room's synchronization state.
+/// </summary>
+/// <param name="roomRepository">The repository used to fetch and save room data.</param>
 public class ChangePlaybackStateHandler(IRoomRepository roomRepository) : IRequestHandler<ChangePlaybackStateCommand, bool>
 {
+    /// <summary>
+    /// Processes the playback state change request.
+    /// </summary>
+    /// <param name="request">The command details.</param>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
+    /// <returns>True if the state was successfully updated; otherwise, false.</returns>
     public async Task<bool> Handle(ChangePlaybackStateCommand request, CancellationToken cancellationToken)
     {
         var room = await roomRepository.GetByIdAsync(request.RoomId, cancellationToken);
