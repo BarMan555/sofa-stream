@@ -1,3 +1,6 @@
+using SofaStream.Domain.Common;
+using SofaStream.Domain.Events;
+
 namespace SofaStream.Domain.Entities;
 
 public enum PlaybackState
@@ -7,7 +10,7 @@ public enum PlaybackState
     Buffering
 }
 
-public class Room
+public class Room : AggregateRoot
 {
     private readonly List<RoomParticipant> _participants = [];
     public IReadOnlyCollection<RoomParticipant> Participants => _participants;
@@ -32,7 +35,7 @@ public class Room
     {
         Name = name;
         HostId = hostId;
-        // AddParticipant(new RoomParticipant(hostId, isHost: true));
+        AddParticipant(new RoomParticipant(hostId, isHost: true));
     }
 
     public void AddParticipant(RoomParticipant participant)
@@ -42,21 +45,20 @@ public class Room
         
         _participants.Add(participant);
     }
-
-    public bool RemoveParticipant(RoomParticipant participant)
-    {
-        if (participant is null) throw new ArgumentException("Participant must not be null");
-        return _participants.Remove(participant);
-    }
     
     public void RemoveParticipant(Guid userId)
     {
-        var participant = Participants.FirstOrDefault(p => p.UserId == userId);
-        if (participant != null)
+        var participant = Participants.FirstOrDefault(p => p.UserId == userId)
+            ?? throw new ArgumentException("Participant was not found");
+        
+        _participants.Remove(participant);
+
+        if (participant.IsHost && _participants.Count > 0)
         {
-            _participants.Remove(participant);
+            HostId = _participants[0].UserId;
             _participants[0].SetHostState(isHost: true);
         }
+        
     }
 
     public void Play(TimeSpan currentClientPosition)
@@ -71,6 +73,12 @@ public class Room
         State = PlaybackState.Playing;
         CurrentPosition = currentClientPosition;
         LastUpdatedAt = DateTimeOffset.UtcNow;
+        
+        AddDomainEvent(new RoomPlaybackStateChangedEvent(
+            RoomId: Id, 
+            NewState: State, 
+            CurrentPosition: CurrentPosition, 
+            TriggeredAt: LastUpdatedAt));
     }
 
     public void Pause(TimeSpan currentClientPosition)
@@ -80,6 +88,12 @@ public class Room
         State = PlaybackState.Paused;
         CurrentPosition = currentClientPosition;
         LastUpdatedAt = DateTimeOffset.UtcNow;
+        
+        AddDomainEvent(new RoomPlaybackStateChangedEvent(
+            RoomId: Id, 
+            NewState: State, 
+            CurrentPosition: CurrentPosition, 
+            TriggeredAt: LastUpdatedAt));
     }
 
     public void ReportBuffering(Guid userId, TimeSpan currentClientPosition)
@@ -95,6 +109,12 @@ public class Room
             CurrentPosition = currentClientPosition;
             LastUpdatedAt = DateTimeOffset.UtcNow;
         }
+        
+        AddDomainEvent(new RoomPlaybackStateChangedEvent(
+            RoomId: Id, 
+            NewState: State, 
+            CurrentPosition: CurrentPosition, 
+            TriggeredAt: LastUpdatedAt));
     }
 
     public void ReportBufferingCompleted(Guid userId)
@@ -109,5 +129,11 @@ public class Room
             State = PlaybackState.Playing;
             LastUpdatedAt = DateTimeOffset.UtcNow;
         }
+        
+        AddDomainEvent(new RoomPlaybackStateChangedEvent(
+            RoomId: Id, 
+            NewState: State, 
+            CurrentPosition: CurrentPosition, 
+            TriggeredAt: LastUpdatedAt));
     }
 }
