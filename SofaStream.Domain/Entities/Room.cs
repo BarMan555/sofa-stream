@@ -108,13 +108,13 @@ public class Room : AggregateRoot
             State = PlaybackState.Buffering;
             CurrentPosition = currentClientPosition;
             LastUpdatedAt = DateTimeOffset.UtcNow;
+            
+            AddDomainEvent(new RoomPlaybackStateChangedEvent(
+                RoomId: Id, 
+                NewState: State, 
+                CurrentPosition: CurrentPosition, 
+                TriggeredAt: LastUpdatedAt));
         }
-        
-        AddDomainEvent(new RoomPlaybackStateChangedEvent(
-            RoomId: Id, 
-            NewState: State, 
-            CurrentPosition: CurrentPosition, 
-            TriggeredAt: LastUpdatedAt));
     }
 
     public void ReportBufferingCompleted(Guid userId)
@@ -128,12 +128,12 @@ public class Room : AggregateRoot
         {
             State = PlaybackState.Playing;
             LastUpdatedAt = DateTimeOffset.UtcNow;
+            
+            AddDomainEvent(new RoomPlaybackStateChangedEvent(
+                RoomId: Id, 
+                NewState: State, 
+                CurrentPosition: CurrentPosition, 
+                TriggeredAt: LastUpdatedAt));
         }
-        
-        AddDomainEvent(new RoomPlaybackStateChangedEvent(
-            RoomId: Id, 
-            NewState: State, 
-            CurrentPosition: CurrentPosition, 
-            TriggeredAt: LastUpdatedAt));
     }
 }
