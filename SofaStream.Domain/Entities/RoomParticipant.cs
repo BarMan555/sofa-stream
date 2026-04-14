@@ -12,7 +12,9 @@ public class RoomParticipant(Guid userId, bool isHost = false)
     /// Gets the unique identifier of the participating user.
     /// </summary>
     public Guid UserId { get; } = userId;
-
+    
+    public Guid RoomId { get; private set; }
+    
     /// <summary>
     /// Gets a value indicating whether this participant is the host of the room.
     /// The host is responsible for controlling the shared playback state.
