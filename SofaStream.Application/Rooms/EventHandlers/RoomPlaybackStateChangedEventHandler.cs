@@ -1,4 +1,3 @@
-using MediatR;
 using SofaStream.Application.Common.Interfaces;
 using SofaStream.Domain.Events;
 
