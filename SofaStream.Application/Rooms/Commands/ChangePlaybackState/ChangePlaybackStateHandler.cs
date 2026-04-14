@@ -12,12 +12,7 @@ namespace SofaStream.Application.Rooms.Commands.ChangePlaybackState;
 public class ChangePlaybackStateHandler(IRoomRepository roomRepository)
     : ICommandHandler<ChangePlaybackStateCommand, bool>
 {
-    /// <summary>
-    /// Processes the playback state change request.
-    /// </summary>
-    /// <param name="request">The command details.</param>
-    /// <param name="cancellationToken">Token to cancel the operation.</param>
-    /// <returns>True if the state was successfully updated; otherwise, false.</returns>
+    /// <inheritdoc />
     public async Task<bool> HandleAsync(ChangePlaybackStateCommand request,
         CancellationToken cancellationToken = default)
     {

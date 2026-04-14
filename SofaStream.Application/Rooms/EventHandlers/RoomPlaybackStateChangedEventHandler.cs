@@ -11,12 +11,7 @@ namespace SofaStream.Application.Rooms.EventHandlers;
 public class RoomPlaybackStateChangedEventHandler(IRoomNotificationService notificationService) 
     : IDomainEventHandler<RoomPlaybackStateChangedEvent>
 {
-    /// <summary>
-    /// Handles the notification of a room playback state change.
-    /// </summary>
-    /// <param name="domainEvent">The domain event notification.</param>
-    /// <param name="cancellationToken">Token to cancel the operation.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
+    /// <inheritdoc />
     public async Task HandleAsync(RoomPlaybackStateChangedEvent domainEvent, CancellationToken cancellationToken = default)
     {
         await notificationService.NotifyPlaybackStateChangedAsync(

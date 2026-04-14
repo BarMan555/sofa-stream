@@ -85,10 +85,10 @@ public class Room : AggregateRoot
     }
 
     /// <summary>
-    /// Adds a new user to the room if they are not already present.
+    /// Registers a new participant in the room session, enabling them to synchronize with the shared playback.
     /// </summary>
-    /// <param name="participant">The participant to add.</param>
-    /// <exception cref="ArgumentException">Thrown when the participant is null.</exception>
+    /// <param name="participant">The participant entity to be added to the viewing session.</param>
+    /// <exception cref="ArgumentException">Thrown when the participant reference is null.</exception>
     public void AddParticipant(RoomParticipant participant)
     {
         if (participant is null) throw new ArgumentException("Participant must not be null");
@@ -98,10 +98,10 @@ public class Room : AggregateRoot
     }
     
     /// <summary>
-    /// Removes a user from the room and reassigns host privileges if necessary.
+    /// Removes a participant from the room and automatically reassigns host privileges to maintain session control.
     /// </summary>
-    /// <param name="userId">The identifier of the user to remove.</param>
-    /// <exception cref="ArgumentException">Thrown if the user is not found in the room.</exception>
+    /// <param name="userId">The identifier of the participant to be removed.</param>
+    /// <exception cref="ArgumentException">Thrown if the participant is not found within the current session.</exception>
     public void RemoveParticipant(Guid userId)
     {
         var participant = Participants.FirstOrDefault(p => p.UserId == userId)
@@ -118,10 +118,10 @@ public class Room : AggregateRoot
     }
 
     /// <summary>
-    /// Switches the room to the playing state if all participants have finished buffering.
+    /// Transitions the room to a playing state, synchronizing all participants to the specified video position.
     /// </summary>
-    /// <param name="currentClientPosition">The current playback time provided by the triggering client.</param>
-    /// <exception cref="InvalidOperationException">Thrown if someone is still buffering.</exception>
+    /// <param name="currentClientPosition">The master playback position captured from the triggering client.</param>
+    /// <exception cref="InvalidOperationException">Thrown if any participant is currently in a buffering state, preventing synchronization.</exception>
     public void Play(TimeSpan currentClientPosition)
     {
         if (State == PlaybackState.Playing) return;
@@ -143,9 +143,9 @@ public class Room : AggregateRoot
     }
 
     /// <summary>
-    /// Pauses the playback for everyone in the room.
+    /// Suspends playback across the entire room to ensure all participants remain synchronized at the same timestamp.
     /// </summary>
-    /// <param name="currentClientPosition">The current playback time provided by the triggering client.</param>
+    /// <param name="currentClientPosition">The video position where the pause was initiated.</param>
     public void Pause(TimeSpan currentClientPosition)
     {
         if (State == PlaybackState.Paused) return;
@@ -162,11 +162,11 @@ public class Room : AggregateRoot
     }
 
     /// <summary>
-    /// Reports that a participant has started buffering, potentially suspending playback for the entire room.
+    /// Signals that a participant has encountered technical lag, forcing the room into a buffering state to wait for recovery.
     /// </summary>
-    /// <param name="userId">The identifier of the buffering participant.</param>
-    /// <param name="currentClientPosition">The current playback time where buffering started.</param>
-    /// <exception cref="ArgumentException">Thrown if the user is not in the room.</exception>
+    /// <param name="userId">The identifier of the participant experiencing buffering.</param>
+    /// <param name="currentClientPosition">The playback position where the buffering event occurred.</param>
+    /// <exception cref="ArgumentException">Thrown if the user is not a member of the room.</exception>
     public void ReportBuffering(Guid userId, TimeSpan currentClientPosition)
     {
         var participant = _participants.FirstOrDefault(p => p.UserId == userId)
@@ -189,10 +189,11 @@ public class Room : AggregateRoot
     }
 
     /// <summary>
-    /// Reports that a participant has finished buffering. Resumes playback if no other participants are buffering.
+    /// Notifies the room that a participant's player is ready to resume. 
+    /// Restores playback if all other participants have also completed buffering.
     /// </summary>
-    /// <param name="userId">The identifier of the participant who finished loading.</param>
-    /// <exception cref="ArgumentException">Thrown if the user is not in the room.</exception>
+    /// <param name="userId">The identifier of the participant who has recovered from buffering.</param>
+    /// <exception cref="ArgumentException">Thrown if the user is not found in the session.</exception>
     public void ReportBufferingCompleted(Guid userId)
     {
         var participant = _participants.FirstOrDefault(p => p.UserId == userId)
