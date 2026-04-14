@@ -3,20 +3,20 @@ using SofaStream.Domain.Entities;
 namespace SofaStream.Application.Common.Interfaces;
 
 /// <summary>
-/// Defines a service for real-time communication with room participants.
-/// Responsible for broadcasting synchronization signals to connected clients.
+/// Defines a contract for real-time synchronization with viewing session participants.
+/// Handles the delivery of playback control signals to remote clients.
 /// </summary>
 public interface IRoomNotificationService
 {
     /// <summary>
-    /// Broadcasts a playback state change to all participants in a specific room.
+    /// Broadcasts a playback state transition to all active participants in the specified room.
     /// </summary>
-    /// <param name="roomId">The target room for the notification.</param>
-    /// <param name="newState">The new playback state clients should adopt.</param>
-    /// <param name="currentPosition">The current position in the video to seek to.</param>
-    /// <param name="triggeredAt">The timestamp when the state change occurred for latency compensation.</param>
-    /// <param name="cancellationToken">Token to cancel the operation.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
+    /// <param name="roomId">The unique identifier of the room session where participants are located.</param>
+    /// <param name="newState">The master playback status that clients are required to adopt.</param>
+    /// <param name="currentPosition">The target video timestamp for player seeking and synchronization.</param>
+    /// <param name="triggeredAt">The exact time the state change was recorded, enabling clients to calculate latency offsets.</param>
+    /// <param name="cancellationToken">Token to cancel the broadcast operation.</param>
+    /// <returns>A task representing the asynchronous notification process.</returns>
     Task NotifyPlaybackStateChangedAsync(
         Guid roomId, 
         PlaybackState newState, 
