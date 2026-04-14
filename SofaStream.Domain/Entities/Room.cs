@@ -48,7 +48,7 @@ public class Room : AggregateRoot
     {
         get;
         private set => field = string.IsNullOrWhiteSpace(value)
-            ? throw new ArgumentException("Room name cannot be null or empty")
+            ? throw new ArgumentException("Room name must not be null or empty")
             : value;
     }
     

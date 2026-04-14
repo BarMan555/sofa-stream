@@ -21,7 +21,7 @@
 
 ## 🛠 Стек технологий
 - **Backend:** C# 14, .NET 10, ASP.NET Core (Web API)
-- **Architecture:** Clean Architecture, DDD, CQRS (MediatR)
+- **Architecture:** Clean Architecture, DDD, CQRS
 - **Database:** PostgreSQL, Entity Framework Core 
 - **Real-time Communication:** SignalR (WebSockets)
 - **Frontend:** *В планах (React / Vue.js)*

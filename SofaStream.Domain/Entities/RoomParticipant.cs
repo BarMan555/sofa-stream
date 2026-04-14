@@ -6,7 +6,7 @@ namespace SofaStream.Domain.Entities;
 /// </summary>
 /// <param name="userId">The unique identifier of the user.</param>
 /// <param name="isHost">Indicates if the user has administrative control over the playback.</param>
-public class RoomParticipant(Guid userId, bool isHost)
+public class RoomParticipant(Guid userId, bool isHost = false)
 {
     /// <summary>
     /// Gets the unique identifier of the participating user.
@@ -24,7 +24,7 @@ public class RoomParticipant(Guid userId, bool isHost)
     /// This state is used to pause the room automatically if any participant falls behind.
     /// </summary>
     public bool IsBuffering { get; private set; } = false;
-
+    
     /// <summary>
     /// Updates the buffering state of the participant.
     /// </summary>
