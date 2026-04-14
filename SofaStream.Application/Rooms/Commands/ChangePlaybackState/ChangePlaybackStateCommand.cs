@@ -1,4 +1,3 @@
-using MediatR;
 using SofaStream.Domain.Entities;
 
 namespace SofaStream.Application.Rooms.Commands.ChangePlaybackState;
@@ -15,4 +14,4 @@ public record ChangePlaybackStateCommand(
     Guid RoomId, 
     Guid UserId,
     PlaybackState RequestedState, 
-    TimeSpan ClientPosition) : IRequest<bool>;
+    TimeSpan ClientPosition);

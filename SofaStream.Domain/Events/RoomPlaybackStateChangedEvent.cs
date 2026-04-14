@@ -11,8 +11,9 @@ namespace SofaStream.Domain.Events;
 /// <param name="NewState">The updated playback status.</param>
 /// <param name="CurrentPosition">The video timestamp where the state change happened.</param>
 /// <param name="TriggeredAt">The UTC timestamp when the event was generated.</param>
-public record RoomPlaybackStateChangedEvent(
+public record RoomPlaybackStateChangedEvent (
     Guid RoomId,
     PlaybackState NewState,
     TimeSpan CurrentPosition,
-    DateTimeOffset TriggeredAt) : IDomainEvent;
+    DateTimeOffset TriggeredAt
+    ) : IDomainEvent;
