@@ -1,9 +1,6 @@
-using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using SofaStream.Application.Common.Interfaces;
-using SofaStream.Application.Rooms.Commands.ChangePlaybackState;
 using SofaStream.Domain.Common;
-using SofaStream.Domain.Events;
 
 namespace SofaStream.Infrastructure.Services;
 

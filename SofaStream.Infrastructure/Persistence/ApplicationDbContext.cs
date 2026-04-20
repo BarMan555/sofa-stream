@@ -39,13 +39,13 @@ public class ApplicationDbContext(
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         var entitiesWithEvents = ChangeTracker.Entries<AggregateRoot>()
-            .Select(e => e.Entity)
-            .Where(e => e.DomainEvents.Any())
+            .Select(r => r.Entity)
+            .Where(r => r.DomainEvents.Count != 0)
             .ToList();
 
-        var events = entitiesWithEvents.SelectMany(e => e.DomainEvents).ToList();
+        var events = entitiesWithEvents.SelectMany(r => r.DomainEvents).ToList();
         
-        entitiesWithEvents.ForEach(e => e.ClearDomainEvents());
+        entitiesWithEvents.ForEach(r => r.ClearDomainEvents());
 
         var result = await base.SaveChangesAsync(cancellationToken);
 
