@@ -11,7 +11,7 @@ public class RoomParticipant(Guid userId, bool isHost = false)
     /// <summary>
     /// Gets the unique identifier of the user account participating in the session.
     /// </summary>
-    public Guid UserId { get; } = userId;
+    public Guid UserId { get; private set; } = userId;
     
     /// <summary>
     /// Gets the unique identifier of the viewing room currently associated with this participant.

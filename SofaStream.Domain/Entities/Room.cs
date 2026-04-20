@@ -38,7 +38,7 @@ public class Room : AggregateRoot
     /// <summary>
     /// Gets the unique identifier for the room session.
     /// </summary>
-    public Guid Id { get; } = Guid.NewGuid();
+    public Guid Id { get; private set; } = Guid.NewGuid();
 
     /// <summary>
     /// Gets the display name of the room.
