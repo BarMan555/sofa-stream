@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SofaStream.Application", "S
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SofaStream.Infrastructure", "SofaStream.Infrastructure\SofaStream.Infrastructure.csproj", "{6EB6775C-AA3C-420A-87ED-E1524F863440}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SofaStream.Api", "SofaStream.Api\SofaStream.Api.csproj", "{78503B43-BFB8-4201-A4F5-21C5CD39095A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{6EB6775C-AA3C-420A-87ED-E1524F863440}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6EB6775C-AA3C-420A-87ED-E1524F863440}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6EB6775C-AA3C-420A-87ED-E1524F863440}.Release|Any CPU.Build.0 = Release|Any CPU
+		{78503B43-BFB8-4201-A4F5-21C5CD39095A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{78503B43-BFB8-4201-A4F5-21C5CD39095A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{78503B43-BFB8-4201-A4F5-21C5CD39095A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{78503B43-BFB8-4201-A4F5-21C5CD39095A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
