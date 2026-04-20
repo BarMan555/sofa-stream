@@ -26,4 +26,11 @@ public class RoomRepository(ApplicationDbContext dbContext) : IRoomRepository
         dbContext.Rooms.Update(room);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
+
+    /// <inheritdoc />
+    public async Task AddAsync(Room room, CancellationToken cancellationToken)
+    {
+        await dbContext.Rooms.AddAsync(room, cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
 }
