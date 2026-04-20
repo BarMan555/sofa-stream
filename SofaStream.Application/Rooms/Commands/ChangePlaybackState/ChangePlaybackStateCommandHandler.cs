@@ -9,7 +9,7 @@ namespace SofaStream.Application.Rooms.Commands.ChangePlaybackState;
 /// Validates user permissions and coordinates the update of the room's synchronization state.
 /// </summary>
 /// <param name="roomRepository">The repository used to fetch and save room data.</param>
-public class ChangePlaybackStateHandler(IRoomRepository roomRepository)
+public class ChangePlaybackStateCommandHandler(IRoomRepository roomRepository)
     : ICommandHandler<ChangePlaybackStateCommand, bool>
 {
     /// <inheritdoc />
