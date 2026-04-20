@@ -22,4 +22,12 @@ public interface IRoomRepository
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
     Task UpdateAsync(Room room, CancellationToken cancellationToken);
+    
+    /// <summary>
+    /// Adds a new room session to the persistent store.
+    /// </summary>
+    /// <param name="room">The room entity to add.</param>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    Task AddAsync(Room room, CancellationToken cancellationToken);
 }
