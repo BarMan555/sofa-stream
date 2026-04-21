@@ -1,4 +1,5 @@
 using SofaStream.Domain.Common;
+using SofaStream.Domain.Common.Models;
 using SofaStream.Domain.Events;
 
 namespace SofaStream.Domain.Entities;
@@ -122,13 +123,13 @@ public class Room : AggregateRoot
     /// </summary>
     /// <param name="currentClientPosition">The master playback position captured from the triggering client.</param>
     /// <exception cref="InvalidOperationException">Thrown if any participant is currently in a buffering state, preventing synchronization.</exception>
-    public void Play(TimeSpan currentClientPosition)
+    public Result Play(TimeSpan currentClientPosition)
     {
-        if (State == PlaybackState.Playing) return;
+        if (State == PlaybackState.Playing) return Result.Success();
 
         if (_participants.Any(p => p.IsBuffering))
         {
-            throw new InvalidOperationException("Cannot play while participants are buffering.");
+            return Result.Failure(DomainErrors.Room.CannotPlayWhileBuffering);
         }
         
         State = PlaybackState.Playing;
@@ -140,15 +141,17 @@ public class Room : AggregateRoot
             NewState: State, 
             CurrentPosition: CurrentPosition, 
             TriggeredAt: LastUpdatedAt));
+        
+        return Result.Success();
     }
 
     /// <summary>
     /// Suspends playback across the entire room to ensure all participants remain synchronized at the same timestamp.
     /// </summary>
     /// <param name="currentClientPosition">The video position where the pause was initiated.</param>
-    public void Pause(TimeSpan currentClientPosition)
+    public Result Pause(TimeSpan currentClientPosition)
     {
-        if (State == PlaybackState.Paused) return;
+        if (State == PlaybackState.Paused) return Result.Success();
         
         State = PlaybackState.Paused;
         CurrentPosition = currentClientPosition;
@@ -159,6 +162,8 @@ public class Room : AggregateRoot
             NewState: State, 
             CurrentPosition: CurrentPosition, 
             TriggeredAt: LastUpdatedAt));
+        
+        return Result.Success();
     }
 
     /// <summary>
@@ -167,10 +172,12 @@ public class Room : AggregateRoot
     /// <param name="userId">The identifier of the participant experiencing buffering.</param>
     /// <param name="currentClientPosition">The playback position where the buffering event occurred.</param>
     /// <exception cref="ArgumentException">Thrown if the user is not a member of the room.</exception>
-    public void ReportBuffering(Guid userId, TimeSpan currentClientPosition)
+    public Result ReportBuffering(Guid userId, TimeSpan currentClientPosition)
     {
-        var participant = _participants.FirstOrDefault(p => p.UserId == userId)
-            ?? throw new ArgumentException("Participant was not found");
+        var participant = _participants.FirstOrDefault(p => p.UserId == userId);
+            
+        if(participant == null) 
+            return Result.Failure(DomainErrors.Room.ParticipantNotFound);
 
         participant.SetBufferingState(isBuffering: true);
         
@@ -186,6 +193,8 @@ public class Room : AggregateRoot
                 CurrentPosition: CurrentPosition, 
                 TriggeredAt: LastUpdatedAt));
         }
+        
+        return Result.Success();
     }
 
     /// <summary>
@@ -194,10 +203,12 @@ public class Room : AggregateRoot
     /// </summary>
     /// <param name="userId">The identifier of the participant who has recovered from buffering.</param>
     /// <exception cref="ArgumentException">Thrown if the user is not found in the session.</exception>
-    public void ReportBufferingCompleted(Guid userId)
+    public Result ReportBufferingCompleted(Guid userId)
     {
-        var participant = _participants.FirstOrDefault(p => p.UserId == userId)
-            ?? throw new ArgumentException("Participant was not found");
+        var participant = _participants.FirstOrDefault(p => p.UserId == userId);
+        
+        if(participant == null) 
+            return Result.Failure(DomainErrors.Room.ParticipantNotFound);
         
         participant.SetBufferingState(isBuffering: false);
 
@@ -212,5 +223,7 @@ public class Room : AggregateRoot
                 CurrentPosition: CurrentPosition, 
                 TriggeredAt: LastUpdatedAt));
         }
+        
+        return Result.Success();
     }
 }
