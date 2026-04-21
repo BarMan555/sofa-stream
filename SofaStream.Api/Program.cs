@@ -5,7 +5,6 @@ using SofaStream.Application.Common.Interfaces;
 using SofaStream.Application.Rooms.Commands.ChangePlaybackState;
 using SofaStream.Application.Rooms.Commands.CreateRoom;
 using SofaStream.Application.Rooms.EventHandlers;
-using SofaStream.Domain.Common;
 using SofaStream.Domain.Common.Models;
 using SofaStream.Domain.Events;
 using SofaStream.Infrastructure.Persistence;
@@ -33,9 +32,14 @@ builder.Services.AddScoped<ICommandHandler<CreateRoomCommand, Result<Guid>>, Cre
 builder.Services.AddScoped<ICommandHandler<ChangePlaybackStateCommand, Result>, ChangePlaybackStateCommandHandler>();
 builder.Services.AddScoped<IDomainEventHandler<RoomPlaybackStateChangedEvent>, RoomPlaybackStateChangedEventHandler>();
 
+builder.Services.AddExceptionHandler<SofaStream.Api.Infrastructure.GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
 builder.Services.AddControllers();
 
 var app = builder.Build();
+
+app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
 {
