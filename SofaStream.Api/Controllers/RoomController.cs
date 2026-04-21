@@ -13,7 +13,7 @@ namespace SofaStream.Api.Controllers;
 public class RoomController(
     ICommandHandler<CreateRoomCommand, Result<Guid>> createRoomHandler,
     ICommandHandler<ChangePlaybackStateCommand, Result> changePlaybackStateHandler,
-    IQueryHandler<GetRoomStateQuery, RoomStateDto?> getRoomStateHandler) : ControllerBase
+    IQueryHandler<GetRoomStateQuery, Result<RoomStateDto>> getRoomStateHandler) : ControllerBase
 {
     
     /// <summary>
@@ -28,7 +28,7 @@ public class RoomController(
         var command = new CreateRoomCommand(request.Name, request.HostId);
         var result = await createRoomHandler.HandleAsync(command, cancellationToken);
         
-        return Ok(result);
+        return Ok(result.Value);
     }
 
     /// <summary>
@@ -55,6 +55,21 @@ public class RoomController(
         }
         
         return Ok("State changed successfully. SignalR broadcast triggered.");
+    }
+
+    [HttpGet("{roomId:guid}")]
+    public async Task<IActionResult> GetRoomState(
+        [FromRoute] Guid roomId,
+        CancellationToken cancellationToken
+    )
+    {
+        var query = new GetRoomStateQuery(roomId);
+        var result = await getRoomStateHandler.HandleAsync(query, cancellationToken);
+        
+        if (result.IsFailure)
+            BadRequest(result.Error);
+        
+        return Ok(result.Value);
     }
 }
 
