@@ -6,6 +6,7 @@ using SofaStream.Application.Rooms.Commands.ChangePlaybackState;
 using SofaStream.Application.Rooms.Commands.CreateRoom;
 using SofaStream.Application.Rooms.EventHandlers;
 using SofaStream.Domain.Common;
+using SofaStream.Domain.Common.Models;
 using SofaStream.Domain.Events;
 using SofaStream.Infrastructure.Persistence;
 using SofaStream.Infrastructure.Repositories;
@@ -28,8 +29,8 @@ builder.Services.AddScoped<DomainEventDispatcher>();
 builder.Services.AddSignalR();
 builder.Services.AddTransient<IRoomNotificationService, SignalRRoomNotificationService>();
 
-builder.Services.AddScoped<ICommandHandler<CreateRoomCommand, CreateRoomResult>, CreateRoomCommandHandler>();
-builder.Services.AddScoped<ICommandHandler<ChangePlaybackStateCommand, bool>, ChangePlaybackStateCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<CreateRoomCommand, Result<Guid>>, CreateRoomCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<ChangePlaybackStateCommand, Result>, ChangePlaybackStateCommandHandler>();
 builder.Services.AddScoped<IDomainEventHandler<RoomPlaybackStateChangedEvent>, RoomPlaybackStateChangedEventHandler>();
 
 builder.Services.AddControllers();
@@ -46,6 +47,8 @@ if (app.Environment.IsDevelopment())
         c.RoutePrefix = string.Empty; 
     });
 }
+
+app.UseStaticFiles();
 
 app.UseRouting();
 
