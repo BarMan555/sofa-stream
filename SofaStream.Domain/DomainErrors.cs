@@ -17,5 +17,9 @@ public static class DomainErrors
         public static readonly Error NotFound = new(
             "Room.NotFound", 
             "A room with the specified ID was not found.");
+        
+        public static readonly Error InvalidPlaybackState = new(
+            "Room.InvalidPlaybackState", 
+            "Запрошенное состояние плеера некорректно или не поддерживается.");
     }
 }

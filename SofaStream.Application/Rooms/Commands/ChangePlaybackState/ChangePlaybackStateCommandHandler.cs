@@ -1,5 +1,7 @@
 using System.ComponentModel;
 using SofaStream.Application.Common.Interfaces;
+using SofaStream.Domain;
+using SofaStream.Domain.Common.Models;
 using SofaStream.Domain.Entities;
 
 namespace SofaStream.Application.Rooms.Commands.ChangePlaybackState;
@@ -10,48 +12,45 @@ namespace SofaStream.Application.Rooms.Commands.ChangePlaybackState;
 /// </summary>
 /// <param name="roomRepository">The repository used to fetch and save room data.</param>
 public class ChangePlaybackStateCommandHandler(IRoomRepository roomRepository)
-    : ICommandHandler<ChangePlaybackStateCommand, bool>
+    : ICommandHandler<ChangePlaybackStateCommand, Result>
 {
     /// <inheritdoc />
-    public async Task<bool> HandleAsync(ChangePlaybackStateCommand request,
+    public async Task<Result> HandleAsync(ChangePlaybackStateCommand request,
         CancellationToken cancellationToken = default)
     {
         var room = await roomRepository.GetByIdAsync(request.RoomId, cancellationToken);
         if (room == null)
-            return false;
+            return Result.Failure(DomainErrors.Room.NotFound);
 
         var participant = room.Participants.FirstOrDefault(p => p.UserId == request.UserId);
         if (participant == null)
-            return false;
+            return Result.Failure(DomainErrors.Room.ParticipantNotFound);
 
-        try
+        Result operationResult;
+        
+        switch (request.RequestedState)
         {
-            switch (request.RequestedState)
-            {
-                case PlaybackState.Playing:
-                    room.Play(request.ClientPosition);
-                    break;
-                case PlaybackState.Paused:
-                    room.Pause(request.ClientPosition);
-                    break;
-                case PlaybackState.Buffering:
-                    room.ReportBuffering(request.UserId, request.ClientPosition);
-                    break;
-                default:
-                    throw new InvalidEnumArgumentException();
-            }
-        }
-        catch (InvalidOperationException)
-        {
-            return false; // TO DO
-        }
-        catch (InvalidEnumArgumentException)
-        {
-            return false; // TO DO
+            case PlaybackState.Playing:
+                operationResult = room.Play(request.ClientPosition);
+                break;
+            case PlaybackState.Paused:
+                operationResult = room.Pause(request.ClientPosition);
+                break;
+            case PlaybackState.Buffering:
+                operationResult = room.ReportBuffering(request.UserId, request.ClientPosition);
+                break;
+            default:
+                operationResult = Result.Failure(DomainErrors.Room.InvalidPlaybackState);
+                break;
         }
 
+        if (operationResult.IsFailure)
+        {
+            return operationResult;
+        }
+            
         await roomRepository.UpdateAsync(room, cancellationToken);
 
-        return true;
+        return Result.Success();
     }
 }

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using SofaStream.Application.Common.Interfaces;
 using SofaStream.Application.Rooms.Commands.ChangePlaybackState;
 using SofaStream.Application.Rooms.Commands.CreateRoom;
+using SofaStream.Domain.Common.Models;
 using SofaStream.Domain.Entities;
 
 namespace SofaStream.Api.Controllers;
@@ -9,8 +10,8 @@ namespace SofaStream.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class RoomController(
-    ICommandHandler<CreateRoomCommand, CreateRoomResult> createRoomHandler,
-    ICommandHandler<ChangePlaybackStateCommand, bool> changePlaybackStateHandler) : ControllerBase
+    ICommandHandler<CreateRoomCommand, Result<Guid>> createRoomHandler,
+    ICommandHandler<ChangePlaybackStateCommand, Result> changePlaybackStateHandler) : ControllerBase
 {
     
     /// <summary>
@@ -38,12 +39,17 @@ public class RoomController(
         CancellationToken cancellationToken
     )
     {
-        var command = new ChangePlaybackStateCommand(roomId, request.UserId, request.RequestedState, request.ClientPosition);
+        var command = new ChangePlaybackStateCommand(
+            roomId, 
+            request.UserId, 
+            request.RequestedState, 
+            request.ClientPosition);
+        
         var result = await changePlaybackStateHandler.HandleAsync(command, cancellationToken);
 
-        if (!result)
+        if (result.IsFailure)
         {
-            return BadRequest("Failed to change playback state. Check if room exists, user is in the room, or if someone is buffering.");
+            return BadRequest(result.Error);
         }
         
         return Ok("State changed successfully. SignalR broadcast triggered.");
