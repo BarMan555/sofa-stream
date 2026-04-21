@@ -125,6 +125,9 @@ public class Room : AggregateRoot
     /// <exception cref="InvalidOperationException">Thrown if any participant is currently in a buffering state, preventing synchronization.</exception>
     public Result Play(TimeSpan currentClientPosition)
     {
+        if (currentClientPosition < TimeSpan.Zero || currentClientPosition > TimeSpan.MaxValue)
+            return Result.Failure(DomainErrors.Room.InvalidPosition);
+        
         if (State == PlaybackState.Playing) return Result.Success();
 
         if (_participants.Any(p => p.IsBuffering))
@@ -151,6 +154,9 @@ public class Room : AggregateRoot
     /// <param name="currentClientPosition">The video position where the pause was initiated.</param>
     public Result Pause(TimeSpan currentClientPosition)
     {
+        if (currentClientPosition < TimeSpan.Zero || currentClientPosition > TimeSpan.MaxValue)
+            return Result.Failure(DomainErrors.Room.InvalidPosition);
+
         if (State == PlaybackState.Paused) return Result.Success();
         
         State = PlaybackState.Paused;
@@ -174,6 +180,9 @@ public class Room : AggregateRoot
     /// <exception cref="ArgumentException">Thrown if the user is not a member of the room.</exception>
     public Result ReportBuffering(Guid userId, TimeSpan currentClientPosition)
     {
+        if (currentClientPosition < TimeSpan.Zero || currentClientPosition > TimeSpan.MaxValue)
+            return Result.Failure(DomainErrors.Room.InvalidPosition);
+        
         var participant = _participants.FirstOrDefault(p => p.UserId == userId);
             
         if(participant == null) 
