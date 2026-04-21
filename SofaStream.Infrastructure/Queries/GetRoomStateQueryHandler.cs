@@ -2,6 +2,8 @@ using Dapper;
 using Microsoft.EntityFrameworkCore;
 using SofaStream.Application.Common.Interfaces;
 using SofaStream.Application.Rooms.Queries.GetRoomState;
+using SofaStream.Domain;
+using SofaStream.Domain.Common.Models;
 using SofaStream.Domain.Entities;
 using SofaStream.Infrastructure.Persistence;
 
@@ -12,10 +14,10 @@ namespace SofaStream.Infrastructure.Queries;
 /// Utilizes Dapper for high-performance raw SQL querying, bypassing the EF Core Change Tracker.
 /// </summary>
 /// <param name="dbContext">The database context used to extract the underlying ADO.NET connection.</param>
-public class GetRoomStateQueryHandler(ApplicationDbContext dbContext) : IQueryHandler<GetRoomStateQuery, RoomStateDto?>
+public class GetRoomStateQueryHandler(ApplicationDbContext dbContext) : IQueryHandler<GetRoomStateQuery, Result<RoomStateDto>>
 {
     /// <inheritdoc />
-    public async Task<RoomStateDto?> HandleAsync(GetRoomStateQuery query, CancellationToken cancellationToken = default)
+    public async Task<Result<RoomStateDto>> HandleAsync(GetRoomStateQuery query, CancellationToken cancellationToken = default)
     {
         var connection = dbContext.Database.GetDbConnection();
         
@@ -40,7 +42,7 @@ public class GetRoomStateQueryHandler(ApplicationDbContext dbContext) : IQueryHa
         var resultList = flatResult.ToList();
 
         if (resultList.Count == 0)
-            return null;
+            return Result<RoomStateDto>.Failure(DomainErrors.Room.NotFound);
         
         var firstRow = resultList.First();
         
@@ -49,7 +51,7 @@ public class GetRoomStateQueryHandler(ApplicationDbContext dbContext) : IQueryHa
             .Select(r => new ParticipantDto(r.UserId!.Value, r.IsHost, r.IsBuffering))
             .ToList();
         
-        return new RoomStateDto(
+        var roomState = new RoomStateDto(
             firstRow.Id,
             firstRow.Name,
             // Cast the integer from the DB back to our Domain enum, then to string
@@ -57,6 +59,8 @@ public class GetRoomStateQueryHandler(ApplicationDbContext dbContext) : IQueryHa
             firstRow.CurrentPosition.TotalSeconds,
             participants
         );
+        
+        return Result<RoomStateDto>.Success(roomState);
     }
     
     /// <summary>

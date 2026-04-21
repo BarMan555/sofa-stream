@@ -103,10 +103,11 @@ public class Room : AggregateRoot
     /// </summary>
     /// <param name="userId">The identifier of the participant to be removed.</param>
     /// <exception cref="ArgumentException">Thrown if the participant is not found within the current session.</exception>
-    public void RemoveParticipant(Guid userId)
+    public Result RemoveParticipant(Guid userId)
     {
-        var participant = Participants.FirstOrDefault(p => p.UserId == userId)
-            ?? throw new ArgumentException("Participant was not found");
+        var participant = Participants.FirstOrDefault(p => p.UserId == userId);
+        if (participant is null) 
+            return Result.Failure(DomainErrors.Room.ParticipantNotFound);
         
         _participants.Remove(participant);
 
@@ -116,6 +117,7 @@ public class Room : AggregateRoot
             _participants[0].SetHostState(isHost: true);
         }
         
+        return Result.Success();
     }
 
     /// <summary>
