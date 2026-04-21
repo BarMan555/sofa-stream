@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using SofaStream.Application.Common.Interfaces;
 using SofaStream.Application.Rooms.Commands.ChangePlaybackState;
 using SofaStream.Application.Rooms.Commands.CreateRoom;
+using SofaStream.Application.Rooms.Queries.GetRoomState;
 using SofaStream.Domain.Common.Models;
 using SofaStream.Domain.Entities;
 
@@ -11,7 +12,8 @@ namespace SofaStream.Api.Controllers;
 [Route("api/[controller]")]
 public class RoomController(
     ICommandHandler<CreateRoomCommand, Result<Guid>> createRoomHandler,
-    ICommandHandler<ChangePlaybackStateCommand, Result> changePlaybackStateHandler) : ControllerBase
+    ICommandHandler<ChangePlaybackStateCommand, Result> changePlaybackStateHandler,
+    IQueryHandler<GetRoomStateQuery, RoomStateDto?> getRoomStateHandler) : ControllerBase
 {
     
     /// <summary>

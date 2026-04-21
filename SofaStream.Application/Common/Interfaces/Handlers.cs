@@ -51,3 +51,20 @@ public interface IDomainEventHandler<in TDomainEvent> where TDomainEvent : Domai
     /// <returns>A task that represents the asynchronous operation.</returns>
     Task HandleAsync(TDomainEvent domainEvent, CancellationToken cancellationToken = default);
 }
+
+/// <summary>
+/// Defines a contract for handlers that process queries and return a result.
+/// Queries are strictly for reading data and must not modify the system state.
+/// </summary>
+/// <typeparam name="TQuery">The type of the query being handled.</typeparam>
+/// <typeparam name="TResult">The type of the read model returned.</typeparam>
+public interface IQueryHandler<in TQuery, TResult>
+{
+    /// <summary>
+    /// Executes the read operation associated with the query.
+    /// </summary>
+    /// <param name="query">The query instance containing filtering or routing parameters.</param>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
+    /// <returns>A task representing the asynchronous operation, containing the requested read model.</returns>
+    Task<TResult> HandleAsync(TQuery query, CancellationToken cancellationToken = default);
+}

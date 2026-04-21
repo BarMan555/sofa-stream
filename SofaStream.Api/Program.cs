@@ -5,9 +5,11 @@ using SofaStream.Application.Common.Interfaces;
 using SofaStream.Application.Rooms.Commands.ChangePlaybackState;
 using SofaStream.Application.Rooms.Commands.CreateRoom;
 using SofaStream.Application.Rooms.EventHandlers;
+using SofaStream.Application.Rooms.Queries.GetRoomState;
 using SofaStream.Domain.Common.Models;
 using SofaStream.Domain.Events;
 using SofaStream.Infrastructure.Persistence;
+using SofaStream.Infrastructure.Queries;
 using SofaStream.Infrastructure.Repositories;
 using SofaStream.Infrastructure.Services;
 
@@ -32,6 +34,7 @@ builder.Services.AddTransient<IRoomNotificationService, SignalRRoomNotificationS
 builder.Services.AddScoped<ICommandHandler<CreateRoomCommand, Result<Guid>>, CreateRoomCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<ChangePlaybackStateCommand, Result>, ChangePlaybackStateCommandHandler>();
 builder.Services.AddScoped<IDomainEventHandler<RoomPlaybackStateChangedEvent>, RoomPlaybackStateChangedEventHandler>();
+builder.Services.AddScoped<IQueryHandler<GetRoomStateQuery, RoomStateDto?>, GetRoomStateQueryHandler>();
 
 builder.Services.AddExceptionHandler<SofaStream.Api.Infrastructure.GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
@@ -48,7 +51,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "SofaStream API V1");
-        // Чтобы Swagger открывался сразу по адресу http://localhost:PORT/
         c.RoutePrefix = string.Empty; 
     });
 }
