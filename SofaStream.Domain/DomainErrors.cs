@@ -21,5 +21,9 @@ public static class DomainErrors
         public static readonly Error InvalidPlaybackState = new(
             "Room.InvalidPlaybackState", 
             "Запрошенное состояние плеера некорректно или не поддерживается.");
+        
+        public static readonly Error InvalidPosition = new(
+            "Room.InvalidPosition", 
+            "The playback position cannot be negative or exceed the video duration.");
     }
 }
