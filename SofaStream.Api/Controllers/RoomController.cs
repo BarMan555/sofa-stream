@@ -67,7 +67,7 @@ public class RoomController(
         var result = await getRoomStateHandler.HandleAsync(query, cancellationToken);
         
         if (result.IsFailure)
-            BadRequest(result.Error);
+            return BadRequest(result.Error);
         
         return Ok(result.Value);
     }
