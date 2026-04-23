@@ -25,5 +25,9 @@ public static class DomainErrors
         public static readonly Error InvalidPosition = new(
             "Room.InvalidPosition", 
             "The playback position cannot be negative or exceed the video duration.");
+        
+        public static readonly Error NotHost = new(
+            "Room.NotHost",
+            "The user is not host.");
     }
 }

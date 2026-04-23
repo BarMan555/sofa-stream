@@ -15,5 +15,12 @@ internal class RoomConfiguration : IEntityTypeConfiguration<Room>
             .WithOne()
             .HasForeignKey(p => p.RoomId)
             .OnDelete(DeleteBehavior.Cascade);
+        builder.OwnsOne(r => r.CurrentVideo, v =>
+            {
+                v.Property(p => p.Url).IsRequired().HasMaxLength(2000);
+                v.Property(p => p.Title).IsRequired().HasMaxLength(500);
+                v.Property(p => p.Duration).IsRequired();
+            }
+        );
     }
 }
