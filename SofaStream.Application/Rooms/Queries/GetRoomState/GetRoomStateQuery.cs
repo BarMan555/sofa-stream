@@ -14,6 +14,7 @@ public record RoomStateDto(
     string Name,
     string PlaybackState,
     double CurrentPositionSeconds,
+    VideoDto? CurrentVideo,
     List<ParticipantDto> Participants);
 
 /// <summary>
@@ -23,3 +24,5 @@ public record ParticipantDto(
     Guid UserId,
     bool IsHost,
     bool IsBuffering);
+    
+public record VideoDto(string Url, string Title, double DurationSeconds);
