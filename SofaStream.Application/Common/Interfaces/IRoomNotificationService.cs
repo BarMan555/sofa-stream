@@ -23,4 +23,9 @@ public interface IRoomNotificationService
         TimeSpan currentPosition, 
         DateTimeOffset triggeredAt,
         CancellationToken cancellationToken);
+    
+    Task NotifyVideoChangedAsync(
+        Guid roomId,
+        Video video,
+        CancellationToken cancellationToken);
 }

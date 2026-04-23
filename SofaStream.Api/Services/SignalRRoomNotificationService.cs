@@ -24,4 +24,15 @@ public class SignalRRoomNotificationService(IHubContext<RoomHub> hubContext) : I
             }, 
             cancellationToken);
     }
+
+    public async Task NotifyVideoChangedAsync(
+        Guid roomId, 
+        Video video, 
+        CancellationToken cancellationToken)
+    {
+        await hubContext.Clients.Group(roomId.ToString()).SendAsync(
+            "OnVideoChanged",
+            video,
+            cancellationToken);
+    }
 }
