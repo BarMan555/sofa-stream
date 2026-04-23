@@ -78,7 +78,7 @@ public class RoomController(
     /// <summary>
     /// Changes the video content for the specified room. Only the room host can perform this action.
     /// </summary>
-    [HttpPost("{roomId}:guid/video")]
+    [HttpPost("{roomId:guid}/video")]
     public async Task<IActionResult> ChangeVideo(
         [FromRoute] Guid roomId,
         [FromBody] ChangeVideoRequest request,
