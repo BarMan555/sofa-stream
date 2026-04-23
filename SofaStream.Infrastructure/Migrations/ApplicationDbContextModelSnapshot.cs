@@ -69,6 +69,37 @@ namespace SofaStream.Infrastructure.Migrations
                     b.ToTable("RoomParticipant");
                 });
 
+            modelBuilder.Entity("SofaStream.Domain.Entities.Room", b =>
+                {
+                    b.OwnsOne("SofaStream.Domain.Entities.Video", "CurrentVideo", b1 =>
+                        {
+                            b1.Property<Guid>("RoomId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<TimeSpan>("Duration")
+                                .HasColumnType("interval");
+
+                            b1.Property<string>("Title")
+                                .IsRequired()
+                                .HasMaxLength(500)
+                                .HasColumnType("character varying(500)");
+
+                            b1.Property<string>("Url")
+                                .IsRequired()
+                                .HasMaxLength(2000)
+                                .HasColumnType("character varying(2000)");
+
+                            b1.HasKey("RoomId");
+
+                            b1.ToTable("Rooms");
+
+                            b1.WithOwner()
+                                .HasForeignKey("RoomId");
+                        });
+
+                    b.Navigation("CurrentVideo");
+                });
+
             modelBuilder.Entity("SofaStream.Domain.Entities.RoomParticipant", b =>
                 {
                     b.HasOne("SofaStream.Domain.Entities.Room", null)
