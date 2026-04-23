@@ -26,6 +26,6 @@ public interface IRoomNotificationService
     
     Task NotifyVideoChangedAsync(
         Guid roomId,
-        Video video,
+        Video? video,
         CancellationToken cancellationToken);
 }
