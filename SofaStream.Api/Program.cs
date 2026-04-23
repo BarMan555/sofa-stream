@@ -3,6 +3,7 @@ using SofaStream.Api.Hubs;
 using SofaStream.Api.Services;
 using SofaStream.Application.Common.Interfaces;
 using SofaStream.Application.Rooms.Commands.ChangePlaybackState;
+using SofaStream.Application.Rooms.Commands.ChangeVideo;
 using SofaStream.Application.Rooms.Commands.CreateRoom;
 using SofaStream.Application.Rooms.Commands.LeaveRoom;
 using SofaStream.Application.Rooms.EventHandlers;
@@ -35,6 +36,7 @@ builder.Services.AddTransient<IRoomNotificationService, SignalRRoomNotificationS
 builder.Services.AddScoped<ICommandHandler<CreateRoomCommand, Result<Guid>>, CreateRoomCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<ChangePlaybackStateCommand, Result>, ChangePlaybackStateCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<LeaveRoomCommand, Result>, LeaveRoomCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<ChangeVideoCommand, Result>, ChangeVideoCommandHandler>();
 builder.Services.AddScoped<IDomainEventHandler<RoomPlaybackStateChangedEvent>, RoomPlaybackStateChangedEventHandler>();
 builder.Services.AddScoped<IQueryHandler<GetRoomStateQuery, Result<RoomStateDto>>, GetRoomStateQueryHandler>();
 
