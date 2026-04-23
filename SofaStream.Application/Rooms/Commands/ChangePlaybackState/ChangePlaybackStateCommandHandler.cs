@@ -44,13 +44,11 @@ public class ChangePlaybackStateCommandHandler(IRoomRepository roomRepository)
                 break;
         }
 
-        if (operationResult.IsFailure)
+        if (operationResult.IsSuccess)
         {
-            return operationResult;
+            await roomRepository.UpdateAsync(room, cancellationToken);
         }
             
-        await roomRepository.UpdateAsync(room, cancellationToken);
-
-        return Result.Success();
+        return operationResult;
     }
 }
