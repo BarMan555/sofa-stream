@@ -8,7 +8,7 @@ namespace SofaStream.Application.Rooms.Commands.ChangeVideo;
 /// <summary>
 /// Handles the execution of a <see cref="ChangeVideoCommand"/>.
 /// </summary>
-public class ChengeVideoCommandHandler(IRoomRepository roomRepository) : ICommandHandler<ChangeVideoCommand, Result>
+public class ChangeVideoCommandHandler(IRoomRepository roomRepository) : ICommandHandler<ChangeVideoCommand, Result>
 {
     /// <inheritdoc />
     public async Task<Result> HandleAsync(ChangeVideoCommand command, CancellationToken cancellationToken = default)
