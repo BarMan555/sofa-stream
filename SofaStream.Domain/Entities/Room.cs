@@ -98,8 +98,16 @@ public class Room : AggregateRoot
         LastUpdatedAt = DateTimeOffset.UtcNow;
         State = PlaybackState.Paused;
         
-        //AddDomainEvent();
-        //AddDomainEvent();
+        AddDomainEvent(new RoomVideoChangedEvent(
+            RoomId: Id, 
+            Video: CurrentVideo, 
+            TriggeredAt: LastUpdatedAt));
+
+        AddDomainEvent(new RoomPlaybackStateChangedEvent(
+            RoomId: Id, 
+            NewState: State, 
+            CurrentPosition: CurrentPosition, 
+            TriggeredAt: LastUpdatedAt));
         
         return Result.Success();
     }
