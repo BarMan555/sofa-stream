@@ -25,6 +25,9 @@ public class GetRoomStateQueryHandler(ApplicationDbContext dbContext) : IQueryHa
            SELECT 
                r."Id", 
                r."Name", 
+               r."CurrentVideo_Url" AS VideoUrl,          
+               r."CurrentVideo_Title" AS VideoTitle,     
+               r."CurrentVideo_Duration" AS VideoDuration,
                r."State" AS PlaybackState, 
                r."CurrentPosition",
                p."UserId", 
@@ -50,13 +53,18 @@ public class GetRoomStateQueryHandler(ApplicationDbContext dbContext) : IQueryHa
             .Where(r => r.UserId.HasValue) // Safeguard for LEFT JOIN returning nulls
             .Select(r => new ParticipantDto(r.UserId!.Value, r.IsHost, r.IsBuffering))
             .ToList();
-        
+
+        VideoDto? videoDto = firstRow.VideoUrl != null
+            ? new VideoDto(firstRow.VideoUrl, firstRow.VideoTitle!, firstRow.VideoDuration!.Value.TotalSeconds)
+            : null;
+            
         var roomState = new RoomStateDto(
             firstRow.Id,
             firstRow.Name,
             // Cast the integer from the DB back to our Domain enum, then to string
             ((PlaybackState)firstRow.PlaybackState).ToString(),
             firstRow.CurrentPosition.TotalSeconds,
+            videoDto,
             participants
         );
         
@@ -70,6 +78,9 @@ public class GetRoomStateQueryHandler(ApplicationDbContext dbContext) : IQueryHa
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
+        public string? VideoUrl { get; set; }
+        public string? VideoTitle { get; set; }
+        public TimeSpan? VideoDuration { get; set; }
         public int PlaybackState { get; set; }
         public TimeSpan CurrentPosition { get; set; }
         
