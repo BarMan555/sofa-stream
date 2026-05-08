@@ -1,0 +1,31 @@
+name: SofaStream CI
+
+# 1. Триггеры (Когда запускать этот пайплайн)
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+# 2. Работы 
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Скачивание кода репозитория
+        uses: actions/checkout@v4
+
+      - name: Установка .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Восстановление зависимостей (Restore)
+        run: dotnet restore SofaStream.sln
+
+      - name: Сборка проекта (Build)
+        run: dotnet build SofaStream.sln --configuration Release --no-restore
+
+      - name: Запуск тестов (Test)
+        run: dotnet test SofaStream.sln --configuration Release --no-build --verbosity normal
