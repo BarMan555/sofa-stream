@@ -25,6 +25,9 @@ public class ChangePlaybackStateCommandHandler(IRoomRepository roomRepository)
         var participant = room.Participants.FirstOrDefault(p => p.UserId == request.UserId);
         if (participant == null)
             return Result.Failure(DomainErrors.Room.ParticipantNotFound);
+        
+        if (!participant.IsHost)
+            return Result.Failure(DomainErrors.Room.NotHost);
 
         Result operationResult;
         
