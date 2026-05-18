@@ -3,6 +3,7 @@ using SofaStream.Application.Common.Interfaces;
 using SofaStream.Application.Rooms.Commands.ChangePlaybackState;
 using SofaStream.Application.Rooms.Commands.ChangeVideo;
 using SofaStream.Application.Rooms.Commands.CreateRoom;
+using SofaStream.Application.Rooms.Commands.JoinRoom;
 using SofaStream.Application.Rooms.Commands.LeaveRoom;
 using SofaStream.Application.Rooms.Queries.GetRoomState;
 using SofaStream.Domain.Common.Models;
@@ -96,8 +97,38 @@ public class RoomController(
         
         return Ok("Video changed successfully. SignalR broadcast triggered.");
     }
+    
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="roomId"></param>
+    /// <param name="request"></param>
+    /// <param name="joinRoomHandler"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpPost("{roomId:guid}/join")]
+    public async Task<IActionResult> JoinRoom(
+        [FromRoute] Guid roomId,
+        [FromBody] JoinRoomRequest request,
+        [FromServices] ICommandHandler<JoinRoomCommand, Result> joinRoomHandler,
+        CancellationToken cancellationToken)
+    {
+        var result = await joinRoomHandler.HandleAsync(new JoinRoomCommand(roomId, request.UserId), cancellationToken);
+        if (result.IsFailure) return BadRequest(result.Error);
+        return Ok("Room joined successfully. SignalR broadcast triggered.");
+    }
+    
+    /// <summary>
+    /// Returns the current UTC time of the server for NTP-like synchronization.
+    /// </summary>
+    [HttpGet("time")]
+    public IActionResult GetServerTime()
+    {
+        return Ok(new { serverTimeUtc = DateTimeOffset.UtcNow });
+    }
 }
 
 public record CreateRoomRequest(string Name, Guid HostId);
 public record ChangePlaybackStateRequest(Guid UserId, PlaybackState RequestedState, TimeSpan ClientPosition);
 public record ChangeVideoRequest(Guid UserId, string VideoUrl, string Title, double DurationSeconds);
+public record JoinRoomRequest(Guid UserId);
