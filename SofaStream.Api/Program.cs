@@ -5,6 +5,7 @@ using SofaStream.Application.Common.Interfaces;
 using SofaStream.Application.Rooms.Commands.ChangePlaybackState;
 using SofaStream.Application.Rooms.Commands.ChangeVideo;
 using SofaStream.Application.Rooms.Commands.CreateRoom;
+using SofaStream.Application.Rooms.Commands.JoinRoom;
 using SofaStream.Application.Rooms.Commands.LeaveRoom;
 using SofaStream.Application.Rooms.EventHandlers;
 using SofaStream.Application.Rooms.Queries.GetRoomState;
@@ -30,14 +31,27 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<IRoomRepository, RoomRepository>();
 builder.Services.AddScoped<DomainEventDispatcher>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontendPolicy", policy =>
+    {
+        policy.WithOrigins("http://127.0.0.1:63342", "http://localhost:63342")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
+
 builder.Services.AddSignalR();
 builder.Services.AddTransient<IRoomNotificationService, SignalRRoomNotificationService>();
 
 builder.Services.AddScoped<ICommandHandler<CreateRoomCommand, Result<Guid>>, CreateRoomCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<ChangePlaybackStateCommand, Result>, ChangePlaybackStateCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<JoinRoomCommand, Result>, JoinRoomCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<LeaveRoomCommand, Result>, LeaveRoomCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<ChangeVideoCommand, Result>, ChangeVideoCommandHandler>();
 builder.Services.AddScoped<IDomainEventHandler<RoomPlaybackStateChangedEvent>, RoomPlaybackStateChangedEventHandler>();
+builder.Services.AddScoped<IDomainEventHandler<RoomVideoChangedEvent>, RoomVideoChangedEventHandler>();
 builder.Services.AddScoped<IQueryHandler<GetRoomStateQuery, Result<RoomStateDto>>, GetRoomStateQueryHandler>();
 
 builder.Services.AddExceptionHandler<SofaStream.Api.Infrastructure.GlobalExceptionHandler>();
@@ -63,7 +77,9 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseCors("FrontendPolicy");
 app.MapControllers();
+
 app.MapHub<RoomHub>("/hubs/room");
 
 app.Run();
