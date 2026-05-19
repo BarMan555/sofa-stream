@@ -18,7 +18,8 @@ public class RoomPlaybackStateChangedEventHandler(IRoomNotificationService notif
             domainEvent.RoomId, 
             domainEvent.NewState, 
             domainEvent.CurrentPosition, 
-            domainEvent.TriggeredAt, 
+            domainEvent.TriggeredAt,
+            domainEvent.ScheduledFor,
             cancellationToken);
     }
 }
