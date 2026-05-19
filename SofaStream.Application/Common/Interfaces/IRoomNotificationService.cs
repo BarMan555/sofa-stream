@@ -15,6 +15,7 @@ public interface IRoomNotificationService
     /// <param name="newState">The master playback status that clients are required to adopt.</param>
     /// <param name="currentPosition">The target video timestamp for player seeking and synchronization.</param>
     /// <param name="triggeredAt">The exact time the state change was recorded, enabling clients to calculate latency offsets.</param>
+    /// <param name="scheduledFor">The scheduled start time of the event</param>
     /// <param name="cancellationToken">Token to cancel the broadcast operation.</param>
     /// <returns>A task representing the asynchronous notification process.</returns>
     Task NotifyPlaybackStateChangedAsync(
@@ -22,6 +23,7 @@ public interface IRoomNotificationService
         PlaybackState newState, 
         TimeSpan currentPosition, 
         DateTimeOffset triggeredAt,
+        DateTimeOffset? scheduledFor,
         CancellationToken cancellationToken);
     
     Task NotifyVideoChangedAsync(

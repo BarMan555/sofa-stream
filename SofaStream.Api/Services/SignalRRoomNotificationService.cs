@@ -12,6 +12,7 @@ public class SignalRRoomNotificationService(IHubContext<RoomHub> hubContext) : I
         PlaybackState newState, 
         TimeSpan currentPosition, 
         DateTimeOffset triggeredAt, 
+        DateTimeOffset? scheduledFor,
         CancellationToken cancellationToken)
     {
         await hubContext.Clients.Group(roomId.ToString()).SendAsync(
@@ -20,7 +21,8 @@ public class SignalRRoomNotificationService(IHubContext<RoomHub> hubContext) : I
             {
                 State = newState.ToString(),
                 PositionInSeconds = currentPosition.TotalSeconds,
-                TriggeredAt = triggeredAt
+                TriggeredAt = triggeredAt,
+                ScheduledFor = scheduledFor
             }, 
             cancellationToken);
     }
