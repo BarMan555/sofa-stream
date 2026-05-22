@@ -1,9 +1,23 @@
-bin/
-obj/
+# Сборка .NET (бинарники и логи)
+[Bb]in/
+[Oo]bj/
+**/BuildHost-net472/
+**/BuildHost-netcore/
+
+# Зависимости и пакеты
+packages/
 /packages/
-riderModule.iml
-/_ReSharper.Caches/
-.git
-.idea
-*/bin/
+
+# Настройки Rider / JetBrains
+.idea/
+*.DotSettings
 *.user
+riderModule.iml
+_ReSharper.Caches/
+
+# Конфигурация окружения
+.env
+
+# Системные файлы macOS
+.DS_Store
+**/.DS_Store
