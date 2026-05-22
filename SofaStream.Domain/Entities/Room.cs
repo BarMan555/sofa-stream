@@ -107,7 +107,8 @@ public class Room : AggregateRoot
             RoomId: Id, 
             NewState: State, 
             CurrentPosition: CurrentPosition, 
-            TriggeredAt: LastUpdatedAt));
+            TriggeredAt: LastUpdatedAt,
+            ScheduledFor: null));
         
         return Result.Success();
     }
@@ -181,11 +182,14 @@ public class Room : AggregateRoot
         CurrentPosition = currentClientPosition;
         LastUpdatedAt = DateTimeOffset.UtcNow;
         
+        var scheduledFor = LastUpdatedAt.AddSeconds(1);
+        
         AddDomainEvent(new RoomPlaybackStateChangedEvent(
             RoomId: Id, 
             NewState: State, 
             CurrentPosition: CurrentPosition, 
-            TriggeredAt: LastUpdatedAt));
+            TriggeredAt: LastUpdatedAt,
+            ScheduledFor: scheduledFor));
         
         return Result.Success();
     }
@@ -210,7 +214,8 @@ public class Room : AggregateRoot
             RoomId: Id, 
             NewState: State, 
             CurrentPosition: CurrentPosition, 
-            TriggeredAt: LastUpdatedAt));
+            TriggeredAt: LastUpdatedAt,
+            ScheduledFor: null));
         
         return Result.Success();
     }
@@ -244,7 +249,8 @@ public class Room : AggregateRoot
                 RoomId: Id, 
                 NewState: State, 
                 CurrentPosition: CurrentPosition, 
-                TriggeredAt: LastUpdatedAt));
+                TriggeredAt: LastUpdatedAt,
+                ScheduledFor: null));
         }
         
         return Result.Success();
@@ -274,7 +280,8 @@ public class Room : AggregateRoot
                 RoomId: Id, 
                 NewState: State, 
                 CurrentPosition: CurrentPosition, 
-                TriggeredAt: LastUpdatedAt));
+                TriggeredAt: LastUpdatedAt,
+                ScheduledFor: null));
         }
         
         return Result.Success();

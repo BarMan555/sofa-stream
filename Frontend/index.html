@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SofaStream - Sync & Chill</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>🛋️ SofaStream</h1>
+        <p>Sync your movie, sync your hearts.</p>
+    </header>
+
+    <main>
+        <div class="panel">
+            <div class="form-group">
+                <label>My User ID (Auto-generated):</label>
+                <input type="text" id="userIdInput" readonly />
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <h3>Create a New Room</h3>
+                    <input type="text" id="roomNameInput" placeholder="Room Name (e.g. Movie Night)" />
+                    <button onclick="createRoom()" class="btn-primary">Create Room</button>
+                </div>
+                <div class="col">
+                    <h3>Join Existing Room</h3>
+                    <input type="text" id="roomIdInput" placeholder="Enter Room ID here..." />
+                    <button onclick="joinRoom()" class="btn-secondary">Join Room</button>
+                </div>
+            </div>
+
+            <div class="row" style="margin-top: 15px; border-top: 1px solid #ddd; padding-top: 15px;">
+                <div class="col full-width">
+                    <h3>Change Video (Host Only)</h3>
+                    <input type="text" id="videoUrlInput" placeholder="Paste YouTube URL here..." />
+                    <button onclick="changeVideo()" class="btn-danger">Load Video</button>
+                </div>
+            </div>
+
+            <div id="status" class="status-badge disconnected">Disconnected</div>
+        </div>
+
+        <div class="player-wrapper">
+            <div id="youtubePlayer"></div>
+        </div>
+    </main>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

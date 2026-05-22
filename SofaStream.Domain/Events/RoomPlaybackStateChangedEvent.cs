@@ -11,9 +11,11 @@ namespace SofaStream.Domain.Events;
 /// <param name="NewState">The target playback status that participants must adopt.</param>
 /// <param name="CurrentPosition">The master video timestamp for precise playback synchronization.</param>
 /// <param name="TriggeredAt">The UTC timestamp of the event, used by clients for network latency compensation.</param>
+/// <param name="ScheduledFor">The scheduled start time of the event</param>
 public record RoomPlaybackStateChangedEvent (
     Guid RoomId,
     PlaybackState NewState,
     TimeSpan CurrentPosition,
-    DateTimeOffset TriggeredAt
+    DateTimeOffset TriggeredAt,
+    DateTimeOffset? ScheduledFor
     ) : IDomainEvent;
