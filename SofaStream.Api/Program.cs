@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using SofaStream.Api.Hubs;
 using SofaStream.Api.Services;
@@ -31,14 +32,18 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<IRoomRepository, RoomRepository>();
 builder.Services.AddScoped<DomainEventDispatcher>();
 
+// Настройка CORS под динамический appsettings
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("FrontendPolicy", policy =>
+    options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("http://127.0.0.1:63342", "http://localhost:63342")
+        var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() 
+                             ?? new[] { "http://localhost:8000", "http://127.0.0.1:8000" };
+
+        policy.WithOrigins(allowedOrigins) 
             .AllowAnyHeader()
             .AllowAnyMethod()
-            .AllowCredentials();
+            .AllowCredentials(); 
     });
 });
 
@@ -56,10 +61,31 @@ builder.Services.AddScoped<IQueryHandler<GetRoomStateQuery, Result<RoomStateDto>
 
 builder.Services.AddExceptionHandler<SofaStream.Api.Infrastructure.GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
-
 builder.Services.AddControllers();
 
 var app = builder.Build();
+
+// Настройка прокси-заголовков для работы за Nginx (Строго в самом верху!)
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
+
+// Автоматическое применение миграций при старте контейнера бэкенда
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        context.Database.Migrate();
+        Console.WriteLine("Database migrations applied successfully.");
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while migrating the database.");
+    }
+}
 
 app.UseExceptionHandler();
 
@@ -73,13 +99,9 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseStaticFiles();
-
 app.UseRouting();
-
-app.UseCors("FrontendPolicy");
+app.UseCors();
 app.MapControllers();
-
 app.MapHub<RoomHub>("/hubs/room");
 
 app.Run();

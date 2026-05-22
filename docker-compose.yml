@@ -2,14 +2,35 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: sofastream-db
+    restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 123123123
-      POSTGRES_DB: sofastream
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${POSTGRES_DB_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_DB_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB_NAME}
     volumes:
       - postgres_sofa_stream_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 250M
+
+  backend:
+    build:
+      context: .
+      dockerfile: SofaStream.Api/Dockerfile
+    container_name: sofastream-backend
+    restart: always
+    ports:
+      - "5063:5063"
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=${POSTGRES_DB_NAME};Username=${POSTGRES_DB_USER};Password=${POSTGRES_DB_PASSWORD};
+      - Cors__AllowedOrigins__2=http://${SERVER_IP}
+    depends_on:
+      - postgres
+    deploy:
+      resources:
+        limits:
+          memory: 350M
 
 volumes:
   postgres_sofa_stream_data:
