@@ -1,5 +1,5 @@
 // --- Configuration ---
-const API_BASE_URL = "http://0.0.0.0:5063";
+const API_BASE_URL = window.location.origin;
 
 // --- Time Synchronization (NTP) ---
 let serverTimeOffset = 0; // Разница в миллисекундах между клиентом и сервером
@@ -37,6 +37,7 @@ function getExactServerTimeNow() {
 syncClockWithServer();
 
 let currentRoomId = null;
+let isHost = false; // Глобальный трекинг роли для предотвращения гонок при старте
 
 // Enums mapping from C# Domain
 const PlaybackState = {
@@ -46,9 +47,8 @@ const PlaybackState = {
 };
 
 // --- Player Adapter (Pattern) ---
-// Этот класс - универсальная обертка. Завтра мы сможем написать такой же RuTubeAdapter
 class YouTubeAdapter {
-    constructor(containerId, onStateChangeCallback) {
+    constructor(containerId, onStateChangeCallback, onPlayerReadyCallback) {
         this.player = new YT.Player(containerId, {
             height: '390',
             width: '640',
@@ -59,7 +59,6 @@ class YouTubeAdapter {
                 'origin': window.location.origin
             },
             events: {
-                // Когда YouTube меняет состояние, мы переводим его на язык нашего Домена
                 'onStateChange': (event) => {
                     let domainState = null;
                     if (event.data === YT.PlayerState.PLAYING) domainState = PlaybackState.Playing;
@@ -69,58 +68,81 @@ class YouTubeAdapter {
                     if (domainState !== null) {
                         onStateChangeCallback(domainState);
                     }
+                },
+                'onReady': () => {
+                    console.log("YouTube Player is fully READY.");
+                    onPlayerReadyCallback();
                 }
             }
         });
     }
 
-    // Стандартный интерфейс, который будет использовать наша бизнес-логика
-    play() { this.player.playVideo(); }
-    pause() { this.player.pauseVideo(); }
-    seekTo(seconds) { this.player.seekTo(seconds, true); }
-    getCurrentTime() { return this.player.getCurrentTime() || 0; }
+    play() { if (this.player && this.player.playVideo) this.player.playVideo(); }
+    pause() { if (this.player && this.player.pauseVideo) this.player.pauseVideo(); }
+    seekTo(seconds) { if (this.player && this.player.seekTo) this.player.seekTo(seconds, true); }
+    getCurrentTime() { return (this.player && this.player.getCurrentTime) ? this.player.getCurrentTime() : 0; }
 
     loadVideo(videoId, startSeconds = 0) {
-        this.player.loadVideoById(videoId, startSeconds);
+        if (this.player && this.player.loadVideoById) {
+            this.player.loadVideoById(videoId, startSeconds);
+        }
     }
 
     cueVideo(videoId, startSeconds = 0) {
-        this.player.cueVideoById(videoId, startSeconds);
+        if (this.player && this.player.cueVideoById) {
+            this.player.cueVideoById(videoId, startSeconds);
+        }
     }
 }
 
 // --- Finite State Machine (FSM) ---
-// Возможные состояния нашего автомата
 const MachineState = {
-    IDLE: 'IDLE',                     // Плеер в покое, ждет действий пользователя или сервера
-    WAITING_SERVER: 'WAITING_SERVER', // Хост нажал кнопку, ждем подтверждения от сервера
-    SYNCING: 'SYNCING'                // Применяем команды сервера (блокируем действия юзера)
+    IDLE: 'IDLE',
+    WAITING_SERVER: 'WAITING_SERVER',
+    SYNCING: 'SYNCING',
+    SCHEDULED_PLAY: 'SCHEDULED_PLAY'
 };
 
 class SyncStateMachine {
-    constructor(player, sendUpdateCallback) {
-        this.player = player;
+    constructor(sendUpdateCallback) {
+        this.player = null; // Привязывается позже через setPlayer
         this.sendUpdate = sendUpdateCallback;
         this.currentState = MachineState.IDLE;
         this.isHost = false;
     }
 
-    setHostStatus(isHost) {
-        this.isHost = isHost;
+    setPlayer(player) {
+        this.player = player;
+        console.log("FSM: Player adapter linked to State Machine.");
     }
 
-    // Обработка событий от ЛОКАЛЬНОГО плеера (когда юзер кликает сам)
+    setHostStatus(isHostStatus) {
+        this.isHost = isHostStatus;
+        console.log(`FSM: Host status updated to: ${isHostStatus}`);
+    }
+
     handleLocalEvent(domainState) {
-        // Если мы сейчас синхронизируемся с сервером — игнорируем любые клики
-        if (this.currentState === MachineState.SYNCING) return;
+        if (this.currentState === MachineState.SYNCING || this.currentState === MachineState.SCHEDULED_PLAY) return;
         if (!currentRoomId) return;
+        if (!this.player) return;
 
         // ЗАЩИТА ГОСТЯ
         if (!this.isHost) {
             if (domainState === PlaybackState.Playing) {
                 this.enterSyncingState(() => {
                     this.player.pause();
-                    alert("Только Host может управлять просмотром!");
+
+                    const statusEl = document.getElementById('status');
+                    if (statusEl) {
+                        const oldText = statusEl.innerText;
+                        statusEl.innerText = "⚠️ Только Host может управлять просмотром!";
+                        statusEl.style.color = "red";
+
+                        setTimeout(() => {
+                            statusEl.innerText = oldText;
+                            statusEl.style.color = "";
+                        }, 3000);
+                    }
                 });
             }
             return;
@@ -129,7 +151,6 @@ class SyncStateMachine {
         // ЛОГИКА ХОСТА
         if (this.currentState === MachineState.IDLE) {
             if (domainState === PlaybackState.Playing) {
-                // Идем в ожидание сервера, глушим плеер и отправляем запрос
                 this.currentState = MachineState.WAITING_SERVER;
                 this.player.pause();
                 this.sendUpdate(PlaybackState.Playing);
@@ -137,41 +158,67 @@ class SyncStateMachine {
             else if (domainState === PlaybackState.Paused) {
                 this.sendUpdate(PlaybackState.Paused);
             }
-            else if (domainState === PlaybackState.Buffering) {
-                this.sendUpdate(PlaybackState.Buffering);
-            }
-        }
-        else if (this.currentState === MachineState.WAITING_SERVER) {
-            // Если мы уже ждем ответа, игнорируем панику пользователя (двойные клики)
-            console.log("FSM: Ignoring local click, waiting for server...");
         }
     }
 
-    // Обработка событий от СЕРВЕРА (SignalR)
     handleRemoteEvent(data) {
-        // Сервер всегда прав. Переходим в состояние синхронизации.
-        this.enterSyncingState(() => {
-            const currentTime = this.player.getCurrentTime();
+        if (!this.player) return;
 
-            // Компенсация рассинхрона времени
-            if (Math.abs(currentTime - data.positionInSeconds) > 0.5) {
+        // 1. Всегда проверяем рассинхрон ползунка
+        const currentTime = this.player.getCurrentTime();
+        if (Math.abs(currentTime - data.positionInSeconds) > 0.5) {
+            this.enterSyncingState(() => {
                 this.player.seekTo(data.positionInSeconds);
-            }
+            });
+        }
 
-            if (data.state === "Playing") {
-                this.player.play();
-            } else if (data.state === "Paused" || data.state === "Buffering") {
+        // 2. Обработка Запланированного Старта (Play)
+        if (data.state === "Playing" && data.scheduledFor) {
+            const exactServerTimeNow = getExactServerTimeNow();
+            const targetTime = new Date(data.scheduledFor).getTime();
+            const delayMs = targetTime - exactServerTimeNow;
+
+            if (delayMs > 0) {
+                console.log(`FSM: Запланирован старт через ${delayMs} мс`);
+                this.currentState = MachineState.SCHEDULED_PLAY;
                 this.player.pause();
+
+                setTimeout(() => {
+                    if (this.currentState === MachineState.SCHEDULED_PLAY) {
+                        this.enterSyncingState(() => {
+                            this.player.play();
+                        });
+                    }
+                }, delayMs);
+            } else {
+                console.log(`FSM: Время старта упущено (${delayMs} мс). Запускаем мгновенно.`);
+                this.enterSyncingState(() => {
+                    this.player.play();
+                });
             }
-        });
+        }
+        // 3. Обработка Мгновенной Паузы
+        else if (data.state === "Paused" || data.state === "Buffering") {
+            this.enterSyncingState(() => {
+                this.player.pause();
+            });
+        }
     }
 
-    // Вспомогательный метод для безопасной работы с плеером без петель
+    lockForSync() {
+        this.currentState = MachineState.SYNCING;
+        console.log("FSM: Locked for initial sync...");
+    }
+
+    unlockAfterSync() {
+        this.currentState = MachineState.IDLE;
+        console.log("FSM: Unlocked after initial sync. Ready.");
+    }
+
     enterSyncingState(action) {
         this.currentState = MachineState.SYNCING;
-        action(); // Выполняем действия с плеером (пауза, плей, перемотка)
+        action();
 
-        // Через 500мс возвращаемся в режим ожидания новых команд
         setTimeout(() => {
             this.currentState = MachineState.IDLE;
         }, 500);
@@ -180,7 +227,6 @@ class SyncStateMachine {
 
 // --- Initialization ---
 
-// Generate a random GUID for the user session
 function uuidv4() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
         var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
@@ -191,12 +237,21 @@ function uuidv4() {
 document.getElementById('userIdInput').value = uuidv4();
 
 let videoPlayer = null;
-let syncMachine = null;
+// Создаем автомат мгновенно при загрузке страницы, передавая ТОЛЬКО callback-функцию
+let syncMachine = new SyncStateMachine(sendPlaybackStateUpdate);
 
 // Вызывается автоматически скриптом YouTube
 function onYouTubeIframeAPIReady() {
-    videoPlayer = new YouTubeAdapter("youtubePlayer", onPlayerStateChange);
-    syncMachine = new SyncStateMachine(videoPlayer, sendPlaybackStateUpdate);
+    videoPlayer = new YouTubeAdapter("youtubePlayer", onPlayerStateChange, () => {
+        // Привязываем плеер к автомату, когда он полностью готов
+        syncMachine.setPlayer(videoPlayer);
+
+        if (isHost) {
+            syncMachine.setHostStatus(true);
+        }
+
+        console.log("FSM: State Machine activated safely after Player Ready.");
+    });
 }
 
 // 2. SignalR Hub Connection Setup
@@ -212,22 +267,19 @@ connection.on("OnVideoChanged", (videoData) => {
     if (!videoData || !videoData.url) return;
 
     const videoId = extractYouTubeId(videoData.url);
-    if (videoId) {
-        isRemoteUpdate = true;
-        videoPlayer.cueVideo(videoId);
-        setTimeout(() => { isRemoteUpdate = false; }, 500);
+    if (videoId && videoPlayer) {
+        syncMachine.enterSyncingState(() => {
+            videoPlayer.cueVideo(videoId);
+        });
     }
 });
 
 connection.on("OnPlaybackStateChanged", (data) => {
     console.log("OnPlaybackStateChanged event received:", data);
-    // Просто отдаем данные автомату, он сам разберется
     syncMachine.handleRemoteEvent(data);
 });
 
-// --- YouTube Player Event Listeners (Client -> Server) ---
 function onPlayerStateChange(domainState) {
-    // Отдаем локальный клик автомату
     syncMachine.handleLocalEvent(domainState);
 }
 
@@ -246,6 +298,8 @@ async function createRoom() {
     if (response.ok) {
         const roomId = await response.text();
         document.getElementById('roomIdInput').value = roomId.replace(/"/g, '');
+
+        isHost = true;
         syncMachine.setHostStatus(true);
         await joinRoom();
     } else {
@@ -264,7 +318,7 @@ async function joinRoom() {
 
     currentRoomId = roomId;
 
-    if (syncMachine && syncMachine.isHost === false) {
+    if (isHost === false) {
         syncMachine.setHostStatus(false);
     }
 
@@ -321,6 +375,7 @@ async function changeVideo() {
 }
 
 async function sendPlaybackStateUpdate(stateEnum) {
+    if (!videoPlayer) return;
     const userId = document.getElementById('userIdInput').value;
     const currentTimeSeconds = videoPlayer.getCurrentTime() || 0;
 
@@ -339,24 +394,29 @@ async function sendPlaybackStateUpdate(stateEnum) {
     });
 }
 
-// Helper: Fetch current state on load
 async function fetchAndSyncCurrentState(roomId) {
     const response = await fetch(`${API_BASE_URL}/api/room/${roomId}`);
     if (response.ok) {
         const state = await response.json();
         console.log("Initial State Fetched:", state);
 
-        if (state.currentVideo && state.currentVideo.url) {
+        if (state.currentVideo && state.currentVideo.url && videoPlayer) {
             const videoId = extractYouTubeId(state.currentVideo.url);
-            isRemoteUpdate = true;
 
-            if (state.playbackState === "Playing") {
+            // Включаем жесткую броню автомата
+            syncMachine.lockForSync();
+
+            // Приказываем плееру загрузить видео на нужной секунде
+            if (state.playbackState === "Playing" || state.playbackState === 1) {
                 videoPlayer.loadVideo(videoId, state.currentPositionSeconds);
             } else {
                 videoPlayer.cueVideo(videoId, state.currentPositionSeconds);
             }
 
-            setTimeout(() => { isRemoteUpdate = false; }, 500);
+            // Защита: отключаем броню только через 4 секунды, когда внутренний автостарт YouTube утихнет
+            setTimeout(() => {
+                syncMachine.unlockAfterSync();
+            }, 4000);
         }
     }
 }
