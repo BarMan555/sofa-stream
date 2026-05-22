@@ -11,14 +11,14 @@ public class RoomTests
     {
         // 1. Arrange (Подготовка: создаем нужные объекты)
         var room = new Room ("Movie Night", Guid.NewGuid());
-        var newTime = 120.5;
+        var newTime = TimeSpan.FromSeconds(120.5);
         var isPlaying = true;
 
         // 2. Act (Действие: вызываем метод, который хотим протестировать)
-        room.Play(TimenewTime);
+        room.Play(newTime);
 
         // 3. Assert (Проверка: убеждаемся, что всё сработало как надо)
-        Assert.Equal(newTime, room.CurrentTime);
-        Assert.Equal(isPlaying, room.IsPlaying);
+        Assert.Equal(newTime, room.CurrentPosition);
+        Assert.Equal(isPlaying, room.State == PlaybackState.Playing);
     }
 }
