@@ -1,77 +1,136 @@
-/* Прозрачный щит поверх YouTube Iframe */
-#playerShield {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 10;
-    background: transparent;
-    cursor: default;
+:root {
+    --bg-color: #fdfbf7;
+    --text-color: #3e2723;
+    --panel-bg: #ffffff;
+    --primary: #d84315;
+    --primary-hover: #bf360c;
+    --secondary: #8d6e63;
+    --secondary-hover: #6d4c41;
 }
 
-/* Панель кастомных контроллеров: Вертикальный flex-ряд */
-.custom-controls-panel {
-    display: flex;
-    flex-direction: column; /* Размещаем полосу времени над кнопками */
-    gap: 10px;
-    margin-top: 15px;
-    padding: 12px 20px;
-    background-color: var(--panel-bg);
-    border-radius: 12px;
-}
-
-/* Кастомный ползунок таймлайна: во всю ширину */
-#customProgressBar {
-    width: 100%; /* Занимает всю ширину панели */
-    -webkit-appearance: none;
-    appearance: none;
-    height: 6px;
-    background: #e0e0e0;
-    border-radius: 3px;
-    outline: none;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-#customProgressBar::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: var(--primary);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-
-/* Ряд кнопок и тайм-лейбла */
-.controls-buttons-row {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    width: 100%;
-}
-
-.btn-control {
-    padding: 8px 16px;
-    font-size: 14px;
-    border-radius: 6px;
-}
-.btn-play { background-color: #2e7d32; }
-.btn-play:hover { background-color: #1b5e20; }
-.btn-pause { background-color: #795548; }
-.btn-pause:hover { background-color: #5d4037; }
-
-#customTimeLabel {
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 14px;
-    font-weight: bold;
-    min-width: 100px;
-    text-align: center;
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-color);
     color: var(--text-color);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
 }
 
-/* Прозрачный щит поверх YouTube Iframe */
+.container {
+    width: 100%;
+    max-width: 900px;
+    padding: 20px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 2.5em;
+    color: var(--primary);
+}
+
+.panel {
+    background-color: var(--panel-bg);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(141, 110, 99, 0.1);
+    margin-bottom: 20px;
+}
+
+.row {
+    display: flex;
+    gap: 20px;
+}
+
+.col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.full-width {
+    flex: 2;
+    flex-direction: row;
+    align-items: center;
+}
+
+h3 {
+    margin: 0 0 5px 0;
+    font-size: 1.1em;
+}
+
+input {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+    flex-grow: 1;
+}
+
+input:focus {
+    border-color: var(--primary);
+}
+
+button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: bold;
+    color: white;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-primary { background-color: var(--primary); }
+.btn-primary:hover { background-color: var(--primary-hover); }
+
+.btn-secondary { background-color: var(--secondary); }
+.btn-secondary:hover { background-color: var(--secondary-hover); }
+
+.btn-danger { background-color: #e53935; }
+.btn-danger:hover { background-color: #c62828; }
+
+.status-badge {
+    margin-top: 15px;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: bold;
+    display: inline-block;
+}
+
+.disconnected { background-color: #ffebee; color: #c62828; }
+.connected { background-color: #e8f5e9; color: #2e7d32; }
+
+/* ---ОБВЯЗКА ПЛЕЕРА (ОБЯЗАТЕЛЬНО ДОЛЖНА БЫТЬ ТУТ!)--- */
+.player-wrapper {
+    position: relative; /* Родоначальник координат для защитного щита */
+    padding-bottom: 56.25%; /* Пропорции экрана 16:9 */
+    height: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    background-color: #000;
+}
+
+.player-wrapper iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* Прозрачный щит ПОВЕРХ YouTube Iframe (теперь позиционируется строго внутри плеера) */
 #playerShield {
     position: absolute;
     top: 0;
@@ -86,17 +145,18 @@
 /* Панель кастомных контроллеров: Вертикальный flex-ряд */
 .custom-controls-panel {
     display: flex;
-    flex-direction: column; /* Размещаем полосу времени над кнопками */
-    gap: 10px;
+    flex-direction: column; /* Размещаем полосу времени СВЕРХУ над кнопками */
+    gap: 12px;
     margin-top: 15px;
-    padding: 12px 20px;
+    padding: 15px 20px;
     background-color: var(--panel-bg);
     border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(141, 110, 99, 0.08);
 }
 
-/* Кастомный ползунок таймлайна: во всю ширину */
+/* Кастомный ползунок таймлайна: теперь строго во всю ширину */
 #customProgressBar {
-    width: 100%; /* Занимает всю ширину панели */
+    width: 100%;
     -webkit-appearance: none;
     appearance: none;
     height: 6px;
@@ -105,6 +165,7 @@
     outline: none;
     cursor: pointer;
     transition: background 0.2s;
+    margin: 0;
 }
 
 #customProgressBar::-webkit-slider-thumb {
@@ -117,7 +178,7 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
-/* Ряд кнопок и тайм-лейбла */
+/* Второй ряд: Кнопки управления и тайм-лейбл */
 .controls-buttons-row {
     display: flex;
     align-items: center;
@@ -140,6 +201,7 @@
     font-size: 14px;
     font-weight: bold;
     min-width: 100px;
-    text-align: center;
+    text-align: right;
+    margin-left: auto; /* Прижимает таймер к правому краю */
     color: var(--text-color);
 }
