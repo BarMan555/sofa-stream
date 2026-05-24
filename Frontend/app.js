@@ -2,7 +2,7 @@
 const API_BASE_URL = window.location.origin;
 
 // --- Time Synchronization (NTP) ---
-let serverTimeOffset = 0; // Разница в миллисекундах между клиентом и сервером
+let serverTimeOffset = 0;
 
 async function syncClockWithServer() {
     try {
@@ -13,13 +13,8 @@ async function syncClockWithServer() {
         const clientReceiveTime = Date.now();
         const serverTime = new Date(data.serverTimeUtc).getTime();
 
-        // Пинг в одну сторону (приблизительно)
         const ping = (clientReceiveTime - clientSendTime) / 2;
-
-        // Истинное время сервера в момент, когда мы получили ответ
         const estimatedExactServerTime = serverTime + ping;
-
-        // Разница: если сервер спешит на 5 сек, offset будет +5000
         serverTimeOffset = estimatedExactServerTime - clientReceiveTime;
 
         console.log(`Clock synced! Ping: ${ping}ms, Server Offset: ${serverTimeOffset}ms`);
@@ -28,18 +23,15 @@ async function syncClockWithServer() {
     }
 }
 
-// Утилита: получить точное время сервера прямо сейчас
 function getExactServerTimeNow() {
     return Date.now() + serverTimeOffset;
 }
 
-// Запускаем синхронизацию при загрузке скрипта
 syncClockWithServer();
 
 let currentRoomId = null;
-let isHost = false; // Глобальный трекинг роли для предотвращения гонок при старте
+let isHost = false;
 
-// Enums mapping from C# Domain
 const PlaybackState = {
     Paused: 0,
     Playing: 1,
@@ -56,6 +48,10 @@ class YouTubeAdapter {
             playerVars: {
                 'playsinline': 1,
                 'disablekb': 1,
+                'controls': 0, // ОБНОВЛЕНО: Полностью отключаем нативные кнопки Гугла
+                'rel': 0,
+                'showinfo': 0,
+                'modestbranding': 1,
                 'origin': window.location.origin
             },
             events: {
@@ -105,7 +101,7 @@ const MachineState = {
 
 class SyncStateMachine {
     constructor(sendUpdateCallback) {
-        this.player = null; // Привязывается позже через setPlayer
+        this.player = null;
         this.sendUpdate = sendUpdateCallback;
         this.currentState = MachineState.IDLE;
         this.isHost = false;
@@ -113,7 +109,6 @@ class SyncStateMachine {
 
     setPlayer(player) {
         this.player = player;
-        console.log("FSM: Player adapter linked to State Machine.");
     }
 
     setHostStatus(isHostStatus) {
@@ -128,23 +123,16 @@ class SyncStateMachine {
 
         // ЗАЩИТА ГОСТЯ
         if (!this.isHost) {
-            if (domainState === PlaybackState.Playing) {
-                this.enterSyncingState(() => {
-                    this.player.pause();
-
-                    const statusEl = document.getElementById('status');
-                    if (statusEl) {
-                        const oldText = statusEl.innerText;
-                        statusEl.innerText = "⚠️ Только Host может управлять просмотром!";
-                        statusEl.style.color = "red";
-
-                        setTimeout(() => {
-                            statusEl.innerText = oldText;
-                            statusEl.style.color = "";
-                        }, 3000);
-                    }
-                });
-            }
+            this.enterSyncingState(() => {
+                this.player.pause();
+                const statusEl = document.getElementById('status');
+                if (statusEl) {
+                    const oldText = statusEl.innerText;
+                    statusEl.innerText = "⚠️ Только Host может управлять просмотром!";
+                    statusEl.style.color = "red";
+                    setTimeout(() => { statusEl.innerText = oldText; statusEl.style.color = ""; }, 3000);
+                }
+            });
             return;
         }
 
@@ -164,15 +152,13 @@ class SyncStateMachine {
     handleRemoteEvent(data) {
         if (!this.player) return;
 
-        // 1. Всегда проверяем рассинхрон ползунка
         const currentTime = this.player.getCurrentTime();
-        if (Math.abs(currentTime - data.positionInSeconds) > 0.5) {
+        if (Math.abs(currentTime - data.positionInSeconds) > 0.6) {
             this.enterSyncingState(() => {
                 this.player.seekTo(data.positionInSeconds);
             });
         }
 
-        // 2. Обработка Запланированного Старта (Play)
         if (data.state === "Playing" && data.scheduledFor) {
             const exactServerTimeNow = getExactServerTimeNow();
             const targetTime = new Date(data.scheduledFor).getTime();
@@ -185,97 +171,63 @@ class SyncStateMachine {
 
                 setTimeout(() => {
                     if (this.currentState === MachineState.SCHEDULED_PLAY) {
-                        this.enterSyncingState(() => {
-                            this.player.play();
-                        });
+                        this.enterSyncingState(() => { this.player.play(); });
                     }
                 }, delayMs);
             } else {
-                console.log(`FSM: Время старта упущено (${delayMs} мс). Запускаем мгновенно.`);
-                this.enterSyncingState(() => {
-                    this.player.play();
-                });
+                this.enterSyncingState(() => { this.player.play(); });
             }
         }
-        // 3. Обработка Мгновенной Паузы
         else if (data.state === "Paused" || data.state === "Buffering") {
-            this.enterSyncingState(() => {
-                this.player.pause();
-            });
+            this.enterSyncingState(() => { this.player.pause(); });
         }
     }
 
-    lockForSync() {
-        this.currentState = MachineState.SYNCING;
-        console.log("FSM: Locked for initial sync...");
-    }
-
-    unlockAfterSync() {
-        this.currentState = MachineState.IDLE;
-        console.log("FSM: Unlocked after initial sync. Ready.");
-    }
+    lockForSync() { this.currentState = MachineState.SYNCING; }
+    unlockAfterSync() { this.currentState = MachineState.IDLE; }
 
     enterSyncingState(action) {
         this.currentState = MachineState.SYNCING;
         action();
-
-        setTimeout(() => {
-            this.currentState = MachineState.IDLE;
-        }, 500);
+        setTimeout(() => { this.currentState = MachineState.IDLE; }, 500);
     }
 }
 
 // --- Initialization ---
-
 function uuidv4() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
         var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
         return v.toString(16);
     });
 }
-
 document.getElementById('userIdInput').value = uuidv4();
 
 let videoPlayer = null;
-// Создаем автомат мгновенно при загрузке страницы, передавая ТОЛЬКО callback-функцию
 let syncMachine = new SyncStateMachine(sendPlaybackStateUpdate);
 
-// Вызывается автоматически скриптом YouTube
 function onYouTubeIframeAPIReady() {
     videoPlayer = new YouTubeAdapter("youtubePlayer", onPlayerStateChange, () => {
-        // Привязываем плеер к автомату, когда он полностью готов
         syncMachine.setPlayer(videoPlayer);
-
-        if (isHost) {
-            syncMachine.setHostStatus(true);
-        }
-
+        if (isHost) syncMachine.setHostStatus(true);
         console.log("FSM: State Machine activated safely after Player Ready.");
     });
 }
 
-// 2. SignalR Hub Connection Setup
+// SignalR Hub Connection
 const connection = new signalR.HubConnectionBuilder()
     .withUrl(`${API_BASE_URL}/hubs/room`)
     .withAutomaticReconnect()
     .build();
 
-// --- SignalR Event Listeners (Server -> Client) ---
-
 connection.on("OnVideoChanged", (videoData) => {
-    console.log("OnVideoChanged event received:", videoData);
     if (!videoData || !videoData.url) return;
-
     const videoId = extractYouTubeId(videoData.url);
     if (videoId && videoPlayer) {
-        syncMachine.enterSyncingState(() => {
-            videoPlayer.cueVideo(videoId);
-        });
+        syncMachine.enterSyncingState(() => { videoPlayer.cueVideo(videoId); });
     }
 });
 
 connection.on("OnPlaybackStateChanged", (data) => {
-    console.log("OnPlaybackStateChanged event received:", data);
     syncMachine.handleRemoteEvent(data);
 });
 
@@ -283,8 +235,63 @@ function onPlayerStateChange(domainState) {
     syncMachine.handleLocalEvent(domainState);
 }
 
-// --- HTTP API Calls ---
+// --- ОБНОВЛЕНО: Подключение кастомных HTML-контроллеров ---
+let isDraggingProgressBar = false;
 
+document.getElementById('customPlayBtn').addEventListener('click', () => {
+    if (!currentRoomId) return alert("Сначала создайте или подключитесь к комнате!");
+    syncMachine.handleLocalEvent(PlaybackState.Playing);
+});
+
+document.getElementById('customPauseBtn').addEventListener('click', () => {
+    if (!currentRoomId) return alert("Сначала создайте или подключитесь к комнате!");
+    syncMachine.handleLocalEvent(PlaybackState.Paused);
+});
+
+// Отслеживаем, когда пользователь тащит ползунок мышкой (чтобы таймер не дергал его назад)
+const progressBar = document.getElementById('customProgressBar');
+progressBar.addEventListener('mousedown', () => { isDraggingProgressBar = true; });
+progressBar.addEventListener('mouseup', () => { isDraggingProgressBar = false; });
+progressBar.addEventListener('touchstart', () => { isDraggingProgressBar = true; });
+progressBar.addEventListener('touchend', () => { isDraggingProgressBar = false; });
+
+// Перемотка (вызывается в момент отпускания мышки)
+progressBar.addEventListener('change', () => {
+    if (!currentRoomId) return alert("Сначала зайдите в комнату!");
+    if (!isHost) {
+        alert("Только Host может перематывать видео!");
+        // Возвращаем ползунок на место
+        progressBar.value = videoPlayer.getCurrentTime();
+        return;
+    }
+    const targetSeconds = parseFloat(progressBar.value);
+    // Отправляем команду паузы на новой секунде для стабильной синхронизации
+    sendPlaybackStateUpdate(PlaybackState.Paused, targetSeconds);
+});
+
+// Секундный Heartbeat-таймер для обновления ползунка и лейбла времени
+setInterval(() => {
+    if (!videoPlayer || !videoPlayer.player || typeof videoPlayer.player.getDuration !== 'function') return;
+    if (isDraggingProgressBar) return;
+
+    const currentTime = videoPlayer.getCurrentTime();
+    const duration = videoPlayer.player.getDuration() || 0;
+
+    if (duration > 0) {
+        progressBar.max = duration;
+        progressBar.value = currentTime;
+    }
+    document.getElementById('customTimeLabel').innerText = `${formatTime(currentTime)} / ${formatTime(duration)}`;
+}, 500);
+
+function formatTime(seconds) {
+    if (isNaN(seconds)) return "00:00";
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+}
+
+// --- HTTP API Calls ---
 async function createRoom() {
     const roomName = document.getElementById('roomNameInput').value || "Cozy Room";
     const userId = document.getElementById('userIdInput').value;
@@ -298,7 +305,6 @@ async function createRoom() {
     if (response.ok) {
         const roomId = await response.text();
         document.getElementById('roomIdInput').value = roomId.replace(/"/g, '');
-
         isHost = true;
         syncMachine.setHostStatus(true);
         await joinRoom();
@@ -317,10 +323,7 @@ async function joinRoom() {
     }
 
     currentRoomId = roomId;
-
-    if (isHost === false) {
-        syncMachine.setHostStatus(false);
-    }
+    if (isHost === false) syncMachine.setHostStatus(false);
 
     try {
         await fetch(`${API_BASE_URL}/api/room/${roomId}/join`, {
@@ -334,7 +337,6 @@ async function joinRoom() {
         }
 
         await connection.invoke("JoinRoom", roomId, userId);
-
         await fetchAndSyncCurrentState(roomId);
 
         const statusEl = document.getElementById('status');
@@ -374,12 +376,24 @@ async function changeVideo() {
     }
 }
 
-async function sendPlaybackStateUpdate(stateEnum) {
+// ОБНОВЛЕНО: Поддержка ручного указания секунд для перемотки ползунком
+async function sendPlaybackStateUpdate(stateEnum, manualSeconds = null) {
     if (!videoPlayer) return;
-    const userId = document.getElementById('userIdInput').value;
-    const currentTimeSeconds = videoPlayer.getCurrentTime() || 0;
+    if (!currentRoomId) return;
 
-    const timeSpan = new Date(currentTimeSeconds * 1000).toISOString().substring(11, 19);
+    const userId = document.getElementById('userIdInput').value;
+    const currentTimeSeconds = manualSeconds !== null ? manualSeconds : (videoPlayer.getCurrentTime() || 0);
+
+    // Магия перемотки: если мы передали ручные секунды, сначала двигаем ползунок локально
+    if (manualSeconds !== null) {
+        videoPlayer.seekTo(manualSeconds);
+    }
+
+    // Форматируем секунды в вид .NET TimeSpan "HH:mm:ss"
+    const h = Math.floor(currentTimeSeconds / 3600);
+    const m = Math.floor((currentTimeSeconds % 3600) / 60);
+    const s = Math.floor(currentTimeSeconds % 60);
+    const timeSpan = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 
     const payload = {
         userId: userId,
@@ -402,26 +416,19 @@ async function fetchAndSyncCurrentState(roomId) {
 
         if (state.currentVideo && state.currentVideo.url && videoPlayer) {
             const videoId = extractYouTubeId(state.currentVideo.url);
-
-            // Включаем жесткую броню автомата
             syncMachine.lockForSync();
 
-            // Приказываем плееру загрузить видео на нужной секунде
             if (state.playbackState === "Playing" || state.playbackState === 1) {
                 videoPlayer.loadVideo(videoId, state.currentPositionSeconds);
             } else {
                 videoPlayer.cueVideo(videoId, state.currentPositionSeconds);
             }
 
-            // Защита: отключаем броню только через 4 секунды, когда внутренний автостарт YouTube утихнет
-            setTimeout(() => {
-                syncMachine.unlockAfterSync();
-            }, 4000);
+            setTimeout(() => { syncMachine.unlockAfterSync(); }, 4000);
         }
     }
 }
 
-// Helper: Extract YouTube ID from URL
 function extractYouTubeId(url) {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
     const match = url.match(regExp);
