@@ -128,3 +128,68 @@ button {
     width: 100%;
     height: 100%;
 }
+
+/* Прозрачный щит поверх YouTube Iframe */
+#playerShield {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    background: transparent;
+    cursor: default;
+}
+
+/* Панель кастомных контроллеров */
+.custom-controls-panel {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 15px;
+    padding: 12px 20px;
+    background-color: var(--panel-bg);
+    border-radius: 12px;
+}
+
+.btn-control {
+    padding: 8px 16px;
+    font-size: 14px;
+    border-radius: 6px;
+}
+.btn-play { background-color: #2e7d32; }
+.btn-play:hover { background-color: #1b5e20; }
+.btn-pause { background-color: #795548; }
+.btn-pause:hover { background-color: #5d4037; }
+
+/* Кастомный ползунок таймлайна */
+#customProgressBar {
+    flex-grow: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    background: #e0e0e0;
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+#customProgressBar::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--primary);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+#customTimeLabel {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 14px;
+    font-weight: bold;
+    min-width: 100px;
+    text-align: center;
+    color: var(--text-color);
+}
