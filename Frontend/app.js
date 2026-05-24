@@ -205,7 +205,7 @@ document.getElementById('userIdInput').value = uuidv4();
 let videoPlayer = null;
 let syncMachine = new SyncStateMachine(sendPlaybackStateUpdate);
 
-// Инициализация плеера YouTube
+// Эта функция будет вызвана автоматически, когда скрипт YouTube загрузится в DOM
 function onYouTubeIframeAPIReady() {
     videoPlayer = new YouTubeAdapter("youtubePlayer", onPlayerStateChange, () => {
         syncMachine.setPlayer(videoPlayer);
@@ -249,14 +249,12 @@ document.getElementById('customPauseBtn').addEventListener('click', () => {
     syncMachine.handleLocalEvent(PlaybackState.Paused);
 });
 
-// Отслеживаем действия мыши на ползунке
 const progressBar = document.getElementById('customProgressBar');
 progressBar.addEventListener('mousedown', () => { isDraggingProgressBar = true; });
 progressBar.addEventListener('mouseup', () => { isDraggingProgressBar = false; });
 progressBar.addEventListener('touchstart', () => { isDraggingProgressBar = true; });
 progressBar.addEventListener('touchend', () => { isDraggingProgressBar = false; });
 
-// Перемотка ползунком
 progressBar.addEventListener('change', () => {
     if (!currentRoomId) return;
 
@@ -269,7 +267,6 @@ progressBar.addEventListener('change', () => {
     sendPlaybackStateUpdate(PlaybackState.Paused, targetSeconds);
 });
 
-// Секундный Heartbeat-таймер для обновления ползунка
 setInterval(() => {
     if (!videoPlayer || !videoPlayer.player || typeof videoPlayer.player.getDuration !== 'function') return;
     if (isDraggingProgressBar) return;
@@ -322,7 +319,6 @@ async function joinRoom() {
         return;
     }
 
-    // ИСПРАВЛЕНО: Безопасный прогрев автоплея через интерфейс нашего адаптера, а не напрямую через плеер гугла
     if (videoPlayer) {
         try {
             videoPlayer.play();
@@ -333,7 +329,6 @@ async function joinRoom() {
     }
 
     try {
-        // Устанавливаем ID комнаты внутри защищенного блока
         currentRoomId = roomId;
         if (isHost === false) syncMachine.setHostStatus(false);
 
@@ -356,7 +351,7 @@ async function joinRoom() {
     } catch (err) {
         console.error("SignalR Connection Error: ", err);
         alert("Failed to connect to the room.");
-        currentRoomId = null; // Сбрасываем в null, если подключение сорвалось
+        currentRoomId = null;
     }
 }
 
@@ -443,3 +438,13 @@ function extractYouTubeId(url) {
     const match = url.match(regExp);
     return (match && match[2].length === 11) ? match[2] : null;
 }
+
+// --- БЕЗОПАСНЫЙ ИНЖЕКТОР СУПЕР-ПЛЕЕРА ---
+// Принудительно связываем функцию с глобальным окном window, чтобы Google её точно увидел
+window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
+
+// Загружаем YouTube API динамически ТОЛЬКО ПОСЛЕ того, как весь наш скрипт полностью готов!
+const tag = document.createElement('script');
+tag.src = "https://www.youtube.com/iframe_api";
+const firstScriptTag = document.getElementsByTagName('script')[0];
+firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
