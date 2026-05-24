@@ -322,6 +322,11 @@ async function joinRoom() {
         return;
     }
 
+    // МЕГА-ХАК: прогреваем плеер в момент клика на кнопку Join, чтобы обойти защиту автоплея
+    if (videoPlayer && videoPlayer.player) {
+        videoPlayer.player.play().then(() => videoPlayer.player.pause()).catch(() => {});
+    }
+
     currentRoomId = roomId;
     if (isHost === false) syncMachine.setHostStatus(false);
 
