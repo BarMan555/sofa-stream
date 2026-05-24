@@ -48,7 +48,7 @@ class YouTubeAdapter {
             playerVars: {
                 'playsinline': 1,
                 'disablekb': 1,
-                'controls': 0, // ОБНОВЛЕНО: Полностью отключаем нативные кнопки Гугла
+                'controls': 0,
                 'rel': 0,
                 'showinfo': 0,
                 'modestbranding': 1,
@@ -235,41 +235,40 @@ function onPlayerStateChange(domainState) {
     syncMachine.handleLocalEvent(domainState);
 }
 
-// --- ОБНОВЛЕНО: Подключение кастомных HTML-контроллеров ---
+// --- Подключение кастомных HTML-контроллеров ---
 let isDraggingProgressBar = false;
 
 document.getElementById('customPlayBtn').addEventListener('click', () => {
-    if (!currentRoomId) return alert("Сначала создайте или подключитесь к комнате!");
+    if (!currentRoomId) return; // Игнорируем клик в тишине, если не в комнате
     syncMachine.handleLocalEvent(PlaybackState.Playing);
 });
 
 document.getElementById('customPauseBtn').addEventListener('click', () => {
-    if (!currentRoomId) return alert("Сначала создайте или подключитесь к комнате!");
+    if (!currentRoomId) return; // Игнорируем клик в тишине, если не в комнате
     syncMachine.handleLocalEvent(PlaybackState.Paused);
 });
 
-// Отслеживаем, когда пользователь тащит ползунок мышкой (чтобы таймер не дергал его назад)
+// Отслеживаем действия мыши на ползунке
 const progressBar = document.getElementById('customProgressBar');
 progressBar.addEventListener('mousedown', () => { isDraggingProgressBar = true; });
 progressBar.addEventListener('mouseup', () => { isDraggingProgressBar = false; });
 progressBar.addEventListener('touchstart', () => { isDraggingProgressBar = true; });
 progressBar.addEventListener('touchend', () => { isDraggingProgressBar = false; });
 
-// Перемотка (вызывается в момент отпускания мышки)
+// Перемотка ползунком
 progressBar.addEventListener('change', () => {
-    if (!currentRoomId) return alert("Сначала зайдите в комнату!");
+    if (!currentRoomId) return; // ИСПРАВЛЕНО: Никаких алертов! Просто выходим, если ложный вызов до старта комнаты
+
     if (!isHost) {
         alert("Только Host может перематывать видео!");
-        // Возвращаем ползунок на место
         progressBar.value = videoPlayer.getCurrentTime();
         return;
     }
     const targetSeconds = parseFloat(progressBar.value);
-    // Отправляем команду паузы на новой секунде для стабильной синхронизации
     sendPlaybackStateUpdate(PlaybackState.Paused, targetSeconds);
 });
 
-// Секундный Heartbeat-таймер для обновления ползунка и лейбла времени
+// Секундный Heartbeat-таймер для обновления ползунка
 setInterval(() => {
     if (!videoPlayer || !videoPlayer.player || typeof videoPlayer.player.getDuration !== 'function') return;
     if (isDraggingProgressBar) return;
@@ -322,7 +321,7 @@ async function joinRoom() {
         return;
     }
 
-    // МЕГА-ХАК: прогреваем плеер в момент клика на кнопку Join, чтобы обойти защиту автоплея
+    // Микро-прогрев автоплея
     if (videoPlayer && videoPlayer.player) {
         videoPlayer.player.play().then(() => videoPlayer.player.pause()).catch(() => {});
     }
@@ -354,7 +353,7 @@ async function joinRoom() {
 }
 
 async function changeVideo() {
-    if (!currentRoomId) return alert("Join a room first!");
+    if (!currentRoomId) return alert("Join a room first!"); // Тут алерт нужен, так как клик умышленный
 
     const videoUrl = document.getElementById('videoUrlInput').value;
     const userId = document.getElementById('userIdInput').value;
@@ -381,7 +380,6 @@ async function changeVideo() {
     }
 }
 
-// ОБНОВЛЕНО: Поддержка ручного указания секунд для перемотки ползунком
 async function sendPlaybackStateUpdate(stateEnum, manualSeconds = null) {
     if (!videoPlayer) return;
     if (!currentRoomId) return;
@@ -389,12 +387,10 @@ async function sendPlaybackStateUpdate(stateEnum, manualSeconds = null) {
     const userId = document.getElementById('userIdInput').value;
     const currentTimeSeconds = manualSeconds !== null ? manualSeconds : (videoPlayer.getCurrentTime() || 0);
 
-    // Магия перемотки: если мы передали ручные секунды, сначала двигаем ползунок локально
     if (manualSeconds !== null) {
         videoPlayer.seekTo(manualSeconds);
     }
 
-    // Форматируем секунды в вид .NET TimeSpan "HH:mm:ss"
     const h = Math.floor(currentTimeSeconds / 3600);
     const m = Math.floor((currentTimeSeconds % 3600) / 60);
     const s = Math.floor(currentTimeSeconds % 60);
