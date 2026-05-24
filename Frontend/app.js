@@ -205,6 +205,7 @@ document.getElementById('userIdInput').value = uuidv4();
 let videoPlayer = null;
 let syncMachine = new SyncStateMachine(sendPlaybackStateUpdate);
 
+// Инициализация плеера YouTube
 function onYouTubeIframeAPIReady() {
     videoPlayer = new YouTubeAdapter("youtubePlayer", onPlayerStateChange, () => {
         syncMachine.setPlayer(videoPlayer);
@@ -239,12 +240,12 @@ function onPlayerStateChange(domainState) {
 let isDraggingProgressBar = false;
 
 document.getElementById('customPlayBtn').addEventListener('click', () => {
-    if (!currentRoomId) return; // Игнорируем клик в тишине, если не в комнате
+    if (!currentRoomId) return;
     syncMachine.handleLocalEvent(PlaybackState.Playing);
 });
 
 document.getElementById('customPauseBtn').addEventListener('click', () => {
-    if (!currentRoomId) return; // Игнорируем клик в тишине, если не в комнате
+    if (!currentRoomId) return;
     syncMachine.handleLocalEvent(PlaybackState.Paused);
 });
 
@@ -257,7 +258,7 @@ progressBar.addEventListener('touchend', () => { isDraggingProgressBar = false; 
 
 // Перемотка ползунком
 progressBar.addEventListener('change', () => {
-    if (!currentRoomId) return; // ИСПРАВЛЕНО: Никаких алертов! Просто выходим, если ложный вызов до старта комнаты
+    if (!currentRoomId) return;
 
     if (!isHost) {
         alert("Только Host может перематывать видео!");
@@ -321,15 +322,21 @@ async function joinRoom() {
         return;
     }
 
-    // Микро-прогрев автоплея
-    if (videoPlayer && videoPlayer.player) {
-        videoPlayer.player.play().then(() => videoPlayer.player.pause()).catch(() => {});
+    // ИСПРАВЛЕНО: Безопасный прогрев автоплея через интерфейс нашего адаптера, а не напрямую через плеер гугла
+    if (videoPlayer) {
+        try {
+            videoPlayer.play();
+            videoPlayer.pause();
+        } catch (e) {
+            console.log("Warmup handled safely", e);
+        }
     }
 
-    currentRoomId = roomId;
-    if (isHost === false) syncMachine.setHostStatus(false);
-
     try {
+        // Устанавливаем ID комнаты внутри защищенного блока
+        currentRoomId = roomId;
+        if (isHost === false) syncMachine.setHostStatus(false);
+
         await fetch(`${API_BASE_URL}/api/room/${roomId}/join`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -349,11 +356,12 @@ async function joinRoom() {
     } catch (err) {
         console.error("SignalR Connection Error: ", err);
         alert("Failed to connect to the room.");
+        currentRoomId = null; // Сбрасываем в null, если подключение сорвалось
     }
 }
 
 async function changeVideo() {
-    if (!currentRoomId) return alert("Join a room first!"); // Тут алерт нужен, так как клик умышленный
+    if (!currentRoomId) return alert("Join a room first!");
 
     const videoUrl = document.getElementById('videoUrlInput').value;
     const userId = document.getElementById('userIdInput').value;
