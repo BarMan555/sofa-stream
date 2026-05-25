@@ -32,6 +32,68 @@ function getExactServerTimeNow() {
 syncClockWithServer();
 setInterval(syncClockWithServer, 60000);
 
+// =====================================================================
+// NEW: Fullscreen Controls Auto-Hide & Hover Interactive Blueprint
+// =====================================================================
+let inactivityTimer;
+const INACTIVITY_DURATION_MS = 3000; // Duration before controls automatically fade out
+
+const theaterContainer = document.getElementById('theaterContainer');
+const controlsPanel = document.querySelector('.custom-controls-panel');
+
+/**
+ * Executes a clean UI animation reveal of the custom controls board.
+ */
+function showControls() {
+    controlsPanel.classList.add('controls-visible');
+}
+
+/**
+ * Initiates the controlled fade-out animation sequencing for the controls UI board.
+ * Crucial check included to only execute within valid fullscreen session boundaries.
+ */
+function hideControls() {
+    if (document.fullscreenElement) {
+        controlsPanel.classList.remove('controls-visible');
+    }
+}
+
+/**
+ * Resets the active inactivity listener pipeline, scheduling a UI hide sequencing on countdown conclusion.
+ */
+function resetInactivityTimer() {
+    clearTimeout(inactivityTimer);
+    // Suppress automatic hiding if the cursor is physically within the controls area boundaries
+    if (controlsPanel.matches(':hover')) {
+        return;
+    }
+    inactivityTimer = setTimeout(hideControls, INACTIVITY_DURATION_MS);
+}
+
+/**
+ * Master proctor method to handle primary user interface wake-up events on cursor movement tracks.
+ */
+function handleMouseMove() {
+    showControls();
+    resetInactivityTimer();
+}
+
+// Master theater listener array binding framework
+theaterContainer.addEventListener('mousemove', handleMouseMove);
+theaterContainer.addEventListener('mouseenter', handleMouseMove); // Ensure instant wake-up on boundary enter
+theaterContainer.addEventListener('mouseleave', hideControls);   // Instant clean hide sequencing on boundary leave
+
+// Ensure dock continuity lock prevents countdown expiration when the cursor remains actively over the controls panel itself
+controlsPanel.addEventListener('mouseenter', () => {
+    clearTimeout(inactivityTimer);
+    showControls();
+});
+
+controlsPanel.addEventListener('mouseleave', () => {
+    resetInactivityTimer();
+});
+// =====================================================================
+
 let currentRoomId = null;
 let isHost = false;
 
@@ -116,7 +178,7 @@ class SyncStateMachine {
         if (!currentRoomId || !this.player) return;
 
         if (!this.isHost) {
-            return; // Hard block for non-host interface commands
+            return;
         }
 
         if (domainState === PlaybackState.Paused) {
@@ -201,7 +263,6 @@ function uuidv4() {
     });
 }
 
-// FIXED: Save generated unique string and display it as raw plain text
 const globalUserId = uuidv4();
 document.getElementById('userIdDisplay').innerText = globalUserId;
 
@@ -216,7 +277,6 @@ function onYouTubeIframeAPIReady() {
     });
 }
 
-// SignalR Hub Connection Setup
 const connection = new signalR.HubConnectionBuilder()
     .withUrl(`${API_BASE_URL}/hubs/room`)
     .withAutomaticReconnect()
@@ -238,7 +298,7 @@ function onPlayerStateChange(domainState) {
     syncMachine.handlePlayerStateNotification(domainState);
 }
 
-// --- Custom HTML Control Layers ---
+// --- Custom HTML Control Triggers ---
 let isDraggingProgressBar = false;
 
 document.getElementById('customPlayBtn').addEventListener('click', () => {
@@ -260,27 +320,42 @@ progressBar.addEventListener('change', () => {
     syncMachine.handleSliderSeek(targetSeconds);
 });
 
-// Heartbeat interface loop worker
+// MODIFIED: Securely map native HTML5 Fullscreen API toggle method with inactivity auto-hiding continuous track
+document.getElementById('customFullscreenBtn').addEventListener('click', () => {
+    const theater = document.getElementById('theaterContainer');
+
+    if (!document.fullscreenElement) {
+        // Enters full-screen state cleanly across modern browsers
+        theater.requestFullscreen().catch(err => {
+            console.error(`Error attempting to enable fullscreen mode: ${err.message}`);
+        });
+        showControls();             // Ensure standard visual UI continuity on initial load sequencing
+        resetInactivityTimer();    // Immediately schedule an automatic continuous continuous hide track on inactivity conclusion
+    } else {
+        // Exits full-screen mode safely
+        document.exitFullscreen();
+        clearTimeout(inactivityTimer); // Terminate dynamic countdown continuity chains upon full return coordinates
+        showControls();                // Permanently reinstate controls interface visibility frameworks for regular layout matrix
+    }
+});
+
 setInterval(() => {
     if (!videoPlayer || !videoPlayer.player || typeof videoPlayer.player.getDuration !== 'function') return;
 
     const playBtn = document.getElementById('customPlayBtn');
     const pauseBtn = document.getElementById('customPauseBtn');
 
-    // State 1: Room context is absent (Lock controls entirely)
     if (!currentRoomId) {
         playBtn.disabled = true;
         pauseBtn.disabled = true;
         return;
     }
 
-    // FIXED (Req 4): If user is a Guest, permanently lock playback buttons
     if (!isHost) {
         playBtn.disabled = true;
         pauseBtn.disabled = true;
     }
 
-    // Render timeline progress updates if not dragging playhead manually
     if (!isDraggingProgressBar) {
         const currentTime = videoPlayer.getCurrentTime();
         const duration = videoPlayer.player.getDuration() || 0;
@@ -289,14 +364,12 @@ setInterval(() => {
             progressBar.max = duration;
             progressBar.value = currentTime;
 
-            // FIXED (Req 5): Dynamic color gradient filling behind the elapsed track
             const percentage = (currentTime / duration) * 100;
-            progressBar.style.background = `linear-gradient(to right, var(--primary) ${percentage}%, #e0e0e0 ${percentage}%)`;
+            progressBar.style.background = `linear-gradient(to right, var(--primary) ${percentage}%, #232228 ${percentage}%)`;
         }
         document.getElementById('customTimeLabel').innerText = `${formatTime(currentTime)} / ${formatTime(duration)}`;
     }
 
-    // Handle button toggle overrides only for the active Room Host
     if (isHost && typeof videoPlayer.player.getPlayerState === 'function') {
         const state = videoPlayer.player.getPlayerState();
 
@@ -320,14 +393,13 @@ setInterval(() => {
     }
 }, 500);
 
-// Fluid fill scaling when dragging the timeline manually
 progressBar.addEventListener('input', () => {
     if (!videoPlayer || !videoPlayer.player || typeof videoPlayer.player.getDuration !== 'function') return;
     const value = parseFloat(progressBar.value);
     const duration = videoPlayer.player.getDuration() || 0;
 
     const percentage = (value / duration) * 100 || 0;
-    progressBar.style.background = `linear-gradient(to right, var(--primary) ${percentage}%, #e0e0e0 ${percentage}%)`;
+    progressBar.style.background = `linear-gradient(to right, var(--primary) ${percentage}%, #232228 ${percentage}%)`;
 
     document.getElementById('customTimeLabel').innerText = `${formatTime(value)} / ${formatTime(duration)}`;
 });
@@ -343,7 +415,6 @@ function formatTime(seconds) {
 async function createRoom() {
     const roomNameInput = document.getElementById('roomNameInput').value.trim();
 
-    // FIXED (Req 2): Abort action with warning alert if field is blank
     if (!roomNameInput) {
         alert("Please enter a valid Room Name before proceeding!");
         return;
@@ -462,7 +533,6 @@ async function fetchAndSyncCurrentState(roomId) {
         const state = await response.json();
         console.log("Initial State Fetched:", state);
 
-        // FIXED (Req 3): Renders line breaks containing the full Room Name and full target Room ID
         const statusEl = document.getElementById('status');
         statusEl.innerText = `Connected to Room: "${state.name || 'Cozy Room'}"\nID: ${roomId}`;
         statusEl.className = "status-badge connected";
@@ -507,5 +577,4 @@ function switchTab(tabName) {
         joinContent.classList.add('active');
     }
 }
-// Securely map the tab control method to global window scope for inline markup visibility
 window.switchTab = switchTab;
