@@ -704,6 +704,9 @@ async function fetchAndSyncCurrentState(roomId) {
             const videoId = extractVideoId(state.currentVideo.url);
             syncMachine.handleRemoteVideoChange(videoId, state.currentPositionSeconds);
         } else {
+            if (videoPlayer) {
+                try { videoPlayer.pause(); } catch (e) {}
+            }
             hidePlayerBlock();
         }
     }

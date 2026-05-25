@@ -22,7 +22,32 @@ public class RoomHub : Hub
     public async Task JoinRoom(Guid roomId, Guid userId)
     {
         var connectionId = Context.ConnectionId;
-        Connections.TryAdd(connectionId, new(roomId, userId));
+        
+        if (Connections.TryGetValue(connectionId, out var existingInfo))
+        {
+            if (existingInfo.RoomId != roomId)
+            {
+                // Remove from old SignalR group
+                await Groups.RemoveFromGroupAsync(connectionId, existingInfo.RoomId.ToString());
+                
+                // Clean up database state in the old room
+                var serviceProvider = Context.GetHttpContext()?.RequestServices;
+                if (serviceProvider != null)
+                {
+                    using var scope = serviceProvider.CreateScope();
+                    var handler = scope.ServiceProvider.GetRequiredService<ICommandHandler<LeaveRoomCommand, Result>>();
+                    await handler.HandleAsync(new LeaveRoomCommand(existingInfo.RoomId, existingInfo.UserId));                
+                }
+                
+                // Update routing info
+                Connections[connectionId] = new UserConnectionInfo(roomId, userId);
+            }
+        }
+        else
+        {
+            Connections.TryAdd(connectionId, new UserConnectionInfo(roomId, userId));
+        }
+
         await Groups.AddToGroupAsync(connectionId, roomId.ToString());
     }
 
