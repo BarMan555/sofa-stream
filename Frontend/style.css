@@ -205,3 +205,13 @@ button {
     margin-left: auto; /* Прижимает таймер к правому краю */
     color: var(--text-color);
 }
+
+/* Стиль для неактивных контроллеров (когда видео уже играет или пауза) */
+.btn-control:disabled {
+    background-color: #cccccc !important;
+    color: #888888 !important;
+    cursor: not-allowed;
+    opacity: 0.6;
+    transform: none !important;
+    box-shadow: none !important;
+}
