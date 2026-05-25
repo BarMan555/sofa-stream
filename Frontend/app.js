@@ -520,7 +520,7 @@ setInterval(() => {
             const percentage = (currentTime / duration) * 100;
             progressBar.style.background = `linear-gradient(to right, var(--primary) ${percentage}%, #232228 ${percentage}%)`;
         }
-        document.getElementById('customTimeLabel').innerText = `${formatTime(currentTime)} / ${formatTime(duration)}`;
+        document.getElementById('customTimeLabel').innerText = `${formatTime(currentTime, duration)} / ${formatTime(duration, duration)}`;
     }
 
     if (isHost && typeof videoPlayer.player.getPlayerState === 'function') {
@@ -554,14 +554,20 @@ progressBar.addEventListener('input', () => {
     const percentage = (value / duration) * 100 || 0;
     progressBar.style.background = `linear-gradient(to right, var(--primary) ${percentage}%, #232228 ${percentage}%)`;
 
-    document.getElementById('customTimeLabel').innerText = `${formatTime(value)} / ${formatTime(duration)}`;
+    document.getElementById('customTimeLabel').innerText = `${formatTime(value, duration)} / ${formatTime(duration, duration)}`;
 });
 
-function formatTime(seconds) {
-    if (isNaN(seconds)) return "00:00";
-    const m = Math.floor(seconds / 60);
+function formatTime(seconds, duration = 0) {
+    if (isNaN(seconds)) seconds = 0;
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
     const s = Math.floor(seconds % 60);
-    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    
+    if (duration >= 3600 || h > 0) {
+        return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    } else {
+        return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    }
 }
 
 // --- HTTP API Calls ---
