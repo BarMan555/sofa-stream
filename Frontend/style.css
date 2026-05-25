@@ -1,11 +1,19 @@
+/* --- Global Reset & Box Sizing Configuration --- */
+*, *::before, *::after {
+    box-sizing: border-box; /* Prevents structural padding layout scaling overflow bugs */
+}
+
 :root {
-    --bg-color: #fdfbf7;
-    --text-color: #3e2723;
-    --panel-bg: #ffffff;
-    --primary: #d84315;
-    --primary-hover: #bf360c;
-    --secondary: #8d6e63;
-    --secondary-hover: #6d4c41;
+    --bg-color: #0c0b0e;        /* Deep midnight cinema canvas background */
+    --text-color: #f5f5f7;      /* Clean neutral white tone for structural copy */
+    --text-muted: #8e8d94;      /* Soft silver slate tint for label structures */
+    --panel-bg: #151419;        /* Slightly elevated dark dashboard panel surface */
+    --panel-border: #232228;    /* Razor sharp container seam divider boundaries */
+    --primary: #ff4500;         /* Electrifying theatre primary neon glow accent */
+    --primary-hover: #ff5722;   /* Illuminated neon tint shift upon tracking actions */
+    --secondary: #24232a;       /* Clean matte control backing layer */
+    --secondary-hover: #302f38; /* Lightened matte control fill surface on state hover */
+    --input-bg: #1e1d23;        /* Slightly recessed input box layout well track */
 }
 
 body {
@@ -21,26 +29,37 @@ body {
 .container {
     width: 100%;
     max-width: 900px;
-    padding: 20px;
+    padding: 30px 20px;
 }
 
 header {
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 30px;
 }
 
 header h1 {
     margin: 0;
-    font-size: 2.5em;
+    font-size: 2.8em;
+    font-weight: 800;
+    letter-spacing: -1px;
     color: var(--primary);
+    text-shadow: 0 4px 14px rgba(255, 69, 0, 0.25);
 }
 
+/* Base dashboard container wrapper with fluid elevation transitions */
 .panel {
     background-color: var(--panel-bg);
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 8px 16px rgba(141, 110, 99, 0.1);
-    margin-bottom: 20px;
+    border: 1px solid var(--panel-border);
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55);
+    margin-bottom: 24px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Premium feedback effect making panels float slightly on cursor proximity */
+.panel:hover {
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.65);
 }
 
 .row {
@@ -52,73 +71,172 @@ header h1 {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
 }
 
-.full-width {
-    flex: 2;
-    flex-direction: row;
-    align-items: center;
+/* Flex wrapper grid for inline video loader configuration */
+.media-input-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 10px;
+    width: 100%;
+}
+
+/* Ensure the video URL input field expands to fill all available width inside the group */
+.media-input-group input {
+    flex: 1;
+    width: 100%;
 }
 
 h3 {
-    margin: 0 0 5px 0;
+    margin: 0;
     font-size: 1.1em;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+label {
+    color: var(--text-muted);
+    font-size: 0.9em;
+    font-weight: 500;
 }
 
 input {
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
+    background-color: var(--input-bg);
+    color: #ffffff;
+    padding: 12px 16px;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
     font-size: 14px;
     outline: none;
-    flex-grow: 1;
+    transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* UPDATED: Deep cinematic neon focus indicator aura rings */
 input:focus {
     border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(255, 69, 0, 0.12), 0 4px 12px rgba(255, 69, 0, 0.08);
+}
+
+input::placeholder {
+    color: #4f4d57;
 }
 
 button {
-    padding: 10px 15px;
+    padding: 12px 20px;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 14px;
-    font-weight: bold;
+    font-weight: 700;
     color: white;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.btn-primary { background-color: var(--primary); }
-.btn-primary:hover { background-color: var(--primary-hover); }
+/* UPDATED: Fluid micro-lift hover interactions */
+button:hover {
+    transform: translateY(-2px);
+}
 
-.btn-secondary { background-color: var(--secondary); }
-.btn-secondary:hover { background-color: var(--secondary-hover); }
+/* UPDATED: Tactile click feedback depression physics */
+button:active {
+    transform: translateY(1px);
+}
 
-.btn-danger { background-color: #e53935; }
-.btn-danger:hover { background-color: #c62828; }
+.btn-primary {
+    background-color: var(--primary);
+}
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+    box-shadow: 0 6px 20px rgba(255, 69, 0, 0.3);
+}
 
+.btn-secondary {
+    background-color: var(--secondary);
+    border: 1px solid var(--panel-border);
+}
+.btn-secondary:hover {
+    background-color: var(--secondary-hover);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.btn-danger {
+    background-color: #ff3333;
+}
+.btn-danger:hover {
+    background-color: #ff4d4d;
+    box-shadow: 0 6px 20px rgba(255, 51, 51, 0.25);
+}
+
+/* --- STATUS INDICATOR PULSE DOT SYSTEM --- */
 .status-badge {
-    margin-top: 15px;
-    padding: 8px 12px;
-    border-radius: 20px;
-    font-size: 0.9em;
-    font-weight: bold;
-    display: inline-block;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 20px;
+    border-radius: 8px;
+    font-size: 0.95em;
+    font-weight: 600;
+    white-space: pre-line;
+    line-height: 1.5;
+    width: 100%;
+    border: 1px solid transparent;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
-.disconnected { background-color: #ffebee; color: #c62828; }
-.connected { background-color: #e8f5e9; color: #2e7d32; }
+.status-badge::before {
+    content: '';
+    display: block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-top: 6px;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+}
 
-/* ---ОБВЯЗКА ПЛЕЕРА (ОБЯЗАТЕЛЬНО ДОЛЖНА БЫТЬ ТУТ!)--- */
+.disconnected {
+    background-color: rgba(255, 51, 51, 0.04);
+    color: #ff4d4d;
+    border-color: rgba(255, 51, 51, 0.12);
+}
+
+.disconnected::before {
+    background-color: #ff4d4d;
+    animation: pulse-red 2s infinite;
+}
+
+.connected {
+    background-color: rgba(76, 175, 80, 0.05);
+    color: #4caf50;
+    border-color: rgba(76, 175, 80, 0.15);
+}
+
+.connected::before {
+    background-color: #4caf50;
+    animation: pulse-green 2s infinite;
+}
+
+@keyframes pulse-green {
+    0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
+    70% { box-shadow: 0 0 0 8px rgba(76, 175, 80, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+}
+
+@keyframes pulse-red {
+    0% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0.7); }
+    70% { box-shadow: 0 0 0 8px rgba(255, 77, 77, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0); }
+}
+
+/* --- SEAMLESS DOCK PLAYER FRAMEWORK --- */
 .player-wrapper {
-    position: relative; /* Родоначальник координат для защитного щита */
-    padding-bottom: 56.25%; /* Пропорции экрана 16:9 */
+    position: relative;
+    padding-bottom: 56.25%;
     height: 0;
-    border-radius: 12px;
+    border-radius: 16px 16px 0 0;
     overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6);
     background-color: #000;
 }
 
@@ -130,7 +248,6 @@ button {
     height: 100%;
 }
 
-/* Прозрачный щит ПОВЕРХ YouTube Iframe (теперь позиционируется строго внутри плеера) */
 #playerShield {
     position: absolute;
     top: 0;
@@ -142,30 +259,32 @@ button {
     cursor: default;
 }
 
-/* Панель кастомных контроллеров: Вертикальный flex-ряд */
 .custom-controls-panel {
     display: flex;
-    flex-direction: column; /* Размещаем полосу времени СВЕРХУ над кнопками */
-    gap: 12px;
-    margin-top: 15px;
-    padding: 15px 20px;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 0;
+    padding: 20px 24px;
     background-color: var(--panel-bg);
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(141, 110, 99, 0.08);
+    border: 1px solid var(--panel-border);
+    border-top: none;
+    border-radius: 0 0 16px 16px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+    margin-bottom: 24px;
 }
 
-/* Кастомный ползунок таймлайна: теперь строго во всю ширину */
 #customProgressBar {
     width: 100%;
     -webkit-appearance: none;
     appearance: none;
     height: 6px;
-    background: #e0e0e0;
+    background: #232228;
     border-radius: 3px;
     outline: none;
     cursor: pointer;
-    transition: background 0.2s;
     margin: 0;
+    padding: 0;
+    display: block;
 }
 
 #customProgressBar::-webkit-slider-thumb {
@@ -175,10 +294,14 @@ button {
     height: 14px;
     border-radius: 50%;
     background: var(--primary);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    box-shadow: 0 0 8px var(--primary);
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Второй ряд: Кнопки управления и тайм-лейбл */
+#customProgressBar::-webkit-slider-thumb:hover {
+    transform: scale(1.25);
+}
+
 .controls-buttons-row {
     display: flex;
     align-items: center;
@@ -187,31 +310,74 @@ button {
 }
 
 .btn-control {
-    padding: 8px 16px;
+    padding: 10px 20px;
     font-size: 14px;
-    border-radius: 6px;
+    border-radius: 8px;
 }
-.btn-play { background-color: #2e7d32; }
-.btn-play:hover { background-color: #1b5e20; }
-.btn-pause { background-color: #795548; }
-.btn-pause:hover { background-color: #5d4037; }
+.btn-play { background-color: #1b5e20; border: 1px solid #2e7d32; }
+.btn-play:hover { background-color: #2e7d32; box-shadow: 0 4px 12px rgba(46, 125, 50, 0.2); }
+.btn-pause { background-color: #3e2723; border: 1px solid #5d4037; }
+.btn-pause:hover { background-color: #5d4037; box-shadow: 0 4px 12px rgba(93, 64, 55, 0.2); }
 
-#customTimeLabel {
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 14px;
-    font-weight: bold;
-    min-width: 100px;
-    text-align: right;
-    margin-left: auto; /* Прижимает таймер к правому краю */
-    color: var(--text-color);
-}
-
-/* Стиль для неактивных контроллеров (когда видео уже играет или пауза) */
 .btn-control:disabled {
-    background-color: #cccccc !important;
-    color: #888888 !important;
+    background-color: #141318 !important;
+    border-color: #1d1c22 !important;
+    color: #3b3a42 !important;
     cursor: not-allowed;
-    opacity: 0.6;
+    opacity: 0.5;
     transform: none !important;
     box-shadow: none !important;
+}
+
+#customTimeLabel {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    min-width: 100px;
+    text-align: right;
+    margin-left: auto;
+    color: var(--text-muted);
+}
+
+/* --- TABS SEGMENT INTERFACE WRAPPER --- */
+.tabs-container {
+    display: flex;
+    gap: 6px;
+    border-bottom: 1px solid var(--panel-border);
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+}
+
+.tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 8px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tab-btn:hover {
+    color: var(--text-color);
+    background-color: var(--input-bg);
+    transform: none; /* Disables lifting motion specifically for segmented switcher controls */
+}
+
+.tab-btn.active {
+    color: #ffffff;
+    background-color: var(--primary);
+    box-shadow: 0 4px 14px rgba(255, 69, 0, 0.25);
+}
+
+.tab-content {
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.tab-content.active {
+    display: flex;
 }

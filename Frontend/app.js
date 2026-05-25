@@ -1,10 +1,9 @@
 // --- Configuration ---
-// Автоматически определяем окружение: Mac (Rider) или боевой VPS
 const API_BASE_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
     ? "http://localhost:5063"
     : window.location.origin;
 
-// --- Time Synchronization (NTP) ---
+// --- Time Synchronization (NTP Protocol) ---
 let serverTimeOffset = 0;
 
 async function syncClockWithServer() {
@@ -52,7 +51,7 @@ class YouTubeAdapter {
             playerVars: {
                 'playsinline': 1,
                 'disablekb': 1,
-                'controls': 0, // Нативные кнопки YouTube отключены
+                'controls': 0,
                 'rel': 0,
                 'showinfo': 0,
                 'modestbranding': 1,
@@ -95,14 +94,14 @@ class YouTubeAdapter {
     }
 }
 
-// --- УПРОЩЕННЫЙ И НАДЕЖНЫЙ СИНХРОНИЗАТОР ---
+// --- Simplified & Stable Synchronization Manager ---
 class SyncStateMachine {
     constructor(sendUpdateCallback) {
         this.player = null;
         this.sendUpdate = sendUpdateCallback;
         this.isHost = false;
 
-        this.isProcessingRemoteEvent = false; // Флаг защиты от сетевого эха
+        this.isProcessingRemoteEvent = false;
         this.scheduledPlayTimer = null;
         this.unlockTimer = null;
     }
@@ -113,16 +112,13 @@ class SyncStateMachine {
         console.log(`FSM: Host status updated to: ${isHostStatus}`);
     }
 
-    // Обработка нажатий на наши кастомные кнопки Play/Pause
     handleUiAction(domainState) {
         if (!currentRoomId || !this.player) return;
 
         if (!this.isHost) {
-            this.showHostOnlyWarning();
-            return;
+            return; // Hard block for non-host interface commands
         }
 
-        // Энергично ставим на паузу локально для мгновенного отклика UI
         if (domainState === PlaybackState.Paused) {
             this.player.pause();
         }
@@ -130,7 +126,6 @@ class SyncStateMachine {
         this.sendUpdate(domainState);
     }
 
-    // Обработка перемотки ползунком
     handleSliderSeek(targetSeconds) {
         if (!currentRoomId || !this.player || !this.isHost) return;
 
@@ -139,21 +134,17 @@ class SyncStateMachine {
         this.sendUpdate(PlaybackState.Paused, targetSeconds);
     }
 
-    // Принятие команд из сети (SignalR бэкенд)
     handleRemoteEvent(data) {
         if (!this.player) return;
 
-        // Включаем временную броню от эха
         this.isProcessingRemoteEvent = true;
         if (this.unlockTimer) clearTimeout(this.unlockTimer);
 
-        // Проверяем рассинхронизацию ползунка времени
         const currentTime = this.player.getCurrentTime();
         if (Math.abs(currentTime - data.positionInSeconds) > 1.5) {
             this.player.seekTo(data.positionInSeconds);
         }
 
-        // Выполняем сетевую команду
         if (data.state === "Playing") {
             if (this.scheduledPlayTimer) clearTimeout(this.scheduledPlayTimer);
 
@@ -173,7 +164,6 @@ class SyncStateMachine {
                 this.unlockTimer = setTimeout(() => { this.isProcessingRemoteEvent = false; }, 500);
             }
         } else {
-            // Если пришла пауза или буферизация от сервера
             if (this.scheduledPlayTimer) clearTimeout(this.scheduledPlayTimer);
             this.player.pause();
 
@@ -181,12 +171,10 @@ class SyncStateMachine {
         }
     }
 
-    // Следим за техническими событиями самого плеера YouTube
     handlePlayerStateNotification(domainState) {
-        if (this.isProcessingRemoteEvent) return; // Игнорируем команды, вызванные сервером
+        if (this.isProcessingRemoteEvent) return;
 
         if (this.isHost && currentRoomId) {
-            // Если у хоста упал интернет и начался буфер, уведомляем сервер, чтобы запаузить гостей
             if (domainState === PlaybackState.Buffering) {
                 this.sendUpdate(PlaybackState.Buffering);
             }
@@ -203,16 +191,6 @@ class SyncStateMachine {
             this.isProcessingRemoteEvent = false;
         }, 1500);
     }
-
-    showHostOnlyWarning() {
-        const statusEl = document.getElementById('status');
-        if (statusEl) {
-            const oldText = statusEl.innerText;
-            statusEl.innerText = "⚠️ Только Host может управлять просмотром!";
-            statusEl.style.color = "red";
-            setTimeout(() => { statusEl.innerText = oldText; statusEl.style.color = ""; }, 3000);
-        }
-    }
 }
 
 // --- Initialization ---
@@ -222,7 +200,10 @@ function uuidv4() {
         return v.toString(16);
     });
 }
-document.getElementById('userIdInput').value = uuidv4();
+
+// FIXED: Save generated unique string and display it as raw plain text
+const globalUserId = uuidv4();
+document.getElementById('userIdDisplay').innerText = globalUserId;
 
 let videoPlayer = null;
 let syncMachine = new SyncStateMachine(sendPlaybackStateUpdate);
@@ -235,7 +216,7 @@ function onYouTubeIframeAPIReady() {
     });
 }
 
-// SignalR Hub Connection
+// SignalR Hub Connection Setup
 const connection = new signalR.HubConnectionBuilder()
     .withUrl(`${API_BASE_URL}/hubs/room`)
     .withAutomaticReconnect()
@@ -257,7 +238,7 @@ function onPlayerStateChange(domainState) {
     syncMachine.handlePlayerStateNotification(domainState);
 }
 
-// --- Кастомные HTML-контроллеры ---
+// --- Custom HTML Control Layers ---
 let isDraggingProgressBar = false;
 
 document.getElementById('customPlayBtn').addEventListener('click', () => {
@@ -279,19 +260,27 @@ progressBar.addEventListener('change', () => {
     syncMachine.handleSliderSeek(targetSeconds);
 });
 
-// Периодический таймер обновления UI и интеллектуального переключения кнопок
+// Heartbeat interface loop worker
 setInterval(() => {
     if (!videoPlayer || !videoPlayer.player || typeof videoPlayer.player.getDuration !== 'function') return;
 
     const playBtn = document.getElementById('customPlayBtn');
     const pauseBtn = document.getElementById('customPauseBtn');
 
+    // State 1: Room context is absent (Lock controls entirely)
     if (!currentRoomId) {
         playBtn.disabled = true;
         pauseBtn.disabled = true;
         return;
     }
 
+    // FIXED (Req 4): If user is a Guest, permanently lock playback buttons
+    if (!isHost) {
+        playBtn.disabled = true;
+        pauseBtn.disabled = true;
+    }
+
+    // Render timeline progress updates if not dragging playhead manually
     if (!isDraggingProgressBar) {
         const currentTime = videoPlayer.getCurrentTime();
         const duration = videoPlayer.player.getDuration() || 0;
@@ -299,11 +288,16 @@ setInterval(() => {
         if (duration > 0) {
             progressBar.max = duration;
             progressBar.value = currentTime;
+
+            // FIXED (Req 5): Dynamic color gradient filling behind the elapsed track
+            const percentage = (currentTime / duration) * 100;
+            progressBar.style.background = `linear-gradient(to right, var(--primary) ${percentage}%, #e0e0e0 ${percentage}%)`;
         }
         document.getElementById('customTimeLabel').innerText = `${formatTime(currentTime)} / ${formatTime(duration)}`;
     }
 
-    if (typeof videoPlayer.player.getPlayerState === 'function') {
+    // Handle button toggle overrides only for the active Room Host
+    if (isHost && typeof videoPlayer.player.getPlayerState === 'function') {
         const state = videoPlayer.player.getPlayerState();
 
         if (state === YT.PlayerState.PLAYING) {
@@ -326,10 +320,15 @@ setInterval(() => {
     }
 }, 500);
 
+// Fluid fill scaling when dragging the timeline manually
 progressBar.addEventListener('input', () => {
     if (!videoPlayer || !videoPlayer.player || typeof videoPlayer.player.getDuration !== 'function') return;
     const value = parseFloat(progressBar.value);
     const duration = videoPlayer.player.getDuration() || 0;
+
+    const percentage = (value / duration) * 100 || 0;
+    progressBar.style.background = `linear-gradient(to right, var(--primary) ${percentage}%, #e0e0e0 ${percentage}%)`;
+
     document.getElementById('customTimeLabel').innerText = `${formatTime(value)} / ${formatTime(duration)}`;
 });
 
@@ -342,13 +341,18 @@ function formatTime(seconds) {
 
 // --- HTTP API Calls ---
 async function createRoom() {
-    const roomName = document.getElementById('roomNameInput').value || "Cozy Room";
-    const userId = document.getElementById('userIdInput').value;
+    const roomNameInput = document.getElementById('roomNameInput').value.trim();
+
+    // FIXED (Req 2): Abort action with warning alert if field is blank
+    if (!roomNameInput) {
+        alert("Please enter a valid Room Name before proceeding!");
+        return;
+    }
 
     const response = await fetch(`${API_BASE_URL}/api/room`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: roomName, hostId: userId })
+        body: JSON.stringify({ name: roomNameInput, hostId: globalUserId })
     });
 
     if (response.ok) {
@@ -363,11 +367,10 @@ async function createRoom() {
 }
 
 async function joinRoom() {
-    const roomId = document.getElementById('roomIdInput').value;
-    const userId = document.getElementById('userIdInput').value;
+    const roomId = document.getElementById('roomIdInput').value.trim();
 
-    if (!roomId || !userId) {
-        alert("Please provide both User ID and Room ID.");
+    if (!roomId) {
+        alert("Please provide a valid Room ID.");
         return;
     }
 
@@ -382,19 +385,15 @@ async function joinRoom() {
         await fetch(`${API_BASE_URL}/api/room/${roomId}/join`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: userId })
+            body: JSON.stringify({ userId: globalUserId })
         });
 
         if (connection.state === signalR.HubConnectionState.Disconnected) {
             await connection.start();
         }
 
-        await connection.invoke("JoinRoom", roomId, userId);
+        await connection.invoke("JoinRoom", roomId, globalUserId);
         await fetchAndSyncCurrentState(roomId);
-
-        const statusEl = document.getElementById('status');
-        statusEl.innerText = `Connected to Room: ${roomId.substring(0, 8)}...`;
-        statusEl.className = "status-badge connected";
     } catch (err) {
         console.error("SignalR Connection Error: ", err);
         alert("Failed to connect to the room.");
@@ -406,13 +405,12 @@ async function changeVideo() {
     if (!currentRoomId) return alert("Join a room first!");
 
     const videoUrl = document.getElementById('videoUrlInput').value;
-    const userId = document.getElementById('userIdInput').value;
     const videoId = extractYouTubeId(videoUrl);
 
     if (!videoId) return alert("Invalid YouTube URL");
 
     const payload = {
-        userId: userId,
+        userId: globalUserId,
         videoUrl: videoUrl,
         title: "YouTube Video",
         durationSeconds: 3600
@@ -434,7 +432,6 @@ async function sendPlaybackStateUpdate(stateEnum, manualSeconds = null) {
     if (!videoPlayer) return;
     if (!currentRoomId) return;
 
-    const userId = document.getElementById('userIdInput').value;
     const currentTimeSeconds = manualSeconds !== null ? manualSeconds : (videoPlayer.getCurrentTime() || 0);
 
     if (manualSeconds !== null) {
@@ -447,7 +444,7 @@ async function sendPlaybackStateUpdate(stateEnum, manualSeconds = null) {
     const timeSpan = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 
     const payload = {
-        userId: userId,
+        userId: globalUserId,
         requestedState: stateEnum,
         clientPosition: timeSpan
     };
@@ -465,15 +462,14 @@ async function fetchAndSyncCurrentState(roomId) {
         const state = await response.json();
         console.log("Initial State Fetched:", state);
 
+        // FIXED (Req 3): Renders line breaks containing the full Room Name and full target Room ID
+        const statusEl = document.getElementById('status');
+        statusEl.innerText = `Connected to Room: "${state.name || 'Cozy Room'}"\nID: ${roomId}`;
+        statusEl.className = "status-badge connected";
+
         if (state.currentVideo && state.currentVideo.url && videoPlayer) {
             const videoId = extractYouTubeId(state.currentVideo.url);
-
-            if (state.playbackState === "Playing" || state.playbackState === 1) {
-                syncMachine.handleRemoteVideoChange(videoId, state.currentPositionSeconds);
-                // Если комната уже играет, принудительно стартуем через сокеты чуть позже
-            } else {
-                syncMachine.handleRemoteVideoChange(videoId, state.currentPositionSeconds);
-            }
+            syncMachine.handleRemoteVideoChange(videoId, state.currentPositionSeconds);
         }
     }
 }
@@ -484,10 +480,32 @@ function extractYouTubeId(url) {
     return (match && match[2].length === 11) ? match[2] : null;
 }
 
-// --- ДИНАМИЧЕСКИЙ БЕЗОПАСНЫЙ ИНЖЕКТОР API ---
+// --- Dynamic Gateway Injector ---
 window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
 
 const tag = document.createElement('script');
 tag.src = "https://www.youtube.com/iframe_api";
 const firstScriptTag = document.getElementsByTagName('script')[0];
 firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+// --- Tab Navigation Switcher ---
+function switchTab(tabName) {
+    const createBtn = document.getElementById('tabCreateBtn');
+    const joinBtn = document.getElementById('tabJoinBtn');
+    const createContent = document.getElementById('tabCreateContent');
+    const joinContent = document.getElementById('tabJoinContent');
+
+    if (tabName === 'create') {
+        createBtn.classList.add('active');
+        joinBtn.classList.remove('active');
+        createContent.classList.add('active');
+        joinContent.classList.remove('active');
+    } else {
+        createBtn.classList.remove('active');
+        joinBtn.classList.add('active');
+        createContent.classList.remove('active');
+        joinContent.classList.add('active');
+    }
+}
+// Securely map the tab control method to global window scope for inline markup visibility
+window.switchTab = switchTab;
