@@ -32,58 +32,40 @@ function getExactServerTimeNow() {
 syncClockWithServer();
 setInterval(syncClockWithServer, 60000);
 
-// =====================================================================
-// NEW: Fullscreen Controls Auto-Hide & Hover Interactive Blueprint
-// =====================================================================
+// --- Fullscreen Controls Auto-Hide & Hover Interactive Blueprint ---
 let inactivityTimer;
-const INACTIVITY_DURATION_MS = 3000; // Duration before controls automatically fade out
+const INACTIVITY_DURATION_MS = 3000;
 
 const theaterContainer = document.getElementById('theaterContainer');
 const controlsPanel = document.querySelector('.custom-controls-panel');
 
-/**
- * Executes a clean UI animation reveal of the custom controls board.
- */
 function showControls() {
     controlsPanel.classList.add('controls-visible');
 }
 
-/**
- * Initiates the controlled fade-out animation sequencing for the controls UI board.
- * Crucial check included to only execute within valid fullscreen session boundaries.
- */
 function hideControls() {
     if (document.fullscreenElement) {
         controlsPanel.classList.remove('controls-visible');
     }
 }
 
-/**
- * Resets the active inactivity listener pipeline, scheduling a UI hide sequencing on countdown conclusion.
- */
 function resetInactivityTimer() {
     clearTimeout(inactivityTimer);
-    // Suppress automatic hiding if the cursor is physically within the controls area boundaries
     if (controlsPanel.matches(':hover')) {
         return;
     }
     inactivityTimer = setTimeout(hideControls, INACTIVITY_DURATION_MS);
 }
 
-/**
- * Master proctor method to handle primary user interface wake-up events on cursor movement tracks.
- */
 function handleMouseMove() {
     showControls();
     resetInactivityTimer();
 }
 
-// Master theater listener array binding framework
 theaterContainer.addEventListener('mousemove', handleMouseMove);
-theaterContainer.addEventListener('mouseenter', handleMouseMove); // Ensure instant wake-up on boundary enter
-theaterContainer.addEventListener('mouseleave', hideControls);   // Instant clean hide sequencing on boundary leave
+theaterContainer.addEventListener('mouseenter', handleMouseMove);
+theaterContainer.addEventListener('mouseleave', hideControls);
 
-// Ensure dock continuity lock prevents countdown expiration when the cursor remains actively over the controls panel itself
 controlsPanel.addEventListener('mouseenter', () => {
     clearTimeout(inactivityTimer);
     showControls();
@@ -92,10 +74,20 @@ controlsPanel.addEventListener('mouseenter', () => {
 controlsPanel.addEventListener('mouseleave', () => {
     resetInactivityTimer();
 });
-// =====================================================================
 
+// --- UI Authorization Management Helper ---
 let currentRoomId = null;
 let isHost = false;
+
+/**
+ * FIXED: Dynamically adjusts the visibility of host-restricted interface components based on user role status.
+ */
+function updateHostUiVisibility() {
+    const hostPanel = document.getElementById('hostControlsPanel');
+    if (hostPanel) {
+        hostPanel.style.display = isHost ? 'block' : 'none';
+    }
+}
 
 const PlaybackState = {
     Paused: 0,
@@ -320,22 +312,19 @@ progressBar.addEventListener('change', () => {
     syncMachine.handleSliderSeek(targetSeconds);
 });
 
-// MODIFIED: Securely map native HTML5 Fullscreen API toggle method with inactivity auto-hiding continuous track
 document.getElementById('customFullscreenBtn').addEventListener('click', () => {
     const theater = document.getElementById('theaterContainer');
 
     if (!document.fullscreenElement) {
-        // Enters full-screen state cleanly across modern browsers
         theater.requestFullscreen().catch(err => {
             console.error(`Error attempting to enable fullscreen mode: ${err.message}`);
         });
-        showControls();             // Ensure standard visual UI continuity on initial load sequencing
-        resetInactivityTimer();    // Immediately schedule an automatic continuous continuous hide track on inactivity conclusion
+        showControls();
+        resetInactivityTimer();
     } else {
-        // Exits full-screen mode safely
         document.exitFullscreen();
-        clearTimeout(inactivityTimer); // Terminate dynamic countdown continuity chains upon full return coordinates
-        showControls();                // Permanently reinstate controls interface visibility frameworks for regular layout matrix
+        clearTimeout(inactivityTimer);
+        showControls();
     }
 });
 
@@ -431,6 +420,7 @@ async function createRoom() {
         document.getElementById('roomIdInput').value = roomId.replace(/"/g, '');
         isHost = true;
         syncMachine.setHostStatus(true);
+        updateHostUiVisibility(); // FIXED: Force reveal host authorization controls panel dynamically
         await joinRoom();
     } else {
         alert("Failed to create room.");
@@ -452,6 +442,8 @@ async function joinRoom() {
     try {
         currentRoomId = roomId;
         if (isHost === false) syncMachine.setHostStatus(false);
+
+        updateHostUiVisibility(); // FIXED: Secure sync execution path to keep panel hidden for guests
 
         await fetch(`${API_BASE_URL}/api/room/${roomId}/join`, {
             method: 'POST',
