@@ -230,7 +230,7 @@ button:active {
 
 /* --- SEAMLESS DOCK PLAYER FRAMEWORK --- */
 #theaterContainer {
-    display: flex;
+    display: none;
     flex-direction: column;
     width: 100%;
 }
