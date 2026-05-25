@@ -43,7 +43,7 @@
         <div id="hostControlsPanel" class="panel" style="display: none;">
             <h3>Change Video (Host Only)</h3>
             <div class="media-input-group">
-                <input type="text" id="videoUrlInput" placeholder="Paste YouTube URL here..." />
+                <input type="text" id="videoUrlInput" placeholder="Paste YouTube or RuTube URL here..." />
                 <button onclick="changeVideo()" class="btn-danger">Load Video</button>
             </div>
         </div>
@@ -51,6 +51,7 @@
         <div id="theaterContainer">
             <div class="player-wrapper">
                 <div id="youtubePlayer"></div>
+                <iframe id="rutubePlayer" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" allow="autoplay; encrypted-media" allowfullscreen></iframe>
                 <div id="playerShield"></div>
             </div>
 

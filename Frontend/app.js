@@ -109,10 +109,23 @@ const PlaybackState = {
     Buffering: 2
 };
 
-// --- Player Adapter (Pattern) ---
-class YouTubeAdapter {
-    constructor(containerId, onStateChangeCallback, onPlayerReadyCallback) {
-        this.player = new YT.Player(containerId, {
+// --- Universal Player Adapter ---
+class UniversalPlayer {
+    constructor(ytContainerId, rtIframeId, onStateChangeCallback, onPlayerReadyCallback) {
+        this.ytContainerId = ytContainerId;
+        this.rtIframeId = rtIframeId;
+        this.onStateChangeCallback = onStateChangeCallback;
+        this.onPlayerReadyCallback = onPlayerReadyCallback;
+        
+        this.currentType = null; // 'youtube' | 'rutube' | null
+        this.currentVideoId = null;
+        
+        this.rutubeDuration = 0;
+        this.rutubeCurrentTime = 0;
+        this.rutubeState = PlaybackState.Paused;
+
+        // Initialize YouTube Player
+        this.ytPlayer = new YT.Player(ytContainerId, {
             height: '390',
             width: '640',
             videoId: '',
@@ -127,40 +140,172 @@ class YouTubeAdapter {
             },
             events: {
                 'onStateChange': (event) => {
+                    if (this.currentType !== 'youtube') return;
                     let domainState = null;
                     if (event.data === YT.PlayerState.PLAYING) domainState = PlaybackState.Playing;
                     else if (event.data === YT.PlayerState.PAUSED) domainState = PlaybackState.Paused;
                     else if (event.data === YT.PlayerState.BUFFERING) domainState = PlaybackState.Buffering;
 
                     if (domainState !== null) {
-                        onStateChangeCallback(domainState);
+                        this.onStateChangeCallback(domainState);
                     }
                 },
                 'onReady': () => {
                     console.log("YouTube Player is fully READY.");
-                    onPlayerReadyCallback();
+                    this.onPlayerReadyCallback();
                 }
+            }
+        });
+        
+        // Setup Rutube message listener
+        window.addEventListener("message", (event) => {
+            if (typeof event.origin !== 'string' || !event.origin.includes("rutube.ru")) return;
+            let message;
+            try {
+                message = JSON.parse(event.data);
+            } catch (e) {
+                return;
+            }
+            if (!message || !message.type) return;
+            if (this.currentType === 'rutube') {
+                this.handleRutubeMessage(message);
             }
         });
     }
 
-    play() { if (this.player && this.player.playVideo) this.player.playVideo(); }
-    pause() { if (this.player && this.player.pauseVideo) this.player.pauseVideo(); }
-    seekTo(seconds) { if (this.player && this.player.seekTo) this.player.seekTo(seconds, true); }
-    getCurrentTime() { return (this.player && this.player.getCurrentTime) ? this.player.getCurrentTime() : 0; }
+    get player() {
+        return this;
+    }
+
+    handleRutubeMessage(message) {
+        if (message.type === 'player:currentTime') {
+            this.rutubeCurrentTime = parseFloat(message.data.time);
+        } else if (message.type === 'player:durationChange') {
+            this.rutubeDuration = parseFloat(message.data.duration);
+        } else if (message.type === 'player:changeState') {
+            const rtStateStr = message.data.state;
+            let domainState = null;
+            if (rtStateStr === 'playing') {
+                domainState = PlaybackState.Playing;
+            } else if (rtStateStr === 'paused' || rtStateStr === 'stopped') {
+                domainState = PlaybackState.Paused;
+            }
+            if (domainState !== null) {
+                this.rutubeState = domainState;
+                this.onStateChangeCallback(domainState);
+            }
+        }
+    }
+
+    sendRutubeCommand(command, data = {}) {
+        const rtIframe = document.getElementById(this.rtIframeId);
+        if (rtIframe && rtIframe.contentWindow) {
+            rtIframe.contentWindow.postMessage(
+                JSON.stringify({
+                    type: `player:${command}`,
+                    data: data
+                }),
+                "*"
+            );
+        }
+    }
+
+    play() {
+        if (this.currentType === 'youtube') {
+            if (this.ytPlayer && this.ytPlayer.playVideo) this.ytPlayer.playVideo();
+        } else if (this.currentType === 'rutube') {
+            this.sendRutubeCommand('play');
+            this.rutubeState = PlaybackState.Playing;
+        }
+    }
+
+    pause() {
+        if (this.currentType === 'youtube') {
+            if (this.ytPlayer && this.ytPlayer.pauseVideo) this.ytPlayer.pauseVideo();
+        } else if (this.currentType === 'rutube') {
+            this.sendRutubeCommand('pause');
+            this.rutubeState = PlaybackState.Paused;
+        }
+    }
+
+    seekTo(seconds) {
+        if (this.currentType === 'youtube') {
+            if (this.ytPlayer && this.ytPlayer.seekTo) this.ytPlayer.seekTo(seconds, true);
+        } else if (this.currentType === 'rutube') {
+            this.sendRutubeCommand('setCurrentTime', { time: seconds });
+            this.rutubeCurrentTime = seconds;
+        }
+    }
+
+    getCurrentTime() {
+        if (this.currentType === 'youtube') {
+            return (this.ytPlayer && this.ytPlayer.getCurrentTime) ? this.ytPlayer.getCurrentTime() : 0;
+        } else if (this.currentType === 'rutube') {
+            return this.rutubeCurrentTime;
+        }
+        return 0;
+    }
+
+    getDuration() {
+        if (this.currentType === 'youtube') {
+            return (this.ytPlayer && this.ytPlayer.getDuration) ? this.ytPlayer.getDuration() : 0;
+        } else if (this.currentType === 'rutube') {
+            return this.rutubeDuration;
+        }
+        return 0;
+    }
+
+    getPlayerState() {
+        if (this.currentType === 'youtube') {
+            return (this.ytPlayer && this.ytPlayer.getPlayerState) ? this.ytPlayer.getPlayerState() : -1;
+        } else if (this.currentType === 'rutube') {
+            if (this.rutubeState === PlaybackState.Playing) return 1; // YT.PlayerState.PLAYING
+            if (this.rutubeState === PlaybackState.Paused) return 2;  // YT.PlayerState.PAUSED
+            return -1;
+        }
+        return -1;
+    }
 
     loadVideo(videoId, startSeconds = 0) {
-        if (this.player && this.player.loadVideoById) {
-            this.player.loadVideoById(videoId, startSeconds);
+        this.cueVideo(videoId, startSeconds);
+    }
+
+    switchToType(type, videoId, startSeconds = 0) {
+        this.currentType = type;
+        this.currentVideoId = videoId;
+        
+        const ytEl = document.getElementById(this.ytContainerId);
+        const rtEl = document.getElementById(this.rtIframeId);
+        
+        if (type === 'youtube') {
+            if (rtEl) rtEl.style.display = 'none';
+            if (ytEl) ytEl.style.display = 'block';
+            
+            if (this.ytPlayer && this.ytPlayer.cueVideoById) {
+                this.ytPlayer.cueVideoById(videoId, startSeconds);
+            }
+            showPlayerBlock();
+        } else if (type === 'rutube') {
+            if (ytEl) ytEl.style.display = 'none';
+            if (rtEl) {
+                rtEl.style.display = 'block';
+                rtEl.src = `https://rutube.ru/play/embed/${videoId}?rtBorders=0&rtButtons=0&rtLogo=0&skinColor=ff4500`;
+            }
+            this.rutubeDuration = 0;
+            this.rutubeCurrentTime = startSeconds;
+            this.rutubeState = PlaybackState.Paused;
+            
+            setTimeout(() => {
+                this.seekTo(startSeconds);
+            }, 1000);
+
             showPlayerBlock();
         }
     }
 
     cueVideo(videoId, startSeconds = 0) {
-        if (this.player && this.player.cueVideoById) {
-            this.player.cueVideoById(videoId, startSeconds);
-            showPlayerBlock();
-        }
+        const detectedType = (videoId.length === 32) ? 'rutube' : 'youtube';
+        this.switchToType(detectedType, videoId, startSeconds);
     }
 }
 
@@ -278,7 +423,7 @@ let videoPlayer = null;
 let syncMachine = new SyncStateMachine(sendPlaybackStateUpdate);
 
 function onYouTubeIframeAPIReady() {
-    videoPlayer = new YouTubeAdapter("youtubePlayer", onPlayerStateChange, () => {
+    videoPlayer = new UniversalPlayer("youtubePlayer", "rutubePlayer", onPlayerStateChange, () => {
         syncMachine.setPlayer(videoPlayer);
         if (isHost) syncMachine.setHostStatus(true);
         console.log("FSM: State Machine activated safely after Player Ready.");
@@ -295,7 +440,7 @@ const connection = new signalR.HubConnectionBuilder()
 
 connection.on("OnVideoChanged", (videoData) => {
     if (!videoData || !videoData.url) return;
-    const videoId = extractYouTubeId(videoData.url);
+    const videoId = extractVideoId(videoData.url);
     if (videoId && videoPlayer) {
         syncMachine.handleRemoteVideoChange(videoId, 0);
     }
@@ -486,15 +631,16 @@ async function joinRoom() {
 async function changeVideo() {
     if (!currentRoomId) return alert("Join a room first!");
 
-    const videoUrl = document.getElementById('videoUrlInput').value;
-    const videoId = extractYouTubeId(videoUrl);
+    const videoUrl = document.getElementById('videoUrlInput').value.trim();
+    const videoId = extractVideoId(videoUrl);
 
-    if (!videoId) return alert("Invalid YouTube URL");
+    if (!videoId) return alert("Invalid Video URL (supports YouTube & RuTube)");
 
+    const isRutube = videoUrl.includes("rutube.ru");
     const payload = {
         userId: globalUserId,
         videoUrl: videoUrl,
-        title: "YouTube Video",
+        title: isRutube ? "RuTube Video" : "YouTube Video",
         durationSeconds: 3600
     };
 
@@ -549,7 +695,7 @@ async function fetchAndSyncCurrentState(roomId) {
         statusEl.className = "status-badge connected";
 
         if (state.currentVideo && state.currentVideo.url && videoPlayer) {
-            const videoId = extractYouTubeId(state.currentVideo.url);
+            const videoId = extractVideoId(state.currentVideo.url);
             syncMachine.handleRemoteVideoChange(videoId, state.currentPositionSeconds);
         } else {
             hidePlayerBlock();
@@ -557,10 +703,22 @@ async function fetchAndSyncCurrentState(roomId) {
     }
 }
 
-function extractYouTubeId(url) {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = url.match(regExp);
-    return (match && match[2].length === 11) ? match[2] : null;
+function extractVideoId(url) {
+    if (!url) return null;
+    
+    const ytReg = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const ytMatch = url.match(ytReg);
+    if (ytMatch && ytMatch[2].length === 11) {
+        return ytMatch[2];
+    }
+    
+    const rtReg = /rutube\.ru\/(video|play\/embed)\/([a-zA-Z0-9]+)/;
+    const rtMatch = url.match(rtReg);
+    if (rtMatch) {
+        return rtMatch[2];
+    }
+    
+    return null;
 }
 
 // --- Dynamic Gateway Injector ---
