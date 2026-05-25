@@ -89,6 +89,20 @@ function updateHostUiVisibility() {
     }
 }
 
+function showPlayerBlock() {
+    const theater = document.getElementById('theaterContainer');
+    if (theater) {
+        theater.style.display = 'flex';
+    }
+}
+
+function hidePlayerBlock() {
+    const theater = document.getElementById('theaterContainer');
+    if (theater) {
+        theater.style.display = 'none';
+    }
+}
+
 const PlaybackState = {
     Paused: 0,
     Playing: 1,
@@ -138,12 +152,14 @@ class YouTubeAdapter {
     loadVideo(videoId, startSeconds = 0) {
         if (this.player && this.player.loadVideoById) {
             this.player.loadVideoById(videoId, startSeconds);
+            showPlayerBlock();
         }
     }
 
     cueVideo(videoId, startSeconds = 0) {
         if (this.player && this.player.cueVideoById) {
             this.player.cueVideoById(videoId, startSeconds);
+            showPlayerBlock();
         }
     }
 }
@@ -266,6 +282,9 @@ function onYouTubeIframeAPIReady() {
         syncMachine.setPlayer(videoPlayer);
         if (isHost) syncMachine.setHostStatus(true);
         console.log("FSM: State Machine activated safely after Player Ready.");
+        if (currentRoomId) {
+            fetchAndSyncCurrentState(currentRoomId);
+        }
     });
 }
 
@@ -532,6 +551,8 @@ async function fetchAndSyncCurrentState(roomId) {
         if (state.currentVideo && state.currentVideo.url && videoPlayer) {
             const videoId = extractYouTubeId(state.currentVideo.url);
             syncMachine.handleRemoteVideoChange(videoId, state.currentPositionSeconds);
+        } else {
+            hidePlayerBlock();
         }
     }
 }
