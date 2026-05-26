@@ -449,7 +449,7 @@ button:active {
    NEW: VIDEO CHAT OVERLAY PREMIUM GLASSMORPHIC DESIGN SYSTEM
    ===================================================================== */
 .video-chat-overlay {
-    position: absolute;
+    position: fixed;
     top: 20px;
     right: 20px;
     width: 320px;
@@ -669,7 +669,7 @@ button:active {
 
 /* --- Completely Collapsed State Trigger Button --- */
 .video-chat-restore-btn {
-    position: absolute;
+    position: fixed;
     top: 20px;
     right: 20px;
     z-index: 155;
@@ -706,4 +706,12 @@ button:active {
 /* Fallback Canvas Pulsing Animation style */
 .mock-stream-canvas {
     background: radial-gradient(circle, #201a30 0%, #0d0b14 100%);
+}
+
+/* Fullscreen overrides: when inside fullscreen theaterContainer, switch positioning to absolute */
+#theaterContainer:fullscreen .video-chat-overlay {
+    position: absolute !important;
+}
+#theaterContainer:fullscreen .video-chat-restore-btn {
+    position: absolute !important;
 }
