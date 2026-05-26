@@ -55,6 +55,38 @@
                 <div id="playerShield"></div>
             </div>
 
+            <!-- Video Chat Overlay Container -->
+            <div id="videoChatOverlay" class="video-chat-overlay" style="display: none;">
+                <div id="videoChatHeader" class="video-chat-header">
+                    <span class="video-chat-title">🔊 Room Chat</span>
+                    <div class="video-chat-header-actions">
+                        <button id="btnToggleMinimize" class="btn-chat-icon" title="Toggle Minimize (Grid / Single)">👤</button>
+                        <button id="btnToggleCollapse" class="btn-chat-icon" title="Collapse Completely">➖</button>
+                    </div>
+                </div>
+                <div id="videoGrid" class="video-grid">
+                    <!-- Local Stream Slot -->
+                    <div class="video-slot local-slot" id="slot-local">
+                        <video id="localVideo" autoplay playsinline muted></video>
+                        <div class="video-label">Me (You)</div>
+                        <div class="slot-controls">
+                            <span id="localMicIndicator" class="mic-indicator active">🎙️</span>
+                            <span id="localVideoIndicator" class="video-indicator active">📷</span>
+                        </div>
+                    </div>
+                    <!-- Dynamically populated remote stream slots will go here -->
+                </div>
+                <div class="video-chat-controls">
+                    <button id="btnToggleAudio" class="btn-chat-control" title="Toggle Audio">🎤 Mute</button>
+                    <button id="btnToggleVideo" class="btn-chat-control" title="Toggle Video">📷 Disable</button>
+                </div>
+            </div>
+
+            <!-- Restore Toggle Button when collapsed completely -->
+            <button id="videoChatRestoreBtn" class="video-chat-restore-btn" style="display: none;" title="Restore Video Chat">
+                💬 Room Chat
+            </button>
+
             <div class="panel custom-controls-panel">
                 <input type="range" id="customProgressBar" min="0" max="100" value="0" />
 
