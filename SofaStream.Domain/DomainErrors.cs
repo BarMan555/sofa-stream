@@ -29,5 +29,9 @@ public static class DomainErrors
         public static readonly Error NotHost = new(
             "Room.NotHost",
             "The user is not host.");
+
+        public static readonly Error RoomFull = new(
+            "Room.RoomFull", 
+            "The room has reached the maximum capacity of 4 participants.");
     }
 }

@@ -13,7 +13,9 @@ public class JoinRoomCommandHandler(IRoomRepository roomRepository) : ICommandHa
         if (room == null) return Result.Failure(DomainErrors.Room.NotFound);
         
         // Add spectator in room
-        room.AddParticipant(new RoomParticipant(command.UserId, isHost: false));
+        var result = room.AddParticipant(new RoomParticipant(command.UserId, isHost: false));
+        if (result.IsFailure) return result;
+        
         await roomRepository.UpdateAsync(room, cancellationToken);
         
         return Result.Success();
