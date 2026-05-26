@@ -818,8 +818,23 @@ let isVideoDisabled = false;
 
 async function startVideoChat() {
     console.log("WebRTC: Starting video chat session...");
-    document.getElementById("videoChatOverlay").style.display = "flex";
-    document.getElementById("videoChatRestoreBtn").style.display = "none";
+    
+    // Move overlay to document body if not in fullscreen to allow window-wide movement
+    const overlay = document.getElementById("videoChatOverlay");
+    const restoreBtn = document.getElementById("videoChatRestoreBtn");
+    const theater = document.getElementById("theaterContainer");
+    if (overlay && restoreBtn && theater) {
+        if (document.fullscreenElement !== theater) {
+            document.body.appendChild(overlay);
+            document.body.appendChild(restoreBtn);
+        } else {
+            theater.appendChild(overlay);
+            theater.appendChild(restoreBtn);
+        }
+    }
+
+    if (overlay) overlay.style.display = "flex";
+    if (restoreBtn) restoreBtn.style.display = "none";
     
     // Initialize media streams
     await initLocalMedia();
@@ -852,8 +867,18 @@ async function startVideoChat() {
 
 function stopVideoChat() {
     console.log("WebRTC: Stopping video chat session...");
-    document.getElementById("videoChatOverlay").style.display = "none";
-    document.getElementById("videoChatRestoreBtn").style.display = "none";
+    const overlay = document.getElementById("videoChatOverlay");
+    const restoreBtn = document.getElementById("videoChatRestoreBtn");
+    const theater = document.getElementById("theaterContainer");
+    
+    if (overlay) overlay.style.display = "none";
+    if (restoreBtn) restoreBtn.style.display = "none";
+    
+    // Move it back inside theater container on clean up to restore initial DOM state
+    if (overlay && restoreBtn && theater) {
+        theater.appendChild(overlay);
+        theater.appendChild(restoreBtn);
+    }
     
     stopLocalMedia();
     
@@ -1035,17 +1060,28 @@ function makeOverlayDraggable() {
     }
     
     function setTranslate(xPos, yPos, el) {
-        const containerRect = container.getBoundingClientRect();
+        const isInFullscreen = (document.fullscreenElement === container);
+        let containerWidth, containerHeight;
+        
+        if (isInFullscreen) {
+            const containerRect = container.getBoundingClientRect();
+            containerWidth = containerRect.width;
+            containerHeight = containerRect.height;
+        } else {
+            containerWidth = window.innerWidth;
+            containerHeight = window.innerHeight;
+        }
+        
         const elRect = el.getBoundingClientRect();
         
-        const defaultLeft = containerRect.width - elRect.width - 20;
+        const defaultLeft = containerWidth - elRect.width - 20;
         const defaultTop = 20;
         
         const minX = -defaultLeft;
         const maxX = 20;
         
         const minY = -defaultTop;
-        const maxY = containerRect.height - elRect.height - defaultTop;
+        const maxY = containerHeight - elRect.height - defaultTop;
         
         const clampedX = Math.max(minX, Math.min(maxX, xPos));
         const clampedY = Math.max(minY, Math.min(maxY, yPos));
@@ -1076,12 +1112,12 @@ function toggleMinimize() {
     if (isMinimized) {
         overlay.classList.add("minimized");
         grid.classList.add("single-layout");
-        btn.innerText = "🗗";
+        btn.innerText = "👥";
         btn.title = "Restore Grid View";
     } else {
         overlay.classList.remove("minimized");
         grid.classList.remove("single-layout");
-        btn.innerText = "🗖";
+        btn.innerText = "👤";
         btn.title = "Minimize to Single View";
     }
     
@@ -1347,3 +1383,26 @@ document.getElementById("btnToggleCollapse").addEventListener("click", collapseC
 document.getElementById("videoChatRestoreBtn").addEventListener("click", restoreCompletely);
 document.getElementById("btnToggleAudio").addEventListener("click", toggleAudio);
 document.getElementById("btnToggleVideo").addEventListener("click", toggleVideo);
+
+// Dynamic fullscreen reparenting listener
+document.addEventListener("fullscreenchange", () => {
+    const overlay = document.getElementById("videoChatOverlay");
+    const restoreBtn = document.getElementById("videoChatRestoreBtn");
+    const theater = document.getElementById("theaterContainer");
+    
+    if (!overlay || !restoreBtn || !theater) return;
+    
+    if (document.fullscreenElement === theater) {
+        console.log("WebRTC Overlay: Entering fullscreen, reparenting to theaterContainer...");
+        theater.appendChild(overlay);
+        theater.appendChild(restoreBtn);
+    } else {
+        console.log("WebRTC Overlay: Exiting fullscreen, reparenting to document body...");
+        document.body.appendChild(overlay);
+        document.body.appendChild(restoreBtn);
+    }
+    
+    if (window.resetOverlayPosition) {
+        window.resetOverlayPosition();
+    }
+});
