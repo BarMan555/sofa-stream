@@ -237,6 +237,16 @@ class UniversalPlayer {
         }
     }
 
+    setVolume(volume) {
+        if (this.currentType === 'youtube') {
+            if (this.ytPlayer && typeof this.ytPlayer.setVolume === 'function') {
+                this.ytPlayer.setVolume(volume);
+            }
+        } else if (this.currentType === 'rutube') {
+            this.sendRutubeCommand('setVolume', { volume: volume / 100 });
+        }
+    }
+
     getCurrentTime() {
         if (this.currentType === 'youtube') {
             return (this.ytPlayer && this.ytPlayer.getCurrentTime) ? this.ytPlayer.getCurrentTime() : 0;
@@ -863,6 +873,7 @@ async function startVideoChat() {
     slots.forEach(s => s.remove());
     
     updateGridLayout();
+    startDuckingLoop();
 }
 
 function stopVideoChat() {
@@ -880,6 +891,8 @@ function stopVideoChat() {
         theater.appendChild(restoreBtn);
     }
     
+    stopDuckingLoop();
+    audioAnalysers = {};
     stopLocalMedia();
     
     // Close all peer connections
@@ -914,6 +927,8 @@ async function initLocalMedia() {
     if (localVideo) {
         localVideo.srcObject = localStream;
     }
+    
+    registerAudioAnalyser("local", localStream);
 }
 
 function generateMockMediaStream() {
@@ -1256,6 +1271,7 @@ function getOrCreatePeerConnection(peerUserId, isInitiator) {
         console.log(`WebRTC: Remote track received from ${peerUserId}`);
         const remoteStream = event.streams[0];
         displayRemoteStream(peerUserId, remoteStream);
+        registerAudioAnalyser(peerUserId, remoteStream);
     };
 
     pc.onconnectionstatechange = () => {
@@ -1357,6 +1373,8 @@ function closePeerConnection(peerUserId) {
         delete peerConnections[peerUserId];
     }
     
+    unregisterAudioAnalyser(peerUserId);
+    
     const slot = document.getElementById(`slot-${peerUserId}`);
     if (slot) {
         slot.remove();
@@ -1406,3 +1424,130 @@ document.addEventListener("fullscreenchange", () => {
         window.resetOverlayPosition();
     }
 });
+
+// --- Audio Ducking (Speech detection and automatic player volume ducking) ---
+
+let audioAnalysers = {};
+let audioContext = null;
+let isSomeoneSpeaking = false;
+let currentActualVolume = 100;
+let currentTargetVolume = 100;
+let duckingTimerId = null;
+
+function registerAudioAnalyser(id, stream) {
+    try {
+        if (!stream || stream.getAudioTracks().length === 0) return;
+        
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        
+        if (audioContext.state === "suspended") {
+            audioContext.resume();
+        }
+        
+        console.log(`Audio Ducking: Registering analyser for source: ${id}`);
+        
+        const source = audioContext.createMediaStreamSource(stream);
+        const analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256;
+        
+        source.connect(analyser);
+        audioAnalysers[id] = analyser;
+    } catch (e) {
+        console.error(`Audio Ducking: Failed to register analyser for ${id}`, e);
+    }
+}
+
+function unregisterAudioAnalyser(id) {
+    if (audioAnalysers[id]) {
+        console.log(`Audio Ducking: Unregistering analyser for source: ${id}`);
+        delete audioAnalysers[id];
+    }
+}
+
+function startDuckingLoop() {
+    if (duckingTimerId) return;
+    
+    console.log("Audio Ducking: Speech detection loop started.");
+    
+    duckingTimerId = setInterval(() => {
+        let maxRms = 0;
+        
+        // Analyze all registered streams
+        for (const id in audioAnalysers) {
+            const analyser = audioAnalysers[id];
+            const dataArray = new Float32Array(analyser.fftSize);
+            analyser.getFloatTimeDomainData(dataArray);
+            
+            let sumSquares = 0.0;
+            for (const amplitude of dataArray) {
+                sumSquares += amplitude * amplitude;
+            }
+            const rms = Math.sqrt(sumSquares / dataArray.length);
+            if (rms > maxRms) {
+                maxRms = rms;
+            }
+        }
+        
+        // Speech threshold (0.015 is a standard clean gate for speech)
+        const speechThreshold = 0.015;
+        isSomeoneSpeaking = (maxRms > speechThreshold);
+        
+        // Visual indicator in UI for active speakers
+        updateSpeakerVolumeIndicators();
+        
+        // Volume adjustment
+        if (isSomeoneSpeaking) {
+            currentTargetVolume = 30; // Duck volume to 30%
+        } else {
+            currentTargetVolume = 100; // Restore to 100%
+        }
+        
+        // Smooth transition
+        if (Math.abs(currentActualVolume - currentTargetVolume) > 1) {
+            currentActualVolume += (currentTargetVolume - currentActualVolume) * 0.15;
+            if (videoPlayer && typeof videoPlayer.setVolume === 'function') {
+                videoPlayer.setVolume(currentActualVolume);
+            }
+        } else if (currentActualVolume !== currentTargetVolume) {
+            currentActualVolume = currentTargetVolume;
+            if (videoPlayer && typeof videoPlayer.setVolume === 'function') {
+                videoPlayer.setVolume(currentActualVolume);
+            }
+        }
+    }, 60);
+}
+
+function stopDuckingLoop() {
+    if (duckingTimerId) {
+        clearInterval(duckingTimerId);
+        duckingTimerId = null;
+        console.log("Audio Ducking: Speech detection loop stopped.");
+    }
+}
+
+function updateSpeakerVolumeIndicators() {
+    for (const id in audioAnalysers) {
+        const analyser = audioAnalysers[id];
+        const dataArray = new Float32Array(analyser.fftSize);
+        analyser.getFloatTimeDomainData(dataArray);
+        
+        let sumSquares = 0.0;
+        for (const amplitude of dataArray) {
+            sumSquares += amplitude * amplitude;
+        }
+        const rms = Math.sqrt(sumSquares / dataArray.length);
+        const isSpeaking = (rms > 0.015);
+        
+        const slotId = (id === "local") ? "slot-local" : `slot-${id}`;
+        const slotEl = document.getElementById(slotId);
+        if (slotEl) {
+            if (isSpeaking) {
+                slotEl.classList.add("active-speaker");
+            } else {
+                slotEl.classList.remove("active-speaker");
+            }
+        }
+    }
+}
