@@ -130,12 +130,18 @@ public class Room : AggregateRoot
     /// </summary>
     /// <param name="participant">The participant entity to be added to the viewing session.</param>
     /// <exception cref="ArgumentException">Thrown when the participant reference is null.</exception>
-    public void AddParticipant(RoomParticipant participant)
+    public Result AddParticipant(RoomParticipant participant)
     {
         if (participant is null) throw new ArgumentException("Participant must not be null");
-        if (_participants.Any(p => p.UserId == participant.UserId)) return;
+        if (_participants.Any(p => p.UserId == participant.UserId)) return Result.Success();
+        
+        if (_participants.Count >= 4)
+        {
+            return Result.Failure(DomainErrors.Room.RoomFull);
+        }
         
         _participants.Add(participant);
+        return Result.Success();
     }
     
     /// <summary>

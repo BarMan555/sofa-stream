@@ -21,4 +21,27 @@ public class RoomTests
         Assert.Equal(newTime, room.CurrentPosition);
         Assert.Equal(isPlaying, room.State == PlaybackState.Playing);
     }
+
+    [Fact]
+    public void AddParticipant_ShouldReturnFailure_WhenRoomIsFull()
+    {
+        // Arrange
+        var hostId = Guid.NewGuid();
+        var room = new Room("Full Room", hostId); // Host is 1st participant
+        
+        var res2 = room.AddParticipant(new RoomParticipant(Guid.NewGuid(), isHost: false));
+        var res3 = room.AddParticipant(new RoomParticipant(Guid.NewGuid(), isHost: false));
+        var res4 = room.AddParticipant(new RoomParticipant(Guid.NewGuid(), isHost: false));
+        
+        // Act
+        var res5 = room.AddParticipant(new RoomParticipant(Guid.NewGuid(), isHost: false));
+        
+        // Assert
+        Assert.True(res2.IsSuccess);
+        Assert.True(res3.IsSuccess);
+        Assert.True(res4.IsSuccess);
+        Assert.True(res5.IsFailure);
+        Assert.Equal("Room.RoomFull", res5.Error.Code);
+        Assert.Equal(4, room.Participants.Count);
+    }
 }

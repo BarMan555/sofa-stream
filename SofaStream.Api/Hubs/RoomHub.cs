@@ -49,6 +49,17 @@ public class RoomHub : Hub
         }
 
         await Groups.AddToGroupAsync(connectionId, roomId.ToString());
+        
+        // Notify other participants that a new user joined
+        await Clients.Group(roomId.ToString()).SendAsync("OnUserJoined", userId.ToString());
+    }
+
+    /// <summary>
+    /// Routes WebRTC signaling messages (SDP offer/answer, ICE candidates) between participants in the room.
+    /// </summary>
+    public async Task SendSignal(string roomId, string senderUserId, string targetUserId, string signal)
+    {
+        await Clients.Group(roomId).SendAsync("OnSignalReceived", senderUserId, targetUserId, signal);
     }
 
     /// <summary>
@@ -60,6 +71,9 @@ public class RoomHub : Hub
         if (Connections.TryRemove(connectionId, out var userInfo))
         {
             await Groups.RemoveFromGroupAsync(connectionId, userInfo.RoomId.ToString());
+            
+            // Notify other participants that this user disconnected
+            await Clients.Group(userInfo.RoomId.ToString()).SendAsync("OnUserLeft", userInfo.UserId.ToString());
             
             var serviceProvider = Context.GetHttpContext()?.RequestServices;
             if (serviceProvider != null)
