@@ -17,6 +17,7 @@ _ReSharper.Caches/
 
 # Конфигурация окружения
 .env
+docker-compose-bd-local.yml
 
 # Системные файлы macOS
 .DS_Store
