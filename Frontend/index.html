@@ -9,36 +9,93 @@
 </head>
 <body>
 <div class="container">
-    <header>
-        <h1>🛋️ Sofa Stream</h1>
-    </header>
-
-    <main>
-        <div class="panel">
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label>My User ID (Auto-generated):</label>
-                <span id="userIdDisplay" style="font-weight: bold; font-family: monospace; font-size: 15px;"></span>
+    <!-- Main Menu View -->
+    <div id="main-menu" class="panel view">
+        <div class="logo-container" style="display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 24px;">
+            <div class="logo-icon-wrapper" style="position: relative; width: 64px; height: 64px; display: flex; align-items: center; justify-content: center;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="url(#orange-gradient)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 100%; height: 100%; filter: drop-shadow(0 0 8px rgba(240, 90, 40, 0.6));">
+                    <defs>
+                        <linearGradient id="orange-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#ff6b3d" />
+                            <stop offset="100%" stop-color="#f04b14" />
+                        </linearGradient>
+                    </defs>
+                    <path d="M3 12v5a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5" />
+                    <path d="M3 12a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2" />
+                    <path d="M6 10V7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3" />
+                    <polygon points="10 12 10 16 14 14" fill="url(#orange-gradient)" stroke="none" />
+                </svg>
             </div>
-
-            <div class="tabs-container">
-                <button id="tabCreateBtn" class="tab-btn active" onclick="switchTab('create')">Create Room</button>
-                <button id="tabJoinBtn" class="tab-btn" onclick="switchTab('join')">Join Room</button>
-            </div>
-
-            <div id="tabCreateContent" class="tab-content active">
-                <h3>Room Name</h3>
-                <input type="text" id="roomNameInput" placeholder="e.g. Movie Night" />
-                <button onclick="createRoom()" class="btn-primary" style="margin-top: 4px;">Create Room</button>
-            </div>
-
-            <div id="tabJoinContent" class="tab-content">
-                <h3>Room ID</h3>
-                <input type="text" id="roomIdInput" placeholder="Enter Room ID here..." />
-                <button onclick="joinRoom()" class="btn-secondary" style="margin-top: 4px;">Join Room</button>
-            </div>
-
-            <div id="status" class="status-badge disconnected" style="margin-top: 20px;">Disconnected</div>
+            <h1 style="font-size: 2.5rem; font-weight: 800; color: #fff; letter-spacing: -0.5px; margin: 0; background: linear-gradient(to right, #ff6b3d, #f04b14); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 2px 10px rgba(240,90,40,0.2));">
+                Sofa Stream
+            </h1>
+            <span style="color: #9ca3af; font-size: 1rem; font-weight: 400; letter-spacing: 0.5px;">Sync & Chill with friends</span>
         </div>
+        
+        <div class="menu-stack">
+            <button id="btn-menu-create" class="btn-primary btn-large">Create Room</button>
+            <button id="btn-menu-join" class="btn-secondary btn-large">Join Room</button>
+        </div>
+
+        <div class="about-section">
+            <button id="btn-about" class="btn-about-toggle">About Sofa Stream</button>
+            <div id="about-container" class="about-container hidden">
+                <p>Sofa Stream lets you watch YouTube and RuTube videos in perfect sync with your friends, complete with premium WebRTC video and voice chat overlays.</p>
+                <p class="user-id-note">My User ID: <span id="userIdDisplay" class="userid-mono"></span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Form View -->
+    <div id="settings-form" class="panel view hidden">
+        <h2 id="settings-heading" class="settings-title">Room Settings</h2>
+        
+        <div class="settings-stack">
+            <div class="form-group">
+                <label for="userNameInput">Your Name</label>
+                <input type="text" id="userNameInput" placeholder="Enter your display name..." />
+            </div>
+
+            <div id="settings-room-name-group" class="form-group">
+                <label for="roomNameInput">Room Name</label>
+                <input type="text" id="roomNameInput" placeholder="e.g. Cozy Movie Night" />
+            </div>
+
+            <div id="settings-room-id-group" class="form-group hidden">
+                <label for="roomIdInput">Room ID</label>
+                <input type="text" id="roomIdInput" placeholder="Enter Room ID to join..." />
+            </div>
+
+
+            <div class="settings-actions">
+                <button id="btn-settings-back" class="btn-secondary">Back</button>
+                <button id="btn-settings-confirm" class="btn-primary">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Room View -->
+    <div id="room-view" class="view hidden">
+        <header class="room-nav-header">
+            <div class="room-details">
+                <span class="room-icon">🛋️</span>
+                <div class="room-meta">
+                    <div class="room-title-row" style="display: flex; align-items: center; gap: 12px;">
+                        <h2 id="room-name-display" class="room-name">Connecting...</h2>
+                        <span id="participant-count" class="participant-count">👥 1 participant</span>
+                    </div>
+                    <div class="room-id-row" style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+                        <span class="room-id-label" style="font-size: 11px; color: var(--text-muted); font-weight: 500;">Room ID:</span>
+                        <span id="room-id-value" style="font-family: monospace; font-size: 11px; color: var(--text-muted); font-weight: 600; user-select: all;">...</span>
+                        <button id="btn-copy-id" class="btn-copy" style="background: transparent; border: none; padding: 2px 6px; font-size: 11px; color: var(--primary); cursor: pointer; font-weight: 600; transition: color 0.2s;" title="Copy Room ID">📋 Copy</button>
+                    </div>
+                </div>
+            </div>
+            <button id="btn-leave-room" class="btn-leave">Leave Room</button>
+        </header>
+
+        <!-- Hidden old status badge to prevent JS binding errors -->
+        <div id="status" class="status-badge disconnected" style="display: none !important;">Disconnected</div>
 
         <div id="hostControlsPanel" class="panel" style="display: none;">
             <h3>Change Video (Host Only)</h3>
@@ -99,7 +156,7 @@
                 </div>
             </div>
         </div>
-    </main>
+    </div>
 </div>
 
 <script src="app.js?v=1.4"></script>

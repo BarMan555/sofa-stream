@@ -75,9 +75,160 @@ controlsPanel.addEventListener('mouseleave', () => {
     resetInactivityTimer();
 });
 
-// --- UI Authorization Management Helper ---
+// --- UI Authorization & State/View Management Helper ---
 let currentRoomId = null;
 let isHost = false;
+let activeParticipants = new Set();
+let currentSettingsMode = 'create'; // 'create' or 'join'
+
+function switchView(viewId) {
+    const mainMenu = document.getElementById('main-menu');
+    const settingsForm = document.getElementById('settings-form');
+    const roomView = document.getElementById('room-view');
+    
+    if (mainMenu) mainMenu.classList.add('hidden');
+    if (settingsForm) settingsForm.classList.add('hidden');
+    if (roomView) roomView.classList.add('hidden');
+    
+    if (viewId === 'main-menu') {
+        if (mainMenu) mainMenu.classList.remove('hidden');
+    } else if (viewId === 'settings-form') {
+        if (settingsForm) settingsForm.classList.remove('hidden');
+    } else if (viewId === 'room-view') {
+        if (roomView) roomView.classList.remove('hidden');
+    }
+}
+
+// Bind Main Menu & Settings Actions
+function initLayoutActions() {
+    const btnAbout = document.getElementById('btn-about');
+    if (btnAbout) {
+        btnAbout.addEventListener('click', () => {
+            const aboutContainer = document.getElementById('about-container');
+            if (aboutContainer) aboutContainer.classList.toggle('hidden');
+        });
+    }
+
+    const btnMenuCreate = document.getElementById('btn-menu-create');
+    if (btnMenuCreate) {
+        btnMenuCreate.addEventListener('click', () => {
+            currentSettingsMode = 'create';
+            const heading = document.getElementById('settings-heading');
+            if (heading) heading.innerText = 'Create Room Settings';
+            
+            const rnGroup = document.getElementById('settings-room-name-group');
+            const riGroup = document.getElementById('settings-room-id-group');
+            if (rnGroup) rnGroup.classList.remove('hidden');
+            if (riGroup) riGroup.classList.add('hidden');
+            
+            switchView('settings-form');
+        });
+    }
+
+    const btnMenuJoin = document.getElementById('btn-menu-join');
+    if (btnMenuJoin) {
+        btnMenuJoin.addEventListener('click', () => {
+            currentSettingsMode = 'join';
+            const heading = document.getElementById('settings-heading');
+            if (heading) heading.innerText = 'Join Room Settings';
+            
+            const rnGroup = document.getElementById('settings-room-name-group');
+            const riGroup = document.getElementById('settings-room-id-group');
+            if (rnGroup) rnGroup.classList.add('hidden');
+            if (riGroup) riGroup.classList.remove('hidden');
+            
+            switchView('settings-form');
+        });
+    }
+
+    const btnSettingsBack = document.getElementById('btn-settings-back');
+    if (btnSettingsBack) {
+        btnSettingsBack.addEventListener('click', () => {
+            switchView('main-menu');
+        });
+    }
+
+    const btnSettingsConfirm = document.getElementById('btn-settings-confirm');
+    if (btnSettingsConfirm) {
+        btnSettingsConfirm.addEventListener('click', async () => {
+            const userName = document.getElementById('userNameInput').value.trim();
+            if (userName) {
+                localStorage.setItem('sofastream_username', userName);
+            }
+            
+            if (currentSettingsMode === 'create') {
+                await createRoom();
+            } else {
+                await joinRoom();
+            }
+        });
+    }
+
+    const btnLeaveRoom = document.getElementById('btn-leave-room');
+    if (btnLeaveRoom) {
+        btnLeaveRoom.addEventListener('click', leaveRoom);
+    }
+
+    const btnCopyId = document.getElementById('btn-copy-id');
+    if (btnCopyId) {
+        btnCopyId.addEventListener('click', () => {
+            const idVal = document.getElementById('room-id-value').textContent;
+            navigator.clipboard.writeText(idVal).then(() => {
+                btnCopyId.textContent = "✅ Copied";
+                setTimeout(() => {
+                    btnCopyId.textContent = "📋 Copy";
+                }, 2000);
+            }).catch(err => {
+                console.error("Failed to copy text:", err);
+            });
+        });
+    }
+
+    // Load saved username
+    const savedName = localStorage.getItem('sofastream_username');
+    if (savedName) {
+        const input = document.getElementById('userNameInput');
+        if (input) input.value = savedName;
+    }
+}
+
+async function leaveRoom() {
+    console.log("Leaving room...");
+    if (connection) {
+        try {
+            await connection.stop();
+        } catch (e) {
+            console.error("Error stopping SignalR connection:", e);
+        }
+    }
+    
+    stopVideoChat();
+    hidePlayerBlock();
+    
+    currentRoomId = null;
+    isHost = false;
+    syncMachine.setHostStatus(false);
+    updateHostUiVisibility();
+    
+    const statusEl = document.getElementById('status');
+    if (statusEl) {
+        statusEl.textContent = "Disconnected";
+        statusEl.className = "status-badge disconnected";
+    }
+    
+    switchView('main-menu');
+}
+
+function updateParticipantUi() {
+    const el = document.getElementById('participant-count');
+    if (el) {
+        const count = activeParticipants.size;
+        el.textContent = `👥 ${count} participant${count !== 1 ? 's' : ''}`;
+    }
+}
+
+// Call action setup immediately
+initLayoutActions();
 
 /**
  * FIXED: Dynamically adjusts the visibility of host-restricted interface components based on user role status.
@@ -480,12 +631,16 @@ connection.on("OnPlaybackStateChanged", (data) => {
 connection.on("OnUserJoined", (userId) => {
     if (userId === globalUserId) return;
     console.log(`WebRTC: User joined room: ${userId}`);
+    activeParticipants.add(userId);
+    updateParticipantUi();
 });
 
 connection.on("OnUserLeft", (userId) => {
     if (userId === globalUserId) return;
     console.log(`WebRTC: User left room: ${userId}`);
     closePeerConnection(userId);
+    activeParticipants.delete(userId);
+    updateParticipantUi();
 });
 
 connection.on("OnSignalReceived", async (senderUserId, targetUserId, signalStr) => {
@@ -771,6 +926,24 @@ async function fetchAndSyncCurrentState(roomId) {
         statusEl.textContent = `Connected to Room: "${state.name || 'Cozy Room'}"\nID: ${roomId}`;
         statusEl.className = "status-badge connected";
 
+        const roomDisplayEl = document.getElementById('room-name-display');
+        if (roomDisplayEl) {
+            roomDisplayEl.textContent = state.name || 'Cozy Room';
+        }
+
+        const roomIdValEl = document.getElementById('room-id-value');
+        if (roomIdValEl) {
+            roomIdValEl.textContent = roomId;
+        }
+        
+        activeParticipants.clear();
+        activeParticipants.add(globalUserId);
+        if (state.participants) {
+            state.participants.forEach(p => activeParticipants.add(p.userId));
+        }
+        updateParticipantUi();
+        switchView('room-view');
+
         if (state.currentVideo && state.currentVideo.url && videoPlayer) {
             const videoId = extractVideoId(state.currentVideo.url);
             syncMachine.handleRemoteVideoChange(videoId, state.currentPositionSeconds);
@@ -928,23 +1101,25 @@ window.youtubeBlocked = false;
         });
 })();
 
-// --- Tab Navigation Switcher ---
+// --- Tab Navigation Switcher (Safe Stub) ---
 function switchTab(tabName) {
     const createBtn = document.getElementById('tabCreateBtn');
     const joinBtn = document.getElementById('tabJoinBtn');
     const createContent = document.getElementById('tabCreateContent');
     const joinContent = document.getElementById('tabJoinContent');
 
-    if (tabName === 'create') {
-        createBtn.classList.add('active');
-        joinBtn.classList.remove('active');
-        createContent.classList.add('active');
-        joinContent.classList.remove('active');
-    } else {
-        createBtn.classList.remove('active');
-        joinBtn.classList.add('active');
-        createContent.classList.remove('active');
-        joinContent.classList.add('active');
+    if (createBtn && joinBtn && createContent && joinContent) {
+        if (tabName === 'create') {
+            createBtn.classList.add('active');
+            joinBtn.classList.remove('active');
+            createContent.classList.add('active');
+            joinContent.classList.remove('active');
+        } else {
+            createBtn.classList.remove('active');
+            joinBtn.classList.add('active');
+            createContent.classList.remove('active');
+            joinContent.classList.add('active');
+        }
     }
 }
 window.switchTab = switchTab;

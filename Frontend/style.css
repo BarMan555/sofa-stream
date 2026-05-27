@@ -30,6 +30,10 @@ body {
     width: 100%;
     max-width: 900px;
     padding: 30px 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 header {
@@ -714,4 +718,296 @@ button:active {
 }
 #theaterContainer:fullscreen .video-chat-restore-btn {
     position: absolute !important;
+}
+
+/* =====================================================================
+   NEW: STATE-DRIVEN LAYOUT VIEW STYLES & TRANSITIONS
+   ===================================================================== */
+
+/* View Visibility Management */
+.view {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.hidden {
+    display: none !important;
+}
+
+/* Main Menu Custom Layout */
+#main-menu {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto;
+    padding: 0;
+    width: 100%;
+}
+
+#main-menu:hover {
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+#main-menu header {
+    margin-bottom: 40px;
+    text-align: center;
+}
+
+.menu-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin: 30px 0;
+    width: 100%;
+    max-width: 480px; /* Limit button width so they look premium and aligned */
+}
+
+.btn-large {
+    padding: 16px 28px;
+    font-size: 16px;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.subtitle {
+    color: var(--text-muted);
+    font-size: 1.1em;
+    margin-top: 8px;
+}
+
+/* About Section info styling */
+.about-section {
+    margin-top: 30px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08); /* Fainter line on transparent background */
+    padding-top: 20px;
+    text-align: center;
+    width: 100%;
+    max-width: 480px;
+}
+
+.btn-about-toggle {
+    background: transparent;
+    border: none;
+    color: var(--primary);
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 14px;
+    transition: color 0.2s;
+    padding: 6px 12px;
+}
+
+.btn-about-toggle:hover {
+    color: var(--primary-hover);
+    text-decoration: underline;
+}
+
+.about-container {
+    background-color: var(--input-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 12px;
+    text-align: left;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--text-muted);
+    animation: slide-in-down 0.25s ease-out;
+}
+
+.user-id-note {
+    margin-top: 12px;
+    border-top: 1px dashed var(--panel-border);
+    padding-top: 10px;
+    font-weight: 500;
+}
+
+.userid-mono {
+    font-family: monospace;
+    color: var(--text-color);
+    font-weight: 700;
+}
+
+@keyframes slide-in-down {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Settings Form Specific Styles */
+.settings-title {
+    font-size: 1.6em;
+    margin-bottom: 24px;
+    color: var(--text-color);
+    border-bottom: 1px solid var(--panel-border);
+    padding-bottom: 12px;
+}
+
+.settings-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-weight: 600;
+}
+
+.form-group-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    background-color: var(--input-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+}
+
+.toggle-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.toggle-label {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.toggle-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.settings-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.settings-actions button {
+    flex: 1;
+}
+
+/* Toggle Switch Base Design */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    flex-shrink: 0;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--secondary);
+    border: 1px solid var(--panel-border);
+    transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 3px;
+    bottom: 3px;
+    background-color: var(--text-muted);
+    transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+input:checked + .slider {
+    background-color: var(--primary);
+    border-color: var(--primary-hover);
+}
+
+input:checked + .slider:before {
+    transform: translateX(20px);
+    background-color: #ffffff;
+}
+
+.slider.round {
+    border-radius: 24px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+/* Active Room Top Header Design */
+.room-nav-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 16px;
+    padding: 16px 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+}
+
+.room-details {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.room-icon {
+    font-size: 24px;
+}
+
+.room-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.room-name {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+.participant-count {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.btn-leave {
+    background-color: rgba(255, 51, 51, 0.12);
+    border: 1px solid rgba(255, 51, 51, 0.25);
+    color: #ff4d4d;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-leave:hover {
+    background-color: #ff3333;
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(255, 51, 51, 0.3);
 }
