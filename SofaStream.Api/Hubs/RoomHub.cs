@@ -101,9 +101,19 @@ public class RoomHub : Hub
             using var scope = _serviceScopeFactory.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-            // 1. Look up the participant using Context.ConnectionId in the RoomParticipant table
-            var participant = await dbContext.Set<RoomParticipant>()
-                .FirstOrDefaultAsync(p => p.ConnectionId == connectionId);
+            // 1. Look up the participant using Context.ConnectionId or fall back to userInfo
+            RoomParticipant? participant = null;
+            if (!string.IsNullOrEmpty(connectionId))
+            {
+                participant = await dbContext.Set<RoomParticipant>()
+                    .FirstOrDefaultAsync(p => p.ConnectionId == connectionId);
+            }
+
+            if (participant == null && userInfo != null)
+            {
+                participant = await dbContext.Set<RoomParticipant>()
+                    .FirstOrDefaultAsync(p => p.RoomId == userInfo.RoomId && p.UserId == userInfo.UserId);
+            }
 
             if (participant != null)
             {
@@ -114,7 +124,7 @@ public class RoomHub : Hub
                 await Groups.RemoveFromGroupAsync(connectionId, roomId.ToString());
                 await Clients.Group(roomId.ToString()).SendAsync("OnUserLeft", userId.ToString());
 
-                // 2. Delete the participant record from the database (via domain aggregate root to trigger correct state updates)
+                // Load Room and apply domain rules (like host reassignment) before explicit deletion
                 var room = await dbContext.Rooms
                     .Include(r => r.Participants)
                     .FirstOrDefaultAsync(r => r.Id == roomId);
@@ -122,14 +132,11 @@ public class RoomHub : Hub
                 if (room != null)
                 {
                     room.RemoveParticipant(userId);
-                    await dbContext.SaveChangesAsync();
                 }
-                else
-                {
-                    // Fallback to direct deletion if Room was already deleted or not found
-                    dbContext.Set<RoomParticipant>().Remove(participant);
-                    await dbContext.SaveChangesAsync();
-                }
+
+                // Explicitly delete the participant from the DbSet to ensure it is deleted in the database
+                dbContext.Set<RoomParticipant>().Remove(participant);
+                await dbContext.SaveChangesAsync();
 
                 // 3. Immediately query the remaining participant count for that specific RoomId
                 var remainingCount = await dbContext.Set<RoomParticipant>()
@@ -148,28 +155,9 @@ public class RoomHub : Hub
             }
             else if (userInfo != null)
             {
-                // Fallback in case ConnectionId wasn't mapped in the database yet but exists in local dictionary
+                // Fallback in case we somehow didn't find the participant in the database at all
                 await Groups.RemoveFromGroupAsync(connectionId, userInfo.RoomId.ToString());
                 await Clients.Group(userInfo.RoomId.ToString()).SendAsync("OnUserLeft", userInfo.UserId.ToString());
-
-                var room = await dbContext.Rooms
-                    .Include(r => r.Participants)
-                    .FirstOrDefaultAsync(r => r.Id == userInfo.RoomId);
-
-                if (room != null)
-                {
-                    room.RemoveParticipant(userInfo.UserId);
-                    await dbContext.SaveChangesAsync();
-
-                    var remainingCount = await dbContext.Set<RoomParticipant>()
-                        .CountAsync(p => p.RoomId == userInfo.RoomId);
-
-                    if (remainingCount == 0)
-                    {
-                        dbContext.Rooms.Remove(room);
-                        await dbContext.SaveChangesAsync();
-                    }
-                }
             }
         }
         catch (Exception ex)
