@@ -288,6 +288,15 @@ class UniversalPlayer {
         const rtEl = document.getElementById(this.rtIframeId);
         
         if (type === 'youtube') {
+            if (window.youtubeBlocked) {
+                if (ytEl) ytEl.style.display = 'none';
+                if (rtEl) {
+                    rtEl.style.display = 'block';
+                    rtEl.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&enablejsapi=0`;
+                }
+                showPlayerBlock();
+                return;
+            }
             if (rtEl) rtEl.style.display = 'none';
             if (ytEl) ytEl.style.display = 'block';
             
@@ -779,22 +788,130 @@ function extractVideoId(url) {
         return ytMatch[2];
     }
     
-    const rtReg = /rutube\.ru\/(video|play\/embed)\/([a-zA-Z0-9]+)/;
+    const rtReg = /rutube\.ru\/(?:video|play\/embed)\/(?:private\/)?([a-zA-Z0-9]+)/;
     const rtMatch = url.match(rtReg);
     if (rtMatch) {
-        return rtMatch[2];
+        return rtMatch[1];
     }
     
     return null;
 }
 
 // --- Dynamic Gateway Injector ---
-window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
+window.youtubeBlocked = false;
 
-const tag = document.createElement('script');
-tag.src = "https://www.youtube.com/iframe_api";
-const firstScriptTag = document.getElementsByTagName('script')[0];
-firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+// Gracefully handle YouTube API loading with a 4-second timeout
+(function loadYouTubeWithTimeout() {
+    if (typeof window.YT === "undefined") {
+        window.YT = {
+            PlayerState: {
+                UNSTARTED: -1,
+                ENDED: 0,
+                PLAYING: 1,
+                PAUSED: 2,
+                BUFFERING: 3,
+                CUED: 5
+            }
+        };
+    }
+
+    let apiLoaded = false;
+    let timeoutTriggered = false;
+    const originalOnReady = window.onYouTubeIframeAPIReady || onYouTubeIframeAPIReady;
+
+    window.onYouTubeIframeAPIReady = function() {
+        if (timeoutTriggered) {
+            console.warn("YouTube API loaded but after 4s timeout.");
+            return;
+        }
+        apiLoaded = true;
+        window.youtubeBlocked = false;
+        if (originalOnReady) {
+            try {
+                originalOnReady();
+            } catch (e) {
+                console.error("Error in onYouTubeIframeAPIReady callback", e);
+            }
+        }
+    };
+
+    const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => {
+            if (!apiLoaded) {
+                timeoutTriggered = true;
+                reject(new Error("YouTube API ERR_TIMED_OUT (4s limit reached)"));
+            }
+        }, 4000);
+    });
+
+    const scriptLoadPromise = new Promise((resolve, reject) => {
+        const tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        tag.onload = () => resolve();
+        tag.onerror = (err) => reject(err || new Error("YouTube API script failed to load"));
+
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        if (firstScriptTag && firstScriptTag.parentNode) {
+            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+        } else {
+            document.head.appendChild(tag);
+        }
+    });
+
+    Promise.race([scriptLoadPromise, timeoutPromise])
+        .catch((err) => {
+            window.youtubeBlocked = true;
+            console.warn("YouTube API blocked or timed out. Falling back to alternative methods.", err.message);
+            
+            if (typeof window.YT === "undefined") {
+                window.YT = {};
+            }
+            if (!window.YT.PlayerState) {
+                window.YT.PlayerState = {
+                    UNSTARTED: -1,
+                    ENDED: 0,
+                    PLAYING: 1,
+                    PAUSED: 2,
+                    BUFFERING: 3,
+                    CUED: 5
+                };
+            }
+            if (!window.YT.Player) {
+                window.YT.Player = class StubPlayer {
+                    constructor(ytContainerId, config) {
+                        this.ytContainerId = ytContainerId;
+                        this.config = config;
+                        console.warn(`Stub YouTube Player created for element: ${ytContainerId}`);
+                        if (config && config.events && typeof config.events.onReady === "function") {
+                            setTimeout(() => {
+                                try { config.events.onReady(); } catch (e) {}
+                            }, 50);
+                        }
+                    }
+                    cueVideoById(videoId, startSeconds = 0) {
+                        console.warn(`Stub cueVideoById called for ${videoId} at ${startSeconds}s`);
+                    }
+                    playVideo() {}
+                    pauseVideo() {}
+                    seekTo(seconds, allowSeekAhead) {}
+                    setVolume(volume) {}
+                    getCurrentTime() { return 0; }
+                    getDuration() { return 0; }
+                    getPlayerState() { return -1; }
+                };
+            }
+
+            if (!videoPlayer) {
+                try {
+                    if (originalOnReady) {
+                        originalOnReady();
+                    }
+                } catch (e) {
+                    console.error("Error executing fallback player initialization", e);
+                }
+            }
+        });
+})();
 
 // --- Tab Navigation Switcher ---
 function switchTab(tabName) {
