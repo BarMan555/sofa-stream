@@ -3,12 +3,6 @@ const API_BASE_URL = (window.location.hostname === "localhost" || window.locatio
     ? "http://localhost:5063"
     : window.location.origin;
 
-// Initialize SignalR Hub connection at the very top to prevent Temporal Dead Zone (TDZ) reference errors
-const connection = new signalR.HubConnectionBuilder()
-    .withUrl(`${API_BASE_URL}/hubs/room`)
-    .withAutomaticReconnect()
-    .build();
-
 // --- Time Synchronization (NTP Protocol) ---
 let serverTimeOffset = 0;
 
@@ -630,6 +624,11 @@ function onYouTubeIframeAPIReady() {
         }
     });
 }
+
+const connection = new signalR.HubConnectionBuilder()
+    .withUrl(`${API_BASE_URL}/hubs/room`)
+    .withAutomaticReconnect()
+    .build();
 
 connection.on("OnVideoChanged", (videoData) => {
     if (!videoData || !videoData.url) return;
