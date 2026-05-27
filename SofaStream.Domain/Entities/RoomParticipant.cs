@@ -28,6 +28,11 @@ public class RoomParticipant(Guid userId, bool isHost = false)
     /// A buffering state may trigger a global pause to ensure all participants remain synchronized.
     /// </summary>
     public bool IsBuffering { get; private set; } = false;
+
+    /// <summary>
+    /// Gets the SignalR connection identifier for the participant's active websocket connection.
+    /// </summary>
+    public string? ConnectionId { get; private set; }
     
     /// <summary>
     /// Updates the buffering state of the participant.
@@ -45,5 +50,14 @@ public class RoomParticipant(Guid userId, bool isHost = false)
     internal void SetHostState(bool isHost)
     {
         this.IsHost = isHost;
+    }
+
+    /// <summary>
+    /// Updates the SignalR connection identifier for this participant.
+    /// </summary>
+    /// <param name="connectionId">The SignalR connection identifier.</param>
+    public void SetConnectionId(string? connectionId)
+    {
+        this.ConnectionId = connectionId;
     }
 }
