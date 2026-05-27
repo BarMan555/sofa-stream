@@ -9,5 +9,6 @@ public class RoomParticipantConfiguration : IEntityTypeConfiguration<RoomPartici
     public void Configure(EntityTypeBuilder<RoomParticipant> builder)
     {
         builder.HasKey(p => new { p.RoomId, p.UserId });
+        builder.Property(p => p.ConnectionId).HasMaxLength(100);
     }
 }
