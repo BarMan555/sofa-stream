@@ -196,6 +196,17 @@ function initLayoutActions() {
         const input = document.getElementById('userNameInput');
         if (input) input.value = savedName;
     }
+
+    const btnChangeVideo = document.getElementById('btn-change-video');
+    if (btnChangeVideo) {
+        btnChangeVideo.addEventListener('click', async () => {
+            try {
+                await changeVideo();
+            } catch (err) {
+                console.error("Error triggering changeVideo pipeline:", err);
+            }
+        });
+    }
 }
 
 async function leaveRoom() {
