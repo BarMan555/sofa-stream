@@ -462,7 +462,7 @@ class UniversalPlayer {
             if (window.youtubeBlocked) {
                 if (ytEl) ytEl.style.display = 'none';
                 if (rtEl) {
-                    rtEl.setAttribute("sandbox", "allow-scripts allow-forms allow-presentation allow-popups");
+                    rtEl.setAttribute("sandbox", "allow-scripts allow-same-origin allow-forms allow-presentation allow-popups");
                     rtEl.style.display = 'block';
                     rtEl.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&enablejsapi=0`;
                 }
@@ -479,7 +479,7 @@ class UniversalPlayer {
         } else if (type === 'rutube') {
             if (ytEl) ytEl.style.display = 'none';
             if (rtEl) {
-                rtEl.setAttribute("sandbox", "allow-scripts allow-forms allow-presentation allow-popups");
+                rtEl.setAttribute("sandbox", "allow-scripts allow-same-origin allow-forms allow-presentation allow-popups");
                 rtEl.style.display = 'block';
                 rtEl.src = `https://rutube.ru/play/embed/${videoId}?rtBorders=0&rtButtons=0&rtLogo=0&skinColor=ff4500`;
             }
