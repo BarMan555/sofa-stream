@@ -84,6 +84,9 @@ controlsPanel.addEventListener('mouseleave', () => {
 // --- UI Authorization & State/View Management Helper ---
 let currentRoomId = null;
 let isHost = false;
+let isJoiningRoom = false;
+let lastUiInteractionTime = 0;
+const INTERACTION_GRACE_PERIOD_MS = 2000;
 let activeParticipants = new Set();
 let currentSettingsMode = 'create'; // 'create' or 'join'
 
@@ -679,10 +682,12 @@ function onPlayerStateChange(domainState) {
 let isDraggingProgressBar = false;
 
 document.getElementById('customPlayBtn').addEventListener('click', () => {
+    lastUiInteractionTime = Date.now();
     syncMachine.handleUiAction(PlaybackState.Playing);
 });
 
 document.getElementById('customPauseBtn').addEventListener('click', () => {
+    lastUiInteractionTime = Date.now();
     syncMachine.handleUiAction(PlaybackState.Paused);
 });
 
@@ -693,6 +698,7 @@ progressBar.addEventListener('touchstart', () => { isDraggingProgressBar = true;
 progressBar.addEventListener('touchend', () => { isDraggingProgressBar = false; });
 
 progressBar.addEventListener('change', () => {
+    lastUiInteractionTime = Date.now();
     const targetSeconds = parseFloat(progressBar.value);
     syncMachine.handleSliderSeek(targetSeconds);
 });
@@ -719,7 +725,7 @@ setInterval(() => {
     const playBtn = document.getElementById('customPlayBtn');
     const pauseBtn = document.getElementById('customPauseBtn');
 
-    if (!currentRoomId) {
+    if (!currentRoomId || isJoiningRoom) {
         playBtn.disabled = true;
         pauseBtn.disabled = true;
         return;
@@ -742,6 +748,10 @@ setInterval(() => {
             progressBar.style.background = `linear-gradient(to right, var(--primary) ${percentage}%, #232228 ${percentage}%)`;
         }
         document.getElementById('customTimeLabel').textContent = `${formatTime(currentTime, duration)} / ${formatTime(duration, duration)}`;
+    }
+
+    if (Date.now() - lastUiInteractionTime < INTERACTION_GRACE_PERIOD_MS) {
+        return;
     }
 
     if (isHost && typeof videoPlayer.player.getPlayerState === 'function') {
@@ -832,12 +842,8 @@ async function joinRoom() {
 
     try { stopVideoChat(); } catch (e) {}
 
+    isJoiningRoom = true;
     try {
-        currentRoomId = roomId;
-        if (isHost === false) syncMachine.setHostStatus(false);
-
-        updateHostUiVisibility(); // FIXED: Secure sync execution path to keep panel hidden for guests
-
         const joinResponse = await fetch(`${API_BASE_URL}/api/room/${roomId}/join`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -854,9 +860,29 @@ async function joinRoom() {
                 }
             } catch (e) {}
             alert(errorMsg);
-            currentRoomId = null;
+            isJoiningRoom = false;
             return;
         }
+
+        currentRoomId = roomId;
+
+        try {
+            const stateResponse = await fetch(`${API_BASE_URL}/api/room/${roomId}`);
+            if (stateResponse.ok) {
+                const state = await stateResponse.json();
+                if (state && state.participants) {
+                    const me = state.participants.find(p => p.userId === globalUserId);
+                    if (me) {
+                        isHost = me.isHost;
+                    }
+                }
+            }
+        } catch (e) {
+            console.error("Error validating host status during join:", e);
+        }
+
+        syncMachine.setHostStatus(isHost);
+        updateHostUiVisibility();
 
         if (connection.state === signalR.HubConnectionState.Disconnected) {
             await connection.start();
@@ -869,10 +895,20 @@ async function joinRoom() {
         console.error("SignalR Connection Error: ", err);
         alert("Failed to connect to the room.");
         currentRoomId = null;
+    } finally {
+        isJoiningRoom = false;
     }
 }
 
 async function changeVideo() {
+    if (!currentRoomId && isJoiningRoom) {
+        console.log("Session establishment in progress, waiting...");
+        for (let i = 0; i < 30; i++) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            if (currentRoomId) break;
+        }
+    }
+
     if (!currentRoomId) return alert("Join a room first!");
 
     const videoUrl = document.getElementById('videoUrlInput').value.trim();
