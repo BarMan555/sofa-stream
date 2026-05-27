@@ -152,6 +152,12 @@ class UniversalPlayer {
                 },
                 'onReady': () => {
                     console.log("YouTube Player is fully READY.");
+                    if (this.ytPlayer && typeof this.ytPlayer.getIframe === 'function') {
+                        const ytIframe = this.ytPlayer.getIframe();
+                        if (ytIframe) {
+                            ytIframe.setAttribute("sandbox", "allow-scripts allow-same-origin allow-forms allow-presentation");
+                        }
+                    }
                     this.onPlayerReadyCallback();
                 }
             }
@@ -291,6 +297,7 @@ class UniversalPlayer {
             if (window.youtubeBlocked) {
                 if (ytEl) ytEl.style.display = 'none';
                 if (rtEl) {
+                    rtEl.setAttribute("sandbox", "allow-scripts allow-same-origin allow-forms allow-presentation");
                     rtEl.style.display = 'block';
                     rtEl.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&enablejsapi=0`;
                 }
@@ -307,6 +314,7 @@ class UniversalPlayer {
         } else if (type === 'rutube') {
             if (ytEl) ytEl.style.display = 'none';
             if (rtEl) {
+                rtEl.setAttribute("sandbox", "allow-scripts allow-same-origin allow-forms allow-presentation");
                 rtEl.style.display = 'block';
                 rtEl.src = `https://rutube.ru/play/embed/${videoId}?rtBorders=0&rtButtons=0&rtLogo=0&skinColor=ff4500`;
             }
@@ -436,7 +444,7 @@ function uuidv4() {
 }
 
 const globalUserId = uuidv4();
-document.getElementById('userIdDisplay').innerText = globalUserId;
+document.getElementById('userIdDisplay').textContent = globalUserId;
 
 let videoPlayer = null;
 let syncMachine = new SyncStateMachine(sendPlaybackStateUpdate);
@@ -566,7 +574,7 @@ setInterval(() => {
             const percentage = (currentTime / duration) * 100;
             progressBar.style.background = `linear-gradient(to right, var(--primary) ${percentage}%, #232228 ${percentage}%)`;
         }
-        document.getElementById('customTimeLabel').innerText = `${formatTime(currentTime, duration)} / ${formatTime(duration, duration)}`;
+        document.getElementById('customTimeLabel').textContent = `${formatTime(currentTime, duration)} / ${formatTime(duration, duration)}`;
     }
 
     if (isHost && typeof videoPlayer.player.getPlayerState === 'function') {
@@ -600,7 +608,7 @@ progressBar.addEventListener('input', () => {
     const percentage = (value / duration) * 100 || 0;
     progressBar.style.background = `linear-gradient(to right, var(--primary) ${percentage}%, #232228 ${percentage}%)`;
 
-    document.getElementById('customTimeLabel').innerText = `${formatTime(value, duration)} / ${formatTime(duration, duration)}`;
+    document.getElementById('customTimeLabel').textContent = `${formatTime(value, duration)} / ${formatTime(duration, duration)}`;
 });
 
 function formatTime(seconds, duration = 0) {
@@ -760,7 +768,7 @@ async function fetchAndSyncCurrentState(roomId) {
         console.log("Initial State Fetched:", state);
 
         const statusEl = document.getElementById('status');
-        statusEl.innerText = `Connected to Room: "${state.name || 'Cozy Room'}"\nID: ${roomId}`;
+        statusEl.textContent = `Connected to Room: "${state.name || 'Cozy Room'}"\nID: ${roomId}`;
         statusEl.className = "status-badge connected";
 
         if (state.currentVideo && state.currentVideo.url && videoPlayer) {
@@ -780,18 +788,25 @@ async function fetchAndSyncCurrentState(roomId) {
 }
 
 function extractVideoId(url) {
-    if (!url) return null;
+    if (typeof url !== 'string') return null;
     
-    const ytReg = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const ytMatch = url.match(ytReg);
-    if (ytMatch && ytMatch[2].length === 11) {
-        return ytMatch[2];
-    }
+    const trimmedUrl = url.trim();
+    if (!trimmedUrl) return null;
     
-    const rtReg = /rutube\.ru\/(?:video|play\/embed)\/(?:private\/)?([a-zA-Z0-9]+)/;
-    const rtMatch = url.match(rtReg);
-    if (rtMatch) {
-        return rtMatch[1];
+    try {
+        const ytReg = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]{11})/;
+        const ytMatch = trimmedUrl.match(ytReg);
+        if (ytMatch && ytMatch[2] && ytMatch[2].length === 11) {
+            return ytMatch[2];
+        }
+        
+        const rtReg = /rutube\.ru\/(?:video|play\/embed)\/(?:private\/)?([a-zA-Z0-9]+)/;
+        const rtMatch = trimmedUrl.match(rtReg);
+        if (rtMatch && rtMatch[1]) {
+            return rtMatch[1];
+        }
+    } catch (e) {
+        console.error("Error parsing video URL:", e);
     }
     
     return null;
