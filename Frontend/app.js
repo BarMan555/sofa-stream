@@ -219,6 +219,18 @@ async function leaveRoom() {
     stopVideoChat();
     hidePlayerBlock();
     
+    if (videoPlayer) {
+        try {
+            videoPlayer.pause();
+            const rtEl = document.getElementById(videoPlayer.rtIframeId);
+            if (rtEl) {
+                rtEl.src = 'about:blank';
+            }
+        } catch (e) {
+            console.warn("Error pausing/unloading video player on leave", e);
+        }
+    }
+    
     currentRoomId = null;
     isHost = false;
     syncMachine.setHostStatus(false);
@@ -469,7 +481,10 @@ class UniversalPlayer {
                 showPlayerBlock();
                 return;
             }
-            if (rtEl) rtEl.style.display = 'none';
+            if (rtEl) {
+                rtEl.style.display = 'none';
+                rtEl.src = 'about:blank';
+            }
             if (ytEl) ytEl.style.display = 'block';
             
             if (this.ytPlayer && this.ytPlayer.cueVideoById) {
@@ -477,6 +492,13 @@ class UniversalPlayer {
             }
             showPlayerBlock();
         } else if (type === 'rutube') {
+            if (this.ytPlayer && typeof this.ytPlayer.pauseVideo === 'function') {
+                try {
+                    this.ytPlayer.pauseVideo();
+                } catch (e) {
+                    console.warn("Could not pause YouTube player", e);
+                }
+            }
             if (ytEl) ytEl.style.display = 'none';
             if (rtEl) {
                 rtEl.setAttribute("sandbox", "allow-scripts allow-same-origin allow-forms allow-presentation allow-popups");
