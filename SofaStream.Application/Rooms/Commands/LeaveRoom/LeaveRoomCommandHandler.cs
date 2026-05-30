@@ -19,9 +19,11 @@ public class LeaveRoomCommandHandler(IRoomRepository roomRepository) : ICommandH
             return Result.Failure(DomainErrors.Room.NotFound);
         
         var result = room.RemoveParticipant(command.UserId);
-        if (result.IsSuccess) 
+        if (result.IsSuccess)
+        {
             await roomRepository.UpdateAsync(room, cancellationToken);
-        
+        }
+
         return result;
     }
 }

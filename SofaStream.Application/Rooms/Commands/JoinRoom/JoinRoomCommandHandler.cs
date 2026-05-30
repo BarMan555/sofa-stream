@@ -14,10 +14,11 @@ public class JoinRoomCommandHandler(IRoomRepository roomRepository) : ICommandHa
         
         // Add spectator in room
         var result = room.AddParticipant(new RoomParticipant(command.UserId, isHost: false));
-        if (result.IsFailure) return result;
-        
-        await roomRepository.UpdateAsync(room, cancellationToken);
-        
-        return Result.Success();
+        if (result.IsSuccess)
+        {
+            await roomRepository.UpdateAsync(room, cancellationToken);
+        }
+
+        return result;
     }
 }
