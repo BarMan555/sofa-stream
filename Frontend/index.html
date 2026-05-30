@@ -7,7 +7,13 @@
     <link rel="stylesheet" href="style.css?v=1.4">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
 </head>
-<body>
+<body class="theme-warm">
+<!-- Princess Theme Sparkles / Glitters -->
+<div class="glitter-star" style="top: 15%; left: 8%; animation: glitter 3s infinite ease-in-out;">✨</div>
+<div class="glitter-star" style="top: 25%; right: 12%; animation: glitter 4s infinite ease-in-out 1s;">✨</div>
+<div class="glitter-star" style="bottom: 20%; left: 15%; animation: glitter 5s infinite ease-in-out 2s;">✨</div>
+<div class="glitter-star" style="bottom: 35%; right: 8%; animation: glitter 3.5s infinite ease-in-out 0.5s;">✨</div>
+<div class="glitter-star" style="top: 50%; left: 85%; animation: glitter 4.5s infinite ease-in-out 1.5s;">✨</div>
 <div class="container">
     <!-- Main Menu View -->
     <div id="main-menu" class="panel view">
@@ -59,6 +65,24 @@
             <div id="settings-room-name-group" class="form-group">
                 <label for="roomNameInput">Room Name</label>
                 <input type="text" id="roomNameInput" placeholder="e.g. Cozy Movie Night" />
+            </div>
+
+            <div id="settings-room-theme-group" class="form-group">
+                <label>Room Theme</label>
+                <div class="theme-cards-grid">
+                    <div class="theme-card" data-theme="Princess">
+                        <div class="theme-card-preview theme-princess-preview"></div>
+                        <span>Princess Pink</span>
+                    </div>
+                    <div class="theme-card active" data-theme="WarmHome">
+                        <div class="theme-card-preview theme-warm-preview"></div>
+                        <span>Warm Cozy</span>
+                    </div>
+                    <div class="theme-card" data-theme="Dark">
+                        <div class="theme-card-preview theme-dark-preview"></div>
+                        <span>Midnight Dark</span>
+                    </div>
+                </div>
             </div>
 
             <div id="settings-room-id-group" class="form-group hidden">

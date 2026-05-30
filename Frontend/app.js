@@ -83,6 +83,7 @@ let lastUiInteractionTime = 0;
 const INTERACTION_GRACE_PERIOD_MS = 2000;
 let activeParticipants = new Set();
 let currentSettingsMode = 'create'; // 'create' or 'join'
+let selectedTheme = 'WarmHome';
 
 function switchView(viewId) {
     const mainMenu = document.getElementById('main-menu');
@@ -121,8 +122,10 @@ function initLayoutActions() {
             
             const rnGroup = document.getElementById('settings-room-name-group');
             const riGroup = document.getElementById('settings-room-id-group');
+            const rtGroup = document.getElementById('settings-room-theme-group');
             if (rnGroup) rnGroup.classList.remove('hidden');
             if (riGroup) riGroup.classList.add('hidden');
+            if (rtGroup) rtGroup.classList.remove('hidden');
             
             switchView('settings-form');
         });
@@ -137,8 +140,10 @@ function initLayoutActions() {
             
             const rnGroup = document.getElementById('settings-room-name-group');
             const riGroup = document.getElementById('settings-room-id-group');
+            const rtGroup = document.getElementById('settings-room-theme-group');
             if (rnGroup) rnGroup.classList.add('hidden');
             if (riGroup) riGroup.classList.remove('hidden');
+            if (rtGroup) rtGroup.classList.add('hidden');
             
             switchView('settings-form');
         });
@@ -194,6 +199,16 @@ function initLayoutActions() {
         if (input) input.value = savedName;
     }
 
+    // Interactive room theme grid cards logic
+    const themeCards = document.querySelectorAll('.theme-card');
+    themeCards.forEach(card => {
+        card.addEventListener('click', () => {
+            themeCards.forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+            selectedTheme = card.getAttribute('data-theme');
+        });
+    });
+
     const btnChangeVideo = document.getElementById('btn-change-video');
     if (btnChangeVideo) {
         btnChangeVideo.addEventListener('click', async () => {
@@ -235,6 +250,7 @@ async function leaveRoom() {
     isHost = false;
     syncMachine.setHostStatus(false);
     updateHostUiVisibility();
+    applyRoomTheme('WarmHome');
     
     const statusEl = document.getElementById('status');
     if (statusEl) {
@@ -834,7 +850,7 @@ async function createRoom() {
     const response = await fetch(`${API_BASE_URL}/api/room`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: roomNameInput, hostId: globalUserId })
+        body: JSON.stringify({ name: roomNameInput, hostId: globalUserId, theme: selectedTheme })
     });
 
     if (response.ok) {
@@ -990,6 +1006,10 @@ async function fetchAndSyncCurrentState(roomId) {
     if (response.ok) {
         const state = await response.json();
         console.log("Initial State Fetched:", state);
+
+        if (state && (state.theme || state.Theme)) {
+            applyRoomTheme(state.theme || state.Theme);
+        }
 
         const statusEl = document.getElementById('status');
         statusEl.textContent = `Connected to Room: "${state.name || 'Cozy Room'}"\nID: ${roomId}`;
@@ -1192,6 +1212,17 @@ function switchTab(tabName) {
     }
 }
 window.switchTab = switchTab;
+
+function applyRoomTheme(themeName) {
+    document.body.classList.remove('theme-princess', 'theme-warm', 'theme-dark');
+    if (themeName === 'Princess') {
+        document.body.classList.add('theme-princess');
+    } else if (themeName === 'WarmHome') {
+        document.body.classList.add('theme-warm');
+    } else {
+        document.body.classList.add('theme-dark');
+    }
+}
 
 // --- Video Chat (WebRTC mesh and draggable UI overlay) ---
 
@@ -1927,3 +1958,38 @@ function updateSpeakerVolumeIndicators() {
         }
     }
 }
+
+// Click sparkle burst effect inside Princess theme
+document.addEventListener('click', (e) => {
+    if (!document.body.classList.contains('theme-princess')) return;
+    
+    const sparkleCount = 12;
+    const body = document.body;
+    
+    for (let i = 0; i < sparkleCount; i++) {
+        const sparkle = document.createElement('div');
+        sparkle.className = 'click-sparkle';
+        sparkle.innerText = Math.random() > 0.5 ? '✨' : '🌸';
+        
+        // Random angle, distance, rotation, scale
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 40 + Math.random() * 80;
+        const tx = Math.cos(angle) * distance;
+        const ty = Math.sin(angle) * distance;
+        const rot = (Math.random() - 0.5) * 360;
+        
+        sparkle.style.setProperty('--tx', `${tx}px`);
+        sparkle.style.setProperty('--ty', `${ty}px`);
+        sparkle.style.setProperty('--rot', `${rot}deg`);
+        
+        sparkle.style.left = `${e.pageX}px`;
+        sparkle.style.top = `${e.pageY}px`;
+        sparkle.style.animationDelay = `${Math.random() * 0.15}s`;
+        
+        body.appendChild(sparkle);
+        
+        setTimeout(() => {
+            sparkle.remove();
+        }, 1000);
+    }
+});

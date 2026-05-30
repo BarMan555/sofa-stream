@@ -57,6 +57,11 @@ public class Room : AggregateRoot
     /// Gets the unique identifier of the user who currently controls the room.
     /// </summary>
     public Guid HostId { get; private set; }
+
+    /// <summary>
+    /// Gets the visual theme applied to the room.
+    /// </summary>
+    public string Theme { get; private set; } = "Dark";
     
     /// <summary>
     /// Gets the current playback status of the shared video.
@@ -118,10 +123,12 @@ public class Room : AggregateRoot
     /// </summary>
     /// <param name="name">The name of the room.</param>
     /// <param name="hostId">The identifier of the user creating the room.</param>
-    public Room(string name, Guid hostId)
+    /// <param name="theme">The initial visual theme of the room.</param>
+    public Room(string name, Guid hostId, string theme = "Dark")
     {
         Name = name;
         HostId = hostId;
+        Theme = string.IsNullOrWhiteSpace(theme) ? "Dark" : theme;
         AddParticipant(new RoomParticipant(hostId, isHost: true));
     }
 

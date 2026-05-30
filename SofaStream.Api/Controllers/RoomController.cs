@@ -29,7 +29,7 @@ public class RoomController(
         CancellationToken cancellationToken
     )
     {
-        var command = new CreateRoomCommand(request.Name, request.HostId);
+        var command = new CreateRoomCommand(request.Name, request.HostId, request.Theme);
         var result = await createRoomHandler.HandleAsync(command, cancellationToken);
         
         return Ok(result.Value);
@@ -128,7 +128,7 @@ public class RoomController(
     }
 }
 
-public record CreateRoomRequest(string Name, Guid HostId);
+public record CreateRoomRequest(string Name, Guid HostId, string Theme = "Dark");
 public record ChangePlaybackStateRequest(Guid UserId, PlaybackState RequestedState, TimeSpan ClientPosition);
 public record ChangeVideoRequest(Guid UserId, string VideoUrl, string Title, double DurationSeconds);
 public record JoinRoomRequest(Guid UserId);

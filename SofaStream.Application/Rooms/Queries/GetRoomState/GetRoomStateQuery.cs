@@ -15,7 +15,8 @@ public record RoomStateDto(
     string PlaybackState,
     double CurrentPositionSeconds,
     VideoDto? CurrentVideo,
-    List<ParticipantDto> Participants);
+    List<ParticipantDto> Participants,
+    string Theme);
 
 /// <summary>
 /// Read model representing a participant within a room.

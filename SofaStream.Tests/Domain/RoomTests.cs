@@ -44,4 +44,24 @@ public class RoomTests
         Assert.Equal("Room.RoomFull", res5.Error.Code);
         Assert.Equal(4, room.Participants.Count);
     }
+
+    [Fact]
+    public void Constructor_ShouldInitializeTheme_WhenProvided()
+    {
+        // Arrange & Act
+        var room = new Room("Themed Room", Guid.NewGuid(), "Princess");
+
+        // Assert
+        Assert.Equal("Princess", room.Theme);
+    }
+
+    [Fact]
+    public void Constructor_ShouldFallbackToDefaultTheme_WhenThemeIsNull()
+    {
+        // Arrange & Act
+        var room = new Room("Default Themed Room", Guid.NewGuid(), null!);
+
+        // Assert
+        Assert.Equal("Dark", room.Theme);
+    }
 }

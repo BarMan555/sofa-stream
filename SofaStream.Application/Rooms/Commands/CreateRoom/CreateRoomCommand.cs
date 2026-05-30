@@ -5,4 +5,5 @@ namespace SofaStream.Application.Rooms.Commands.CreateRoom;
 /// </summary>
 /// <param name="Name">The display name of the room.</param>
 /// <param name="HostId">The unique identifier of the user creating the room, who will become the host.</param>
-public record CreateRoomCommand (string Name, Guid HostId);
+/// <param name="Theme">The visual theme of the room.</param>
+public record CreateRoomCommand (string Name, Guid HostId, string Theme);

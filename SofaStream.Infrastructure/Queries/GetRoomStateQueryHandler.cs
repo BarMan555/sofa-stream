@@ -25,6 +25,7 @@ public class GetRoomStateQueryHandler(ApplicationDbContext dbContext) : IQueryHa
            SELECT 
                r."Id", 
                r."Name", 
+               r."Theme",
                r."CurrentVideo_Url" AS VideoUrl,          
                r."CurrentVideo_Title" AS VideoTitle,     
                r."CurrentVideo_Duration" AS VideoDuration,
@@ -65,7 +66,8 @@ public class GetRoomStateQueryHandler(ApplicationDbContext dbContext) : IQueryHa
             ((PlaybackState)firstRow.PlaybackState).ToString(),
             firstRow.CurrentPosition.TotalSeconds,
             videoDto,
-            participants
+            participants,
+            firstRow.Theme
         );
         
         return Result<RoomStateDto>.Success(roomState);
@@ -78,6 +80,7 @@ public class GetRoomStateQueryHandler(ApplicationDbContext dbContext) : IQueryHa
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
+        public string Theme { get; set; } = "Dark";
         public string? VideoUrl { get; set; }
         public string? VideoTitle { get; set; }
         public TimeSpan? VideoDuration { get; set; }

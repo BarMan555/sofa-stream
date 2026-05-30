@@ -24,6 +24,10 @@ body {
     padding: 0;
     display: flex;
     justify-content: center;
+    transition: background-color 0.4s ease, color 0.4s ease, background-image 0.4s ease;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
 }
 
 .container {
@@ -58,7 +62,7 @@ header h1 {
     border-radius: 16px;
     box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55);
     margin-bottom: 24px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.4s ease, border-color 0.4s ease;
 }
 
 .panel:hover {
@@ -157,6 +161,7 @@ button:active {
 .btn-secondary {
     background-color: var(--secondary);
     border: 1px solid var(--panel-border);
+    color: var(--text-color);
 }
 .btn-secondary:hover {
     background-color: var(--secondary-hover);
@@ -1010,4 +1015,362 @@ input:checked + .slider:before {
     background-color: #ff3333;
     color: #ffffff;
     box-shadow: 0 4px 14px rgba(255, 51, 51, 0.3);
+}
+
+/* =====================================================================
+   ROOM THEMES DESIGN SYSTEM & CORE SKIN TOKENS
+   ===================================================================== */
+
+/* Theme Grid Selection Panel inside Settings */
+.theme-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 8px;
+    width: 100%;
+}
+
+.theme-card {
+    background-color: var(--secondary);
+    border: 2px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 12px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.theme-card:hover {
+    border-color: var(--secondary-hover);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+.theme-card.active {
+    border-color: var(--primary);
+    background-color: rgba(255, 69, 0, 0.05);
+    box-shadow: 0 0 12px rgba(255, 69, 0, 0.15);
+}
+
+.theme-card-preview {
+    width: 100%;
+    height: 52px;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Previews for themes in settings card grid */
+.theme-princess-preview {
+    background: linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%);
+}
+.theme-princess-preview::after {
+    content: "👑";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
+}
+
+.theme-warm-preview {
+    background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+}
+.theme-warm-preview::after {
+    content: "🏡";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
+}
+
+.theme-dark-preview {
+    background: linear-gradient(135deg, #1e1d23 0%, #09080b 100%);
+}
+.theme-dark-preview::after {
+    content: "🌙";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
+}
+
+.theme-card span {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+/* --- THEME SKINS APPLIED ON BODY --- */
+
+/* 1. Princess Pink Style Theme */
+body.theme-princess {
+    background-color: #ffe3f0; /* Richer soft baby pink */
+    --bg-color: #ffe3f0;
+    --text-color: #5c1b3e; /* Deep royal rose-crimson */
+    --text-muted: #a86c8a;
+    --panel-bg: rgba(255, 224, 238, 0.85); /* Gorgeous rich pastel pink panel */
+    --panel-border: rgba(255, 105, 180, 0.45); /* Clear pink boundary */
+    --primary: #ff4fa8; /* Super vibrant princess hot pink */
+    --primary-hover: #ff1493; /* Deep pink */
+    --secondary: #ffb7d5; /* Rich rose button background */
+    --secondary-hover: #ff85b6;
+    --input-bg: #fff5fa;
+    background-image: 
+        radial-gradient(circle at 10% 20%, rgba(255, 105, 180, 0.45) 0%, transparent 45%),
+        radial-gradient(circle at 90% 80%, rgba(255, 20, 147, 0.35) 0%, transparent 45%);
+}
+body.theme-princess .panel {
+    box-shadow: 0 16px 36px rgba(255, 105, 180, 0.1);
+}
+body.theme-princess input {
+    color: #5c1b3e;
+}
+body.theme-princess input:focus {
+    box-shadow: 0 0 0 3px rgba(255, 105, 180, 0.2), 0 4px 12px rgba(255, 105, 180, 0.1);
+}
+body.theme-princess .logo-icon-wrapper svg {
+    filter: drop-shadow(0 0 8px rgba(255, 105, 180, 0.6)) !important;
+}
+body.theme-princess .logo-icon-wrapper svg stop:first-child {
+    stop-color: #ff69b4 !important;
+}
+body.theme-princess .logo-icon-wrapper svg stop:last-child {
+    stop-color: #ff1493 !important;
+}
+body.theme-princess h1 {
+    background: linear-gradient(to right, #ff69b4, #ff1493) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    filter: drop-shadow(0 2px 10px rgba(255, 105, 180, 0.25)) !important;
+}
+body.theme-princess .btn-primary {
+    color: #ffffff;
+}
+body.theme-princess .btn-primary:hover {
+    box-shadow: 0 6px 20px rgba(255, 105, 180, 0.4);
+}
+body.theme-princess .video-chat-overlay {
+    border-color: rgba(255, 105, 180, 0.3);
+    background-color: rgba(255, 240, 245, 0.82);
+    box-shadow: 0 20px 50px rgba(255, 105, 180, 0.15);
+}
+body.theme-princess .video-chat-header {
+    background-color: rgba(255, 105, 180, 0.1);
+    border-bottom: 1px solid rgba(255, 105, 180, 0.2);
+}
+body.theme-princess .video-chat-title {
+    text-shadow: 0 0 10px rgba(255, 105, 180, 0.3);
+}
+body.theme-princess .video-slot.active-speaker {
+    border-color: #ff69b4;
+    box-shadow: 0 0 12px rgba(255, 105, 180, 0.5);
+}
+
+/* 2. Warm Cozy Home Style Theme */
+body.theme-warm {
+    background-color: #faf4eb; /* Soft Warm Cream */
+    --bg-color: #faf4eb;
+    --text-color: #4a3e3d;
+    --text-muted: #8c7875;
+    --panel-bg: rgba(252, 246, 237, 0.85);
+    --panel-border: rgba(222, 184, 135, 0.55); /* Burlywood */
+    --primary: #d2691e; /* Chocolate Orange */
+    --primary-hover: #b8860b; /* Amber */
+    --secondary: #eedbc5; /* Darker warm sand color for distinct button contrast */
+    --secondary-hover: #e5cdb2;
+    --input-bg: #ffffff;
+    background-image: 
+        radial-gradient(circle at 30% 20%, rgba(253, 160, 133, 0.15) 0%, transparent 45%),
+        radial-gradient(circle at 80% 70%, rgba(246, 211, 101, 0.12) 0%, transparent 50%);
+}
+body.theme-warm .panel {
+    box-shadow: 0 16px 36px rgba(210, 105, 30, 0.08);
+}
+body.theme-warm input {
+    color: #4a3e3d;
+}
+body.theme-warm input:focus {
+    box-shadow: 0 0 0 3px rgba(210, 105, 30, 0.2), 0 4px 12px rgba(210, 105, 30, 0.1);
+}
+body.theme-warm .logo-icon-wrapper svg {
+    filter: drop-shadow(0 0 8px rgba(210, 105, 30, 0.5)) !important;
+}
+body.theme-warm .logo-icon-wrapper svg stop:first-child {
+    stop-color: #d2691e !important;
+}
+body.theme-warm .logo-icon-wrapper svg stop:last-child {
+    stop-color: #b8860b !important;
+}
+body.theme-warm h1 {
+    background: linear-gradient(to right, #d2691e, #b8860b) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    filter: drop-shadow(0 2px 10px rgba(210, 105, 30, 0.2)) !important;
+}
+body.theme-warm .btn-primary:hover {
+    box-shadow: 0 6px 20px rgba(210, 105, 30, 0.35);
+}
+body.theme-warm .video-chat-overlay {
+    border-color: rgba(222, 184, 135, 0.4);
+    background-color: rgba(252, 246, 237, 0.85);
+    box-shadow: 0 20px 50px rgba(210, 105, 30, 0.12);
+}
+body.theme-warm .video-chat-header {
+    background-color: rgba(210, 105, 30, 0.08);
+    border-bottom: 1px solid rgba(222, 184, 135, 0.3);
+}
+body.theme-warm .video-slot.active-speaker {
+    border-color: #d2691e;
+    box-shadow: 0 0 12px rgba(210, 105, 30, 0.4);
+}
+
+/* 3. Midnight Dark Theme (Custom Purple highlights) */
+body.theme-dark {
+    background-color: #050406;
+    --bg-color: #050406;
+    --text-color: #e5e5eb;
+    --text-muted: #75747a;
+    --panel-bg: #0c0b0e;
+    --panel-border: #1a191f;
+    --primary: #a855f7; /* Electric Purple */
+    --primary-hover: #c084fc;
+    --secondary: #16151a;
+    --secondary-hover: #222129;
+    --input-bg: #111014;
+    background-image: 
+        radial-gradient(circle at 20% 30%, rgba(168, 85, 247, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.06) 0%, transparent 45%);
+}
+body.theme-dark .logo-icon-wrapper svg {
+    filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.5)) !important;
+}
+body.theme-dark .logo-icon-wrapper svg stop:first-child {
+    stop-color: #a855f7 !important;
+}
+body.theme-dark .logo-icon-wrapper svg stop:last-child {
+    stop-color: #c084fc !important;
+}
+body.theme-dark h1 {
+    background: linear-gradient(to right, #a855f7, #c084fc) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    filter: drop-shadow(0 2px 10px rgba(168, 85, 247, 0.2)) !important;
+}
+body.theme-dark .btn-primary:hover {
+    box-shadow: 0 6px 20px rgba(168, 85, 247, 0.3);
+}
+body.theme-dark .video-chat-overlay {
+    border-color: rgba(168, 85, 247, 0.25);
+}
+body.theme-dark .video-chat-header {
+    background-color: rgba(168, 85, 247, 0.08);
+}
+body.theme-dark .video-slot.active-speaker {
+    border-color: #a855f7;
+    box-shadow: 0 0 12px rgba(168, 85, 247, 0.4);
+}
+
+/* Keyframe sparklers and dynamic floating elements */
+@keyframes sparklePulse {
+    0%, 100% { opacity: 0.2; transform: scale(0.9) translateY(0); }
+    50% { opacity: 0.9; transform: scale(1.15) translateY(-5px); }
+}
+
+/* Body-level dynamic ornament anchors */
+body::before, body::after {
+    position: absolute;
+    font-size: 32px;
+    pointer-events: none;
+    z-index: 1;
+    display: none;
+    animation: sparklePulse 4s infinite ease-in-out;
+}
+
+body::before {
+    top: 60px;
+    left: 40px;
+}
+
+body::after {
+    bottom: 80px;
+    right: 50px;
+}
+
+/* Skin-specific decoration overrides */
+body.theme-princess::before {
+    content: "👑";
+    display: block;
+}
+body.theme-princess::after {
+    content: "✨";
+    display: block;
+    animation-delay: 2s;
+}
+
+body.theme-warm::before {
+    content: "🏡";
+    display: block;
+}
+body.theme-warm::after {
+    content: "🍂";
+    display: block;
+    animation-delay: 1.5s;
+}
+
+body.theme-dark::before {
+    content: "🌙";
+    display: block;
+}
+body.theme-dark::after {
+    content: "✨";
+    display: block;
+    animation-delay: 2.5s;
+}
+
+/* Princess Theme Sparkles / Glitter Stars */
+@keyframes glitter {
+    0%, 100% { transform: scale(0.3) rotate(0deg); opacity: 0.15; filter: drop-shadow(0 0 2px #ff69b4); }
+    50% { transform: scale(1.1) rotate(180deg); opacity: 0.95; filter: drop-shadow(0 0 10px #ff69b4); }
+}
+
+.glitter-star {
+    position: absolute;
+    color: #ff69b4;
+    font-size: 24px;
+    pointer-events: none;
+    display: none;
+    z-index: 100;
+}
+
+body.theme-princess .glitter-star {
+    display: block;
+}
+
+/* Dynamic Click sparkles inside Princess Theme */
+.click-sparkle {
+    position: absolute;
+    pointer-events: none;
+    font-size: 24px;
+    z-index: 9999;
+    animation: sparkleBurst 0.8s forwards cubic-bezier(0.1, 0.8, 0.3, 1);
+    color: #ff1493;
+    text-shadow: 0 0 8px #ff69b4, 0 0 15px #ff1493;
+}
+
+@keyframes sparkleBurst {
+    0% {
+        transform: translate(-50%, -50%) translate(0, 0) scale(0.5);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) translate(var(--tx), var(--ty)) scale(1.4) rotate(var(--rot));
+        opacity: 0;
+    }
 }

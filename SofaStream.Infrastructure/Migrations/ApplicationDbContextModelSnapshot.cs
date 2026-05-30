@@ -45,6 +45,13 @@ namespace SofaStream.Infrastructure.Migrations
                     b.Property<int>("State")
                         .HasColumnType("integer");
 
+                    b.Property<string>("Theme")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("Dark");
+
                     b.HasKey("Id");
 
                     b.ToTable("Rooms");

@@ -15,7 +15,7 @@ public class CreateRoomCommandHandler(IRoomRepository roomRepository)
     /// <inheritdoc />
     public async Task<Result<Guid>> HandleAsync(CreateRoomCommand command, CancellationToken cancellationToken = default)
     {
-        var newRoom = new Room(command.Name, command.HostId);
+        var newRoom = new Room(command.Name, command.HostId, command.Theme);
         await roomRepository.AddAsync(newRoom, cancellationToken);
         
         return Result<Guid>.Success(newRoom.Id);
