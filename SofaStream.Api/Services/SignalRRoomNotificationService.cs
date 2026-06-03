@@ -37,4 +37,16 @@ public class SignalRRoomNotificationService(IHubContext<RoomHub> hubContext) : I
             video,
             cancellationToken);
     }
+
+    public async Task NotifyHostChangedAsync(
+        Guid roomId,
+        Guid newHostId,
+        CancellationToken cancellationToken)
+    {
+        Console.WriteLine($"[ROOM INFRA] SignalRRoomNotificationService sending OnHostChanged for Room {roomId}. New Host: {newHostId}");
+        await hubContext.Clients.Group(roomId.ToString()).SendAsync(
+            "OnHostChanged",
+            newHostId.ToString(),
+            cancellationToken);
+    }
 }

@@ -30,4 +30,9 @@ public interface IRoomNotificationService
         Guid roomId,
         Video? video,
         CancellationToken cancellationToken);
+
+    Task NotifyHostChangedAsync(
+        Guid roomId,
+        Guid newHostId,
+        CancellationToken cancellationToken);
 }

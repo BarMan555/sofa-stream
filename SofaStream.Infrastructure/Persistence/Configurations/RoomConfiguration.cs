@@ -9,6 +9,7 @@ internal class RoomConfiguration : IEntityTypeConfiguration<Room>
     public void Configure(EntityTypeBuilder<Room> builder)
     {
         builder.HasKey(r => r.Id);
+        builder.Property(r => r.Id).ValueGeneratedNever();
         builder.Property(r => r.Name).IsRequired().HasMaxLength(100);
         builder.Property(r => r.Theme).IsRequired().HasMaxLength(50).HasDefaultValue("Dark");
         builder.Ignore(r => r.DomainEvents);

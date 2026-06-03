@@ -57,6 +57,7 @@ builder.Services.AddScoped<ICommandHandler<LeaveRoomCommand, Result>, LeaveRoomC
 builder.Services.AddScoped<ICommandHandler<ChangeVideoCommand, Result>, ChangeVideoCommandHandler>();
 builder.Services.AddScoped<IDomainEventHandler<RoomPlaybackStateChangedEvent>, RoomPlaybackStateChangedEventHandler>();
 builder.Services.AddScoped<IDomainEventHandler<RoomVideoChangedEvent>, RoomVideoChangedEventHandler>();
+builder.Services.AddScoped<IDomainEventHandler<RoomHostChangedEvent>, RoomHostChangedEventHandler>();
 builder.Services.AddScoped<IQueryHandler<GetRoomStateQuery, Result<RoomStateDto>>, GetRoomStateQueryHandler>();
 
 builder.Services.AddExceptionHandler<SofaStream.Api.Infrastructure.GlobalExceptionHandler>();

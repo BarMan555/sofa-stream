@@ -1,4 +1,12 @@
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using SofaStream.Domain.Entities;
+using SofaStream.Domain.Events;
+using SofaStream.Infrastructure.Persistence;
+using SofaStream.Infrastructure.Services;
 using Xunit;
 
 namespace SofaStream.Tests.Domain;
@@ -63,5 +71,72 @@ public class RoomTests
 
         // Assert
         Assert.Equal("Dark", room.Theme);
+    }
+
+    [Fact]
+    public void RemoveParticipant_ShouldPromoteNewHostAndRaiseEvent_WhenHostLeaves()
+    {
+        // Arrange
+        var hostId = Guid.NewGuid();
+        var secondParticipantId = Guid.NewGuid();
+        var room = new Room("Host Transition Room", hostId);
+        room.AddParticipant(new RoomParticipant(secondParticipantId, isHost: false));
+
+        // Act
+        var result = room.RemoveParticipant(hostId);
+
+        // Assert
+        Assert.True(result.IsSuccess);
+        Assert.Equal(secondParticipantId, room.HostId);
+        
+        var hostChangedEvent = room.DomainEvents
+            .OfType<RoomHostChangedEvent>()
+            .FirstOrDefault();
+            
+        Assert.NotNull(hostChangedEvent);
+        Assert.Equal(room.Id, hostChangedEvent!.RoomId);
+        Assert.Equal(secondParticipantId, hostChangedEvent!.NewHostId);
+    }
+
+    [Fact]
+    public async Task EFCore_Should_UpdateHostId_And_RaiseDomainEvent()
+    {
+        // Arrange
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+
+        var services = new ServiceCollection();
+        var dispatcher = new DomainEventDispatcher(services.BuildServiceProvider());
+        using var context = new ApplicationDbContext(options, dispatcher);
+
+        var hostId = Guid.NewGuid();
+        var guestId = Guid.NewGuid();
+        var room = new Room("EF Test Room", hostId);
+        room.AddParticipant(new RoomParticipant(guestId, isHost: false));
+
+        context.Rooms.Add(room);
+        await context.SaveChangesAsync();
+
+        // Clear tracking to simulate loading from database in a new request/scope
+        context.ChangeTracker.Clear();
+
+        // Act
+        var loadedRoom = await context.Rooms
+            .Include(r => r.Participants)
+            .FirstOrDefaultAsync(r => r.Id == room.Id);
+
+        loadedRoom!.RemoveParticipant(hostId);
+        await context.SaveChangesAsync();
+
+        // Assert
+        using var verifyContext = new ApplicationDbContext(options, dispatcher);
+        var verifiedRoom = await verifyContext.Rooms
+            .Include(r => r.Participants)
+            .FirstOrDefaultAsync(r => r.Id == room.Id);
+
+        Assert.Equal(guestId, verifiedRoom!.HostId);
+        Assert.Single(verifiedRoom.Participants);
+        Assert.True(verifiedRoom.Participants.First().IsHost);
     }
 }

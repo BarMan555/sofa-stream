@@ -681,22 +681,29 @@ connection.on("OnPlaybackStateChanged", (data) => {
 });
 
 connection.on("OnUserJoined", (userId) => {
-    if (userId === globalUserId) return;
+    if (userId && globalUserId && userId.toLowerCase() === globalUserId.toLowerCase()) return;
     console.log(`WebRTC: User joined room: ${userId}`);
     activeParticipants.add(userId);
     updateParticipantUi();
 });
 
 connection.on("OnUserLeft", (userId) => {
-    if (userId === globalUserId) return;
+    if (userId && globalUserId && userId.toLowerCase() === globalUserId.toLowerCase()) return;
     console.log(`WebRTC: User left room: ${userId}`);
     closePeerConnection(userId);
     activeParticipants.delete(userId);
     updateParticipantUi();
 });
 
+connection.on("OnHostChanged", (newHostId) => {
+    console.log(`FSM: Host changed to: ${newHostId}`);
+    isHost = (newHostId && globalUserId && newHostId.toLowerCase() === globalUserId.toLowerCase());
+    syncMachine.setHostStatus(isHost);
+    updateHostUiVisibility();
+});
+
 connection.on("OnSignalReceived", async (senderUserId, targetUserId, signalStr) => {
-    if (targetUserId !== globalUserId) return;
+    if (!targetUserId || !globalUserId || targetUserId.toLowerCase() !== globalUserId.toLowerCase()) return;
     try {
         const signal = JSON.parse(signalStr);
         if (signal.type === "offer") {
@@ -908,7 +915,7 @@ async function joinRoom() {
             if (stateResponse.ok) {
                 const state = await stateResponse.json();
                 if (state && state.participants) {
-                    const me = state.participants.find(p => p.userId === globalUserId);
+                    const me = state.participants.find(p => p.userId && globalUserId && p.userId.toLowerCase() === globalUserId.toLowerCase());
                     if (me) {
                         isHost = me.isHost;
                     }
@@ -1627,7 +1634,7 @@ function toggleVideo() {
 async function initiateConnectionsWithExistingParticipants(participants) {
     console.log("WebRTC: Initiating connections with existing participants:", participants);
     for (const p of participants) {
-        if (p.userId === globalUserId) continue;
+        if (p.userId && globalUserId && p.userId.toLowerCase() === globalUserId.toLowerCase()) continue;
         
         const pc = getOrCreatePeerConnection(p.userId, true);
         const offer = await pc.createOffer();

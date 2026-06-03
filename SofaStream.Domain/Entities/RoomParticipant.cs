@@ -53,6 +53,15 @@ public class RoomParticipant(Guid userId, bool isHost = false)
     }
 
     /// <summary>
+    /// Updates the room identifier for this participant.
+    /// </summary>
+    /// <param name="roomId">The room identifier.</param>
+    internal void SetRoomId(Guid roomId)
+    {
+        this.RoomId = roomId;
+    }
+
+    /// <summary>
     /// Updates the SignalR connection identifier for this participant.
     /// </summary>
     /// <param name="connectionId">The SignalR connection identifier.</param>

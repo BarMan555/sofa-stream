@@ -118,6 +118,12 @@ public class Room : AggregateRoot
         return Result.Success();
     }
 
+    private Room()
+    {
+        // Required by Entity Framework Core for materialization
+        Name = "TempName";
+    }
+
     /// <summary>
     /// Initializes a new instance of the <see cref="Room"/> class.
     /// </summary>
@@ -147,6 +153,7 @@ public class Room : AggregateRoot
             return Result.Failure(DomainErrors.Room.RoomFull);
         }
         
+        participant.SetRoomId(Id);
         _participants.Add(participant);
         return Result.Success();
     }
@@ -168,6 +175,8 @@ public class Room : AggregateRoot
         {
             HostId = _participants[0].UserId;
             _participants[0].SetHostState(isHost: true);
+            Console.WriteLine($"[ROOM DOMAIN] Host changed to {HostId} for Room {Id}. Raising RoomHostChangedEvent.");
+            AddDomainEvent(new RoomHostChangedEvent(Id, HostId, DateTimeOffset.UtcNow));
         }
         
         return Result.Success();

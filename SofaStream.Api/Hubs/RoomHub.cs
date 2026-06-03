@@ -131,12 +131,20 @@ public class RoomHub : Hub
 
                 if (room != null)
                 {
+                    Console.WriteLine($"[ROOM HUB] Removing participant {userId} from Room {roomId}. Total participants in room before removal: {room.Participants.Count}. HostId: {room.HostId}");
                     room.RemoveParticipant(userId);
+                    Console.WriteLine($"[ROOM HUB] Removed participant. New Room HostId: {room.HostId}");
+                }
+                else
+                {
+                    Console.WriteLine($"[ROOM HUB] Room {roomId} not found in database.");
                 }
 
                 // Explicitly delete the participant from the DbSet to ensure it is deleted in the database
                 dbContext.Set<RoomParticipant>().Remove(participant);
+                Console.WriteLine($"[ROOM HUB] Saving changes to database for Room {roomId}...");
                 await dbContext.SaveChangesAsync();
+                Console.WriteLine($"[ROOM HUB] Changes saved to database successfully.");
 
                 // 3. Immediately query the remaining participant count for that specific RoomId
                 var remainingCount = await dbContext.Set<RoomParticipant>()
