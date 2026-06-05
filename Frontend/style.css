@@ -126,7 +126,8 @@ input:focus {
 }
 
 input::placeholder {
-    color: #4f4d57;
+    color: var(--text-muted);
+    opacity: 0.55;
 }
 
 button {
@@ -1277,62 +1278,7 @@ body.theme-dark .video-slot.active-speaker {
     box-shadow: 0 0 12px rgba(168, 85, 247, 0.4);
 }
 
-/* Keyframe sparklers and dynamic floating elements */
-@keyframes sparklePulse {
-    0%, 100% { opacity: 0.2; transform: scale(0.9) translateY(0); }
-    50% { opacity: 0.9; transform: scale(1.15) translateY(-5px); }
-}
 
-/* Body-level dynamic ornament anchors */
-body::before, body::after {
-    position: absolute;
-    font-size: 32px;
-    pointer-events: none;
-    z-index: 1;
-    display: none;
-    animation: sparklePulse 4s infinite ease-in-out;
-}
-
-body::before {
-    top: 60px;
-    left: 40px;
-}
-
-body::after {
-    bottom: 80px;
-    right: 50px;
-}
-
-/* Skin-specific decoration overrides */
-body.theme-princess::before {
-    content: "👑";
-    display: block;
-}
-body.theme-princess::after {
-    content: "✨";
-    display: block;
-    animation-delay: 2s;
-}
-
-body.theme-warm::before {
-    content: "🏡";
-    display: block;
-}
-body.theme-warm::after {
-    content: "🍂";
-    display: block;
-    animation-delay: 1.5s;
-}
-
-body.theme-dark::before {
-    content: "🌙";
-    display: block;
-}
-body.theme-dark::after {
-    content: "✨";
-    display: block;
-    animation-delay: 2.5s;
-}
 
 /* Princess Theme Sparkles / Glitter Stars */
 @keyframes glitter {

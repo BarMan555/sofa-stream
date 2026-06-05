@@ -206,6 +206,7 @@ function initLayoutActions() {
             themeCards.forEach(c => c.classList.remove('active'));
             card.classList.add('active');
             selectedTheme = card.getAttribute('data-theme');
+            applyRoomTheme(selectedTheme);
         });
     });
 
