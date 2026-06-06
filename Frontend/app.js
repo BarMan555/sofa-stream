@@ -648,7 +648,8 @@ function uuidv4() {
 }
 
 const globalUserId = uuidv4();
-document.getElementById('userIdDisplay').textContent = globalUserId;
+let peerNicknames = {};     // Map of peerUserId (lowercase) -> nickname string
+let peerMediaStates = {};    // Map of peerUserId (lowercase) -> { audio: bool, video: bool }
 
 let videoPlayer = null;
 let syncMachine = new SyncStateMachine(sendPlaybackStateUpdate);
@@ -704,7 +705,8 @@ connection.on("OnHostChanged", (newHostId) => {
 });
 
 connection.on("OnSignalReceived", async (senderUserId, targetUserId, signalStr) => {
-    if (!targetUserId || !globalUserId || targetUserId.toLowerCase() !== globalUserId.toLowerCase()) return;
+    const isBroadcast = (targetUserId === "all");
+    if (!isBroadcast && (!targetUserId || !globalUserId || targetUserId.toLowerCase() !== globalUserId.toLowerCase())) return;
     try {
         const signal = JSON.parse(signalStr);
         if (signal.type === "offer") {
@@ -713,6 +715,39 @@ connection.on("OnSignalReceived", async (senderUserId, targetUserId, signalStr) 
             await handleAnswer(senderUserId, signal.sdp);
         } else if (signal.type === "candidate") {
             await handleCandidate(senderUserId, signal.candidate);
+        } else if (signal.type === "nickname") {
+            const peerKey = senderUserId.toLowerCase();
+            peerNicknames[peerKey] = signal.nickname;
+            
+            // Update slot label if it already exists
+            const slot = document.getElementById(`slot-${senderUserId}`);
+            if (slot) {
+                const label = slot.querySelector(".video-label");
+                if (label) {
+                    label.innerText = signal.nickname;
+                }
+            }
+            
+            // If they provided mediaState, update indicators too
+            if (signal.audio !== undefined && signal.video !== undefined) {
+                peerMediaStates[peerKey] = { audio: signal.audio, video: signal.video };
+                updateRemoteMediaIndicators(senderUserId, signal.audio, signal.video);
+            }
+            
+            // If we received a broadcasted nickname, reply with our own nickname and media states
+            if (isBroadcast) {
+                const myNick = localStorage.getItem("sofastream_username") || "Me";
+                connection.invoke("SendSignal", currentRoomId, globalUserId, senderUserId, JSON.stringify({
+                    type: "nickname",
+                    nickname: myNick,
+                    audio: !isAudioMuted,
+                    video: !isVideoDisabled
+                })).catch(err => console.error("WebRTC: Error replying with nickname", err));
+            }
+        } else if (signal.type === "mediaState") {
+            const peerKey = senderUserId.toLowerCase();
+            peerMediaStates[peerKey] = { audio: signal.audio, video: signal.video };
+            updateRemoteMediaIndicators(senderUserId, signal.audio, signal.video);
         }
     } catch (e) {
         console.error("WebRTC: Error handling signal from peer", e);
@@ -1289,6 +1324,23 @@ async function startVideoChat() {
     
     updateGridLayout();
     startDuckingLoop();
+
+    // Update local label with nickname
+    const myNick = localStorage.getItem("sofastream_username") || "Me";
+    const localLabel = document.querySelector("#slot-local .video-label");
+    if (localLabel) {
+        localLabel.innerText = `${myNick} (You)`;
+    }
+
+    // Broadcast nickname and media states to other participants
+    if (currentRoomId) {
+        connection.invoke("SendSignal", currentRoomId, globalUserId, "all", JSON.stringify({
+            type: "nickname",
+            nickname: myNick,
+            audio: !isAudioMuted,
+            video: !isVideoDisabled
+        })).catch(err => console.error("WebRTC: Error broadcasting nickname", err));
+    }
 }
 
 function stopVideoChat() {
@@ -1604,6 +1656,14 @@ function toggleAudio() {
             indicator.innerText = "🎙️";
         }
     }
+
+    if (currentRoomId) {
+        connection.invoke("SendSignal", currentRoomId, globalUserId, "all", JSON.stringify({
+            type: "mediaState",
+            audio: !isAudioMuted,
+            video: !isVideoDisabled
+        })).catch(err => console.error("WebRTC: Error broadcasting audio state change", err));
+    }
 }
 
 function toggleVideo() {
@@ -1629,6 +1689,14 @@ function toggleVideo() {
         if (indicator) {
             indicator.classList.add("active");
         }
+    }
+
+    if (currentRoomId) {
+        connection.invoke("SendSignal", currentRoomId, globalUserId, "all", JSON.stringify({
+            type: "mediaState",
+            audio: !isAudioMuted,
+            video: !isVideoDisabled
+        })).catch(err => console.error("WebRTC: Error broadcasting video state change", err));
     }
 }
 
@@ -1755,17 +1823,34 @@ function displayRemoteStream(peerUserId, remoteStream) {
     
     const label = document.createElement("div");
     label.className = "video-label";
-    label.innerText = `User ID: ${peerUserId.substring(0, 8)}`;
+    
+    // Check cached nickname
+    const cachedNick = peerNicknames[peerUserId.toLowerCase()];
+    label.innerText = cachedNick || `User: ${peerUserId.substring(0, 8)}`;
     
     const controls = document.createElement("div");
     controls.className = "slot-controls";
     
+    // Check cached media state
+    const cachedMedia = peerMediaStates[peerUserId.toLowerCase()];
+    const audioActive = cachedMedia ? cachedMedia.audio : true;
+    const videoActive = cachedMedia ? cachedMedia.video : true;
+    
     const micInd = document.createElement("span");
-    micInd.className = "mic-indicator active";
-    micInd.innerText = "🎙️";
+    if (audioActive) {
+        micInd.className = "mic-indicator active";
+        micInd.innerText = "🎙️";
+    } else {
+        micInd.className = "mic-indicator muted";
+        micInd.innerText = "🔇";
+    }
     
     const vidInd = document.createElement("span");
-    vidInd.className = "video-indicator active";
+    if (videoActive) {
+        vidInd.className = "video-indicator active";
+    } else {
+        vidInd.className = "video-indicator";
+    }
     vidInd.innerText = "📷";
     
     controls.appendChild(micInd);
@@ -1778,6 +1863,31 @@ function displayRemoteStream(peerUserId, remoteStream) {
     grid.appendChild(slot);
     
     updateGridLayout();
+}
+
+function updateRemoteMediaIndicators(peerUserId, audioActive, videoActive) {
+    const slot = document.getElementById(`slot-${peerUserId}`);
+    if (slot) {
+        const micInd = slot.querySelector(".mic-indicator");
+        const vidInd = slot.querySelector(".video-indicator");
+        if (micInd) {
+            if (audioActive) {
+                micInd.className = "mic-indicator active";
+                micInd.innerText = "🎙️";
+            } else {
+                micInd.className = "mic-indicator muted";
+                micInd.innerText = "🔇";
+            }
+        }
+        if (vidInd) {
+            if (videoActive) {
+                vidInd.className = "video-indicator active";
+            } else {
+                vidInd.className = "video-indicator";
+                vidInd.classList.remove("active");
+            }
+        }
+    }
 }
 
 function closePeerConnection(peerUserId) {
