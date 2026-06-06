@@ -3,6 +3,8 @@ const API_BASE_URL = (window.location.hostname === "localhost" || window.locatio
     ? "http://localhost:5063"
     : window.location.origin;
 
+let localNickname = "Me";
+
 // --- Time Synchronization (NTP Protocol) ---
 let serverTimeOffset = 0;
 
@@ -162,6 +164,7 @@ function initLayoutActions() {
             const userName = document.getElementById('userNameInput').value.trim();
             if (userName) {
                 localStorage.setItem('sofastream_username', userName);
+                localNickname = userName;
             }
             
             if (currentSettingsMode === 'create') {
@@ -197,6 +200,7 @@ function initLayoutActions() {
     if (savedName) {
         const input = document.getElementById('userNameInput');
         if (input) input.value = savedName;
+        localNickname = savedName;
     }
 
     // Interactive room theme grid cards logic
@@ -687,6 +691,14 @@ connection.on("OnUserJoined", (userId) => {
     console.log(`WebRTC: User joined room: ${userId}`);
     activeParticipants.add(userId);
     updateParticipantUi();
+    
+    // Proactively send our nickname and media state to the newly joined user
+    connection.invoke("SendSignal", currentRoomId, globalUserId, userId, JSON.stringify({
+        type: "nickname",
+        nickname: localNickname,
+        audio: !isAudioMuted,
+        video: !isVideoDisabled
+    })).catch(err => console.error("WebRTC: Error sending nickname to joined user", err));
 });
 
 connection.on("OnUserLeft", (userId) => {
@@ -720,7 +732,7 @@ connection.on("OnSignalReceived", async (senderUserId, targetUserId, signalStr) 
             peerNicknames[peerKey] = signal.nickname;
             
             // Update slot label if it already exists
-            const slot = document.getElementById(`slot-${senderUserId}`);
+            const slot = document.getElementById(`slot-${senderUserId.toLowerCase()}`);
             if (slot) {
                 const label = slot.querySelector(".video-label");
                 if (label) {
@@ -731,15 +743,14 @@ connection.on("OnSignalReceived", async (senderUserId, targetUserId, signalStr) 
             // If they provided mediaState, update indicators too
             if (signal.audio !== undefined && signal.video !== undefined) {
                 peerMediaStates[peerKey] = { audio: signal.audio, video: signal.video };
-                updateRemoteMediaIndicators(senderUserId, signal.audio, signal.video);
+                updateRemoteMediaIndicators(senderUserId.toLowerCase(), signal.audio, signal.video);
             }
             
             // If we received a broadcasted nickname, reply with our own nickname and media states
             if (isBroadcast) {
-                const myNick = localStorage.getItem("sofastream_username") || "Me";
                 connection.invoke("SendSignal", currentRoomId, globalUserId, senderUserId, JSON.stringify({
                     type: "nickname",
-                    nickname: myNick,
+                    nickname: localNickname,
                     audio: !isAudioMuted,
                     video: !isVideoDisabled
                 })).catch(err => console.error("WebRTC: Error replying with nickname", err));
@@ -747,7 +758,7 @@ connection.on("OnSignalReceived", async (senderUserId, targetUserId, signalStr) 
         } else if (signal.type === "mediaState") {
             const peerKey = senderUserId.toLowerCase();
             peerMediaStates[peerKey] = { audio: signal.audio, video: signal.video };
-            updateRemoteMediaIndicators(senderUserId, signal.audio, signal.video);
+            updateRemoteMediaIndicators(senderUserId.toLowerCase(), signal.audio, signal.video);
         }
     } catch (e) {
         console.error("WebRTC: Error handling signal from peer", e);
@@ -1326,17 +1337,16 @@ async function startVideoChat() {
     startDuckingLoop();
 
     // Update local label with nickname
-    const myNick = localStorage.getItem("sofastream_username") || "Me";
     const localLabel = document.querySelector("#slot-local .video-label");
     if (localLabel) {
-        localLabel.innerText = `${myNick} (You)`;
+        localLabel.innerText = `${localNickname} (You)`;
     }
 
     // Broadcast nickname and media states to other participants
     if (currentRoomId) {
         connection.invoke("SendSignal", currentRoomId, globalUserId, "all", JSON.stringify({
             type: "nickname",
-            nickname: myNick,
+            nickname: localNickname,
             audio: !isAudioMuted,
             video: !isVideoDisabled
         })).catch(err => console.error("WebRTC: Error broadcasting nickname", err));
@@ -1777,12 +1787,28 @@ async function handleOffer(peerUserId, sdp) {
         type: "answer",
         sdp: answer.sdp
     })).catch(err => console.error("WebRTC: Error sending answer signal", err));
+
+    // Send our nickname and media state to the offering peer
+    connection.invoke("SendSignal", currentRoomId, globalUserId, peerUserId, JSON.stringify({
+        type: "nickname",
+        nickname: localNickname,
+        audio: !isAudioMuted,
+        video: !isVideoDisabled
+    })).catch(err => console.error("WebRTC: Error sending nickname on offer", err));
 }
 
 async function handleAnswer(peerUserId, sdp) {
     const pc = peerConnections[peerUserId];
     if (pc) {
         await pc.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: sdp }));
+
+        // Send our nickname and media state to the answering peer
+        connection.invoke("SendSignal", currentRoomId, globalUserId, peerUserId, JSON.stringify({
+            type: "nickname",
+            nickname: localNickname,
+            audio: !isAudioMuted,
+            video: !isVideoDisabled
+        })).catch(err => console.error("WebRTC: Error sending nickname on answer", err));
     }
 }
 
@@ -1794,7 +1820,7 @@ async function handleCandidate(peerUserId, candidate) {
 }
 
 function displayRemoteStream(peerUserId, remoteStream) {
-    let slot = document.getElementById(`slot-${peerUserId}`);
+    let slot = document.getElementById(`slot-${peerUserId.toLowerCase()}`);
     if (slot) {
         const video = slot.querySelector("video");
         if (video && video.srcObject !== remoteStream) {
@@ -1814,7 +1840,7 @@ function displayRemoteStream(peerUserId, remoteStream) {
     const grid = document.getElementById("videoGrid");
     slot = document.createElement("div");
     slot.className = "video-slot";
-    slot.id = `slot-${peerUserId}`;
+    slot.id = `slot-${peerUserId.toLowerCase()}`;
     
     const video = document.createElement("video");
     video.autoplay = true;
@@ -1866,7 +1892,7 @@ function displayRemoteStream(peerUserId, remoteStream) {
 }
 
 function updateRemoteMediaIndicators(peerUserId, audioActive, videoActive) {
-    const slot = document.getElementById(`slot-${peerUserId}`);
+    const slot = document.getElementById(`slot-${peerUserId.toLowerCase()}`);
     if (slot) {
         const micInd = slot.querySelector(".mic-indicator");
         const vidInd = slot.querySelector(".video-indicator");
@@ -1900,7 +1926,7 @@ function closePeerConnection(peerUserId) {
     
     unregisterAudioAnalyser(peerUserId);
     
-    const slot = document.getElementById(`slot-${peerUserId}`);
+    const slot = document.getElementById(`slot-${peerUserId.toLowerCase()}`);
     if (slot) {
         slot.remove();
     }
@@ -1971,23 +1997,25 @@ function registerAudioAnalyser(id, stream) {
             audioContext.resume();
         }
         
-        console.log(`Audio Ducking: Registering analyser for source: ${id}`);
+        const key = id.toLowerCase();
+        console.log(`Audio Ducking: Registering analyser for source: ${key}`);
         
         const source = audioContext.createMediaStreamSource(stream);
         const analyser = audioContext.createAnalyser();
         analyser.fftSize = 256;
         
         source.connect(analyser);
-        audioAnalysers[id] = analyser;
+        audioAnalysers[key] = analyser;
     } catch (e) {
         console.error(`Audio Ducking: Failed to register analyser for ${id}`, e);
     }
 }
 
 function unregisterAudioAnalyser(id) {
-    if (audioAnalysers[id]) {
-        console.log(`Audio Ducking: Unregistering analyser for source: ${id}`);
-        delete audioAnalysers[id];
+    const key = id.toLowerCase();
+    if (audioAnalysers[key]) {
+        console.log(`Audio Ducking: Unregistering analyser for source: ${key}`);
+        delete audioAnalysers[key];
     }
 }
 
@@ -2065,7 +2093,7 @@ function updateSpeakerVolumeIndicators() {
         const rms = Math.sqrt(sumSquares / dataArray.length);
         const isSpeaking = (rms > 0.015);
         
-        const slotId = (id === "local") ? "slot-local" : `slot-${id}`;
+        const slotId = (id === "local") ? "slot-local" : `slot-${id.toLowerCase()}`;
         const slotEl = document.getElementById(slotId);
         if (slotEl) {
             if (isSpeaking) {
