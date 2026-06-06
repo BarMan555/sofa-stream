@@ -536,6 +536,7 @@ button:active {
 .video-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
+    grid-auto-rows: min-content;
     gap: 8px;
     padding: 10px;
     background: rgba(12, 11, 14, 0.4);

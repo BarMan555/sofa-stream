@@ -1939,7 +1939,7 @@ function updateGridLayout() {
     if (!grid) return;
     const slots = grid.querySelectorAll(".video-slot");
     
-    if (slots.length === 1 || grid.classList.contains("single-layout")) {
+    if (slots.length === 1 || slots.length > 2 || grid.classList.contains("single-layout")) {
         grid.classList.add("single-layout");
     } else {
         grid.classList.remove("single-layout");
