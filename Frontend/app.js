@@ -554,6 +554,7 @@ class SyncStateMachine {
         this.isProcessingRemoteEvent = false;
         this.scheduledPlayTimer = null;
         this.unlockTimer = null;
+        this.isLocallyBuffering = false;
     }
 
     setPlayer(player) { this.player = player; }
@@ -641,9 +642,15 @@ class SyncStateMachine {
     handlePlayerStateNotification(domainState) {
         if (this.isProcessingRemoteEvent) return;
 
-        if (this.isHost && currentRoomId) {
-            if (domainState === PlaybackState.Buffering) {
+        if (domainState === PlaybackState.Buffering) {
+            this.isLocallyBuffering = true;
+            if (this.isHost && currentRoomId) {
                 this.sendUpdate(PlaybackState.Buffering);
+            }
+        } else if (domainState === PlaybackState.Playing || domainState === PlaybackState.Paused) {
+            if (this.isLocallyBuffering) {
+                this.isLocallyBuffering = false;
+                sendBufferingCompleted();
             }
         }
     }
@@ -1069,6 +1076,26 @@ async function sendPlaybackStateUpdate(stateEnum, manualSeconds = null) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
+    });
+}
+
+async function sendBufferingCompleted() {
+    if (!currentRoomId) return;
+
+    const payload = {
+        userId: globalUserId
+    };
+
+    fetch(`${API_BASE_URL}/api/room/${currentRoomId}/playback/buffering-completed`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    }).then(response => {
+        if (!response.ok) {
+            console.error("Failed to report buffering completed status to server");
+        }
+    }).catch(err => {
+        console.error("Error sending buffering completed status", err);
     });
 }
 

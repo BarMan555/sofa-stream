@@ -8,6 +8,7 @@ using SofaStream.Application.Rooms.Commands.ChangeVideo;
 using SofaStream.Application.Rooms.Commands.CreateRoom;
 using SofaStream.Application.Rooms.Commands.JoinRoom;
 using SofaStream.Application.Rooms.Commands.LeaveRoom;
+using SofaStream.Application.Rooms.Commands.ReportBufferingCompleted;
 using SofaStream.Application.Rooms.EventHandlers;
 using SofaStream.Application.Rooms.Queries.GetRoomState;
 using SofaStream.Domain.Common.Models;
@@ -55,6 +56,7 @@ builder.Services.AddScoped<ICommandHandler<ChangePlaybackStateCommand, Result>, 
 builder.Services.AddScoped<ICommandHandler<JoinRoomCommand, Result>, JoinRoomCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<LeaveRoomCommand, Result>, LeaveRoomCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<ChangeVideoCommand, Result>, ChangeVideoCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<ReportBufferingCompletedCommand, Result>, ReportBufferingCompletedCommandHandler>();
 builder.Services.AddScoped<IDomainEventHandler<RoomPlaybackStateChangedEvent>, RoomPlaybackStateChangedEventHandler>();
 builder.Services.AddScoped<IDomainEventHandler<RoomVideoChangedEvent>, RoomVideoChangedEventHandler>();
 builder.Services.AddScoped<IDomainEventHandler<RoomHostChangedEvent>, RoomHostChangedEventHandler>();

@@ -5,6 +5,7 @@ using SofaStream.Application.Rooms.Commands.ChangeVideo;
 using SofaStream.Application.Rooms.Commands.CreateRoom;
 using SofaStream.Application.Rooms.Commands.JoinRoom;
 using SofaStream.Application.Rooms.Commands.LeaveRoom;
+using SofaStream.Application.Rooms.Commands.ReportBufferingCompleted;
 using SofaStream.Application.Rooms.Queries.GetRoomState;
 using SofaStream.Domain.Common.Models;
 using SofaStream.Domain.Entities;
@@ -59,6 +60,28 @@ public class RoomController(
         }
         
         return Ok("State changed successfully. SignalR broadcast triggered.");
+    }
+
+    /// <summary>
+    /// Reports that a participant has completed buffering/loading video data.
+    /// </summary>
+    [HttpPost("{roomId:guid}/playback/buffering-completed")]
+    public async Task<IActionResult> ReportBufferingCompleted(
+        [FromRoute] Guid roomId,
+        [FromBody] ReportBufferingCompletedRequest request,
+        [FromServices] ICommandHandler<ReportBufferingCompletedCommand, Result> reportBufferingCompletedHandler,
+        CancellationToken cancellationToken
+    )
+    {
+        var command = new ReportBufferingCompletedCommand(roomId, request.UserId);
+        var result = await reportBufferingCompletedHandler.HandleAsync(command, cancellationToken);
+
+        if (result.IsFailure)
+        {
+            return BadRequest(result.Error);
+        }
+        
+        return Ok("Buffering completed successfully.");
     }
 
     [HttpGet("{roomId:guid}")]
@@ -132,3 +155,4 @@ public record CreateRoomRequest(string Name, Guid HostId, string Theme = "Dark")
 public record ChangePlaybackStateRequest(Guid UserId, PlaybackState RequestedState, TimeSpan ClientPosition);
 public record ChangeVideoRequest(Guid UserId, string VideoUrl, string Title, double DurationSeconds);
 public record JoinRoomRequest(Guid UserId);
+public record ReportBufferingCompletedRequest(Guid UserId);
