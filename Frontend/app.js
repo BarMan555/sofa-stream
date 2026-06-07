@@ -584,6 +584,23 @@ class SyncStateMachine {
         this.sendUpdate(PlaybackState.Paused, targetSeconds);
     }
 
+    handleKeyboardSeek(targetSeconds) {
+        if (!currentRoomId || !this.player || !this.isHost) return;
+
+        const currentState = this.player.getPlayerState();
+        const isPlaying = (currentState === 1);
+
+        this.player.seekTo(targetSeconds);
+
+        if (isPlaying) {
+            this.player.play();
+            this.sendUpdate(PlaybackState.Playing, targetSeconds);
+        } else {
+            this.player.pause();
+            this.sendUpdate(PlaybackState.Paused, targetSeconds);
+        }
+    }
+
     handleRemoteEvent(data) {
         if (!this.player) return;
 
@@ -2137,5 +2154,67 @@ document.addEventListener('click', (e) => {
         setTimeout(() => {
             sparkle.remove();
         }, 1000);
+    }
+});
+
+// --- Keyboard Video Seeking ---
+let pendingSeekTimeout = null;
+let localTargetTime = null;
+
+document.addEventListener('keydown', (e) => {
+    if (!videoPlayer || !videoPlayer.player || !currentRoomId) return;
+
+    // Ignore keyboard seeking if the user is currently typing in an input field
+    const activeEl = document.activeElement;
+    if (activeEl) {
+        const tagName = activeEl.tagName.toLowerCase();
+        if (tagName === 'input' || tagName === 'textarea' || activeEl.isContentEditable) {
+            return;
+        }
+    }
+
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+
+    e.preventDefault();
+
+    const seekOffset = (e.key === 'ArrowRight') ? 10 : -10;
+    const duration = videoPlayer.getDuration() || 0;
+
+    if (localTargetTime === null) {
+        localTargetTime = videoPlayer.getCurrentTime() || 0;
+    }
+
+    localTargetTime = Math.max(0, Math.min(duration, localTargetTime + seekOffset));
+
+    // Instantly seek local player
+    videoPlayer.seekTo(localTargetTime);
+
+    // Update progress bar and time label locally for immediate visual response
+    const progressBar = document.getElementById('customProgressBar');
+    if (progressBar && duration > 0) {
+        progressBar.value = localTargetTime;
+        const percentage = (localTargetTime / duration) * 100;
+        progressBar.style.background = `linear-gradient(to right, var(--primary) ${percentage}%, #232228 ${percentage}%)`;
+    }
+    const timeLabel = document.getElementById('customTimeLabel');
+    if (timeLabel && duration > 0) {
+        timeLabel.textContent = `${formatTime(localTargetTime, duration)} / ${formatTime(duration, duration)}`;
+    }
+
+    // Debounce state synchronization to avoid spamming the backend
+    if (isHost) {
+        if (pendingSeekTimeout) clearTimeout(pendingSeekTimeout);
+        pendingSeekTimeout = setTimeout(() => {
+            const targetSec = localTargetTime;
+            localTargetTime = null;
+            pendingSeekTimeout = null;
+            syncMachine.handleKeyboardSeek(targetSec);
+        }, 500);
+    } else {
+        if (pendingSeekTimeout) clearTimeout(pendingSeekTimeout);
+        pendingSeekTimeout = setTimeout(() => {
+            localTargetTime = null;
+            pendingSeekTimeout = null;
+        }, 500);
     }
 });

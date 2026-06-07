@@ -1,3 +1,4 @@
+using System;
 using SofaStream.Domain.Common;
 using SofaStream.Domain.Common.Models;
 using SofaStream.Domain.Events;
@@ -193,7 +194,17 @@ public class Room : AggregateRoot
             || currentClientPosition < TimeSpan.Zero)
             return Result.Failure(DomainErrors.Room.InvalidPosition);
         
-        if (State == PlaybackState.Playing) return Result.Success();
+        var estimatedPosition = CurrentPosition;
+        if (State == PlaybackState.Playing)
+        {
+            var elapsedSinceLastUpdate = DateTimeOffset.UtcNow - LastUpdatedAt;
+            estimatedPosition = CurrentPosition.Add(elapsedSinceLastUpdate);
+            
+            if (Math.Abs((currentClientPosition - estimatedPosition).TotalSeconds) <= 1.5)
+            {
+                return Result.Success();
+            }
+        }
 
         if (_participants.Any(p => p.IsBuffering))
         {
@@ -226,7 +237,8 @@ public class Room : AggregateRoot
             || currentClientPosition < TimeSpan.Zero)
             return Result.Failure(DomainErrors.Room.InvalidPosition);
 
-        if (State == PlaybackState.Paused) return Result.Success();
+        if (State == PlaybackState.Paused && Math.Abs((currentClientPosition - CurrentPosition).TotalSeconds) <= 0.1) 
+            return Result.Success();
         
         State = PlaybackState.Paused;
         CurrentPosition = currentClientPosition;
