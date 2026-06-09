@@ -1147,10 +1147,10 @@ body.theme-princess .logo-icon-wrapper svg stop:last-child {
     stop-color: #ff1493 !important;
 }
 body.theme-princess h1 {
-    background: linear-gradient(to right, #ff69b4, #ff1493) !important;
-    -webkit-background-clip: text !important;
-    -webkit-text-fill-color: transparent !important;
-    filter: drop-shadow(0 2px 10px rgba(255, 105, 180, 0.25)) !important;
+    color: #ff1493 !important;
+    background: none !important;
+    -webkit-text-fill-color: #ff1493 !important;
+    filter: none !important;
 }
 body.theme-princess .btn-primary {
     color: #ffffff;
@@ -1211,10 +1211,10 @@ body.theme-warm .logo-icon-wrapper svg stop:last-child {
     stop-color: #b8860b !important;
 }
 body.theme-warm h1 {
-    background: linear-gradient(to right, #d2691e, #b8860b) !important;
-    -webkit-background-clip: text !important;
-    -webkit-text-fill-color: transparent !important;
-    filter: drop-shadow(0 2px 10px rgba(210, 105, 30, 0.2)) !important;
+    color: #d2691e !important;
+    background: none !important;
+    -webkit-text-fill-color: #d2691e !important;
+    filter: none !important;
 }
 body.theme-warm .btn-primary:hover {
     box-shadow: 0 6px 20px rgba(210, 105, 30, 0.35);
@@ -1260,10 +1260,10 @@ body.theme-dark .logo-icon-wrapper svg stop:last-child {
     stop-color: #c084fc !important;
 }
 body.theme-dark h1 {
-    background: linear-gradient(to right, #a855f7, #c084fc) !important;
-    -webkit-background-clip: text !important;
-    -webkit-text-fill-color: transparent !important;
-    filter: drop-shadow(0 2px 10px rgba(168, 85, 247, 0.2)) !important;
+    color: #a855f7 !important;
+    background: none !important;
+    -webkit-text-fill-color: #a855f7 !important;
+    filter: none !important;
 }
 body.theme-dark .btn-primary:hover {
     box-shadow: 0 6px 20px rgba(168, 85, 247, 0.3);
