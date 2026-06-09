@@ -25,5 +25,11 @@ public record ParticipantDto(
     Guid UserId,
     bool IsHost,
     bool IsBuffering);
-    
+
+/// <summary>
+/// Read model representing a video resource.
+/// </summary>
+/// <param name="Url">The source URL of the video.</param>
+/// <param name="Title">The title of the video.</param>
+/// <param name="DurationSeconds">The total duration of the video in seconds.</param>
 public record VideoDto(string Url, string Title, double DurationSeconds);

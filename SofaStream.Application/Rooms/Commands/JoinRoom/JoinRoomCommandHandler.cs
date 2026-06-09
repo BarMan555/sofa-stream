@@ -5,8 +5,14 @@ using SofaStream.Domain.Entities;
 
 namespace SofaStream.Application.Rooms.Commands.JoinRoom;
 
+/// <summary>
+/// Handles the execution of a <see cref="JoinRoomCommand"/>.
+/// Adds a participant to a room session and persists the change.
+/// </summary>
+/// <param name="roomRepository">The repository used to fetch and update room data.</param>
 public class JoinRoomCommandHandler(IRoomRepository roomRepository) : ICommandHandler<JoinRoomCommand, Result>
 {
+    /// <inheritdoc />
     public async Task<Result> HandleAsync(JoinRoomCommand command, CancellationToken cancellationToken = default)
     {
         var room = await roomRepository.GetByIdAsync(command.RoomId, cancellationToken);

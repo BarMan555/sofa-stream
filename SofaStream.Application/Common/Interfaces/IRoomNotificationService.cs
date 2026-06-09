@@ -26,11 +26,25 @@ public interface IRoomNotificationService
         DateTimeOffset? scheduledFor,
         CancellationToken cancellationToken);
     
+    /// <summary>
+    /// Broadcasts a video content change to all active participants in the specified room.
+    /// </summary>
+    /// <param name="roomId">The unique identifier of the room.</param>
+    /// <param name="video">The new video info. Can be null if the video is cleared.</param>
+    /// <param name="cancellationToken">Token to cancel the broadcast operation.</param>
+    /// <returns>A task representing the asynchronous notification process.</returns>
     Task NotifyVideoChangedAsync(
         Guid roomId,
         Video? video,
         CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Broadcasts a host transition event to all active participants in the specified room.
+    /// </summary>
+    /// <param name="roomId">The unique identifier of the room.</param>
+    /// <param name="newHostId">The unique identifier of the participant who has been reassigned as the host.</param>
+    /// <param name="cancellationToken">Token to cancel the broadcast operation.</param>
+    /// <returns>A task representing the asynchronous notification process.</returns>
     Task NotifyHostChangedAsync(
         Guid roomId,
         Guid newHostId,
