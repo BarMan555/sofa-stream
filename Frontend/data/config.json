@@ -1,0 +1,29 @@
+{
+  "api": {
+    "defaultPort": 5063,
+    "reconnectIntervalMs": 60000,
+    "interactionGracePeriodMs": 2000,
+    "inactivityDurationMs": 3000
+  },
+  "themes": [
+    {
+      "id": "Princess",
+      "name": "Princess Pink",
+      "class": "theme-princess",
+      "previewClass": "theme-princess-preview"
+    },
+    {
+      "id": "WarmHome",
+      "name": "Warm Cozy",
+      "class": "theme-warm",
+      "previewClass": "theme-warm-preview"
+    },
+    {
+      "id": "Dark",
+      "name": "Midnight Dark",
+      "class": "theme-dark",
+      "previewClass": "theme-dark-preview"
+    }
+  ],
+  "defaultTheme": "WarmHome"
+}

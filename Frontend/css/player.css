@@ -1,0 +1,166 @@
+/* --- SEAMLESS DOCK PLAYER FRAMEWORK --- */
+#theaterContainer {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+    position: relative;
+}
+
+.player-wrapper {
+    position: relative;
+    padding-bottom: 56.25%;
+    height: 0;
+    border-radius: 16px 16px 0 0;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+    background-color: #000;
+}
+
+.player-wrapper iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+#playerShield {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    background: transparent;
+    cursor: default;
+}
+
+.custom-controls-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 0;
+    padding: 20px 24px;
+    background-color: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-top: none;
+    border-radius: 0 0 16px 16px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+    margin-bottom: 24px;
+}
+
+#customProgressBar {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    background: #232228;
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+    margin: 0;
+    padding: 0;
+    display: block;
+}
+
+#customProgressBar::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--primary);
+    box-shadow: 0 0 8px var(--primary);
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+#customProgressBar::-webkit-slider-thumb:hover {
+    transform: scale(1.25);
+}
+
+.controls-buttons-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    width: 100%;
+}
+
+.btn-control {
+    padding: 10px 20px;
+    font-size: 14px;
+    border-radius: 8px;
+}
+.btn-play { background-color: #1b5e20; border: 1px solid #2e7d32; }
+.btn-play:hover { background-color: #2e7d32; box-shadow: 0 4px 12px rgba(46, 125, 50, 0.2); }
+.btn-pause { background-color: #3e2723; border: 1px solid #5d4037; }
+.btn-pause:hover { background-color: #5d4037; box-shadow: 0 4px 12px rgba(93, 64, 55, 0.2); }
+
+.btn-control:disabled {
+    background-color: #141318 !important;
+    border-color: #1d1c22 !important;
+    color: #3b3a42 !important;
+    cursor: not-allowed;
+    opacity: 0.5;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+#customTimeLabel {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    min-width: 100px;
+    text-align: right;
+    margin-left: auto;
+    color: var(--text-muted);
+}
+
+/* HIGH-PREMIUM HARDWARE-ACCELERATED FULLSCREEN CINEMA SEAMLESS OVERLAYS */
+#theaterContainer:fullscreen {
+    background-color: #000000;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+#theaterContainer:fullscreen .player-wrapper {
+    width: 100vw;
+    height: 100vh;
+    padding-bottom: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+#theaterContainer:fullscreen .custom-controls-panel {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100vw;
+    border-radius: 0;
+    border: none;
+    margin-bottom: 0;
+    z-index: 100;
+    background-color: rgba(21, 20, 25, 0.82);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.3s ease;
+}
+
+#theaterContainer:fullscreen .custom-controls-panel.controls-visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+#theaterContainer:fullscreen .custom-controls-panel:hover {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: translateY(0) !important;
+}
