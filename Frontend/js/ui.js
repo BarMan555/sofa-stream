@@ -1,6 +1,7 @@
 // --- UI Authorization & View State Management ---
 
 function switchView(viewId) {
+    document.querySelector('.container')?.classList.toggle('room-active', viewId === 'room-view');
     const mainMenu = document.getElementById('main-menu');
     const settingsForm = document.getElementById('settings-form');
     const roomView = document.getElementById('room-view');

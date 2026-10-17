@@ -1,16 +1,22 @@
 name: SofaStream CI
 
-# 1. Триггеры (Когда запускать этот пайплайн)
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
-# 2. Работы 
+permissions:
+  contents: read
+
+concurrency:
+  group: sofastream-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Скачивание кода репозитория
@@ -19,13 +25,30 @@ jobs:
       - name: Установка .NET 10
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.0.x'
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
 
-      - name: Восстановление зависимостей (Restore)
-        run: dotnet restore SofaStream.sln
+      - name: Установка Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
 
-      - name: Сборка проекта (Build)
-        run: dotnet build SofaStream.sln --configuration Release --no-restore
+      - name: Установка закреплённых зависимостей
+        run: npm ci
 
-      - name: Запуск тестов (Test)
-        run: dotnet test SofaStream.sln --configuration Release --no-build --verbosity normal
+      - name: Установка браузера и системных библиотек
+        run: npx playwright install --with-deps chromium
+
+      - name: Полная проверка теми же командами, что локально
+        run: npm run check:full
+
+      - name: Сохранение результатов и диагностики
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sofastream-checks
+          path: artifacts/
+          retention-days: 7
+          if-no-files-found: warn

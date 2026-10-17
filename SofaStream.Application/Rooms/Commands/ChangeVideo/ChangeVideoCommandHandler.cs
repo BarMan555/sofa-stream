@@ -17,6 +17,8 @@ public class ChangeVideoCommandHandler(IRoomRepository roomRepository) : IComman
         if (room == null)
             return Result.Failure(DomainErrors.Room.NotFound);
         
+        if (!double.IsFinite(command.DurationSeconds) || command.DurationSeconds < 0 || command.DurationSeconds >= TimeSpan.MaxValue.TotalSeconds)
+            return Result.Failure(DomainErrors.Room.InvalidDuration);
         var newVideo = new Video(
             command.VideoUrl, 
             command.Title, 

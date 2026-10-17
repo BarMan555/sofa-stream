@@ -1,0 +1,295 @@
+{
+  "schemaVersion": 1,
+  "tasks": [
+    {
+      "id": "HARNESS-001",
+      "title": "Практический harness для локальной и агентной разработки",
+      "status": "done",
+      "dependsOn": [],
+      "evidence": [
+        "docs/tasks/HARNESS-001.md",
+        "scripts/harness.mjs",
+        "scripts/lib/runtime.mjs",
+        ".github/workflows/dotnet-ci.yml"
+      ],
+      "acceptance": [
+        "Новая копия запускается без production .env и User Secrets",
+        "Быстрые и полные проверки доступны едиными командами",
+        "Проверяются настоящий PostgreSQL, HTTP, SignalR и два браузерных клиента",
+        "Ошибки дают ненулевой код и сохраняют диагностику",
+        "Окружение тестов очищается после завершения"
+      ],
+      "verification": [
+        "npm run check:full",
+        "npm run dev",
+        "npm run diagnose"
+      ]
+    },
+    {
+      "id": "SS-001",
+      "title": "Подтверждённая сервером сессия участника",
+      "status": "done",
+      "dependsOn": [],
+      "evidence": [
+        "SofaStream.Api/Controllers/RoomController.cs",
+        "SofaStream.Api/Hubs/RoomHub.cs",
+        "docs/tasks/SS-001.md",
+        "SofaStream.Api/Infrastructure/ParticipantSession.cs",
+        "SofaStream.IntegrationTests/SessionSecurityTests.cs"
+      ],
+      "acceptance": [
+        "Клиент не может выполнять команды от имени чужого UserId",
+        "HTTP и Hub проверяют членство и права",
+        "Отправитель WebRTC-сигнала определяется сервером",
+        "Вход через Hub не обходит лимит участников"
+      ],
+      "verification": [
+        "Регрессионные API и Hub-тесты подмены идентификатора",
+        "npm run check:full"
+      ]
+    },
+    {
+      "id": "SS-002",
+      "title": "Восстановление комнаты после обрыва связи",
+      "status": "done",
+      "dependsOn": [
+        "SS-001",
+        "SS-004"
+      ],
+      "evidence": [
+        "Frontend/js/api.js",
+        "SofaStream.Api/Hubs/RoomHub.cs",
+        "docs/tasks/SS-002.md",
+        "SofaStream.Api/Infrastructure/RoomConnectionLifecycle.cs",
+        "SofaStream.IntegrationTests/ReconnectionTests.cs",
+        "tests/e2e/reconnect.spec.mjs"
+      ],
+      "acceptance": [
+        "Восстановление SignalR возвращает членство и актуальное состояние",
+        "Старое соединение не удаляет участника нового соединения",
+        "Определены правила сохранения роли ведущего при кратком обрыве"
+      ],
+      "verification": [
+        "Браузерный сценарий обрыва и восстановления",
+        "npm run check:full"
+      ]
+    },
+    {
+      "id": "SS-003",
+      "title": "Буферизация любого участника",
+      "status": "done",
+      "dependsOn": [
+        "SS-001"
+      ],
+      "evidence": [
+        "Frontend/js/sync.js",
+        "SofaStream.Application/Rooms/Commands/ChangePlaybackState/ChangePlaybackStateCommandHandler.cs",
+        "SofaStream.Domain/Entities/Room.cs",
+        "docs/tasks/SS-003.md",
+        "SofaStream.IntegrationTests/GroupBufferingTests.cs",
+        "tests/frontend/group-buffering.test.mjs",
+        "tests/e2e/group-buffering.spec.mjs"
+      ],
+      "acceptance": [
+        "Гость сообщает о своей буферизации без права управлять воспроизведением",
+        "Комната ждёт всех буферизующихся участников",
+        "Готовность и выход последнего буферизующегося участника снимают ожидание",
+        "Смена видео очищает устаревшее ожидание"
+      ],
+      "verification": [
+        "Регрессионные доменные, API и браузерные сценарии",
+        "npm run check:full"
+      ]
+    },
+    {
+      "id": "SS-004",
+      "title": "Актуальный снимок при входе во время просмотра",
+      "status": "done",
+      "dependsOn": [],
+      "evidence": [
+        "docs/tasks/SS-004.md",
+        "SofaStream.Domain/Entities/PlaybackPosition.cs",
+        "SofaStream.Infrastructure/Queries/GetRoomStateQueryHandler.cs",
+        "Frontend/js/sync.js",
+        "Frontend/js/player.js",
+        "SofaStream.IntegrationTests/LateJoinTests.cs",
+        "tests/frontend/player-readiness.test.mjs",
+        "tests/e2e/late-join.spec.mjs"
+      ],
+      "acceptance": [
+        "Позиция учитывает прошедшее время и запланированный старт",
+        "Клиент применяет состояние после готовности API и выбранного видео",
+        "Вход в Playing, Paused и Buffering даёт правильный результат",
+        "Устаревший снимок и выход из комнаты не запускают отложенное воспроизведение"
+      ],
+      "verification": [
+        "Регрессионная проверка позднего входа с управляемым временем",
+        "Миграция и снимки на настоящем PostgreSQL",
+        "Браузерные сценарии позднего входа и задержанной готовности",
+        "Настоящий YouTube: Playing, Paused и Buffering",
+        "npm run check:full"
+      ]
+    },
+    {
+      "id": "SS-005",
+      "title": "Управление длинными видео и ошибки команд",
+      "status": "done",
+      "dependsOn": [],
+      "evidence": [
+        "Frontend/js/api.js",
+        "SofaStream.Domain/Entities/Room.cs",
+        "docs/tasks/SS-005.md",
+        "SofaStream.Application/Rooms/Commands/UpdateVideoDuration/UpdateVideoDurationCommand.cs",
+        "tests/e2e/long-video.spec.mjs"
+      ],
+      "acceptance": [
+        "Длительность не подменяется константой 3600",
+        "Пауза и перемотка работают после первого часа",
+        "Отказ сервера обрабатывается, состояние клиента восстанавливается"
+      ],
+      "verification": [
+        "Регрессионная браузерная проверка позиции 3610 секунд",
+        "Ручная проверка настоящего длинного видео",
+        "npm run check:full"
+      ]
+    },
+    {
+      "id": "SS-006",
+      "title": "Снижение громкости при разговоре",
+      "status": "done",
+      "dependsOn": [],
+      "evidence": [
+        "Frontend/js/audio-ducking.js",
+        "docs/tasks/SS-006.md",
+        "tests/frontend/audio-ducking.test.mjs",
+        "tests/e2e/audio-ducking.spec.mjs"
+      ],
+      "acceptance": [
+        "При речи громкость движется к целевому уровню",
+        "После завершения речи громкость восстанавливается",
+        "Завершение видеочата освобождает ресурсы анализа звука"
+      ],
+      "verification": [
+        "Регрессионный тест управляемого сигнала речи",
+        "Браузерная проверка реального Web Audio и выхода из комнаты",
+        "Измерение громкости настоящего YouTube через Iframe API",
+        "npm run check:full"
+      ]
+    },
+    {
+      "id": "SS-007",
+      "title": "Надёжность WebRTC и внешних адаптеров",
+      "status": "ready",
+      "dependsOn": [
+        "SS-001",
+        "SS-002"
+      ],
+      "evidence": [
+        "Frontend/js/webrtc.js",
+        "Frontend/js/player.js"
+      ],
+      "acceptance": [
+        "ICE-кандидаты до remote description сохраняются и применяются",
+        "Проверены видео и звук между разными сетями",
+        "RuTube postMessage проверяет точный origin и source",
+        "Поведение fallback YouTube явно определено"
+      ],
+      "verification": [
+        "Автоматические проверки очереди сигналов",
+        "Ручные сценарии внешних плееров и разных сетей",
+        "npm run check:full"
+      ]
+    },
+    {
+      "id": "SS-008",
+      "title": "Видеочат не перекрывает управление комнатой",
+      "status": "done",
+      "dependsOn": [],
+      "evidence": [
+        "Frontend/css/video-chat.css",
+        "Frontend/index.html",
+        "tests/e2e/fixtures.mjs",
+        "docs/tasks/SS-008.md",
+        "tests/e2e/chat-layout.spec.mjs"
+      ],
+      "acceptance": [
+        "При открытом видеочате кнопка выхода и управление видео доступны",
+        "Проверены обычный размер окна и узкий экран",
+        "Браузерный сценарий выхода не требует предварительного сворачивания видеочата"
+      ],
+      "verification": [
+        "Браузерная проверка доступности кнопок с открытым видеочатом",
+        "npm run check:full"
+      ]
+    },
+    {
+      "id": "SS-009",
+      "title": "Устранить предупреждение безопасности SignalR/.NET",
+      "status": "blocked",
+      "dependsOn": [],
+      "evidence": [
+        "SofaStream.IntegrationTests/packages.lock.json",
+        "global.json",
+        "SofaStream.Api/Dockerfile",
+        "docs/tasks/SS-006.md",
+        "docs/tasks/SS-009.md"
+      ],
+      "acceptance": [
+        "Затронутые пакетные и runtime-зависимости обновлены до исправленных версий для GHSA-334f-vvp4-7g6p",
+        "SDK, файлы блокировки, локальное окружение, CI и Docker согласованы",
+        "Восстановление больше не выдаёт предупреждение NU1903 по этому бюллетеню"
+      ],
+      "verification": [
+        "npm run check:full",
+        "Контейнерная сборка API"
+      ],
+      "blockedReason": "Официальные загрузки SDK/NuGet недоступны из локального окружения (DNS/TLS). Проверенной замены SDK и lock-файлов пока нет; NU1903 сохраняется."
+    },
+    {
+      "id": "SS-010",
+      "title": "Первое YouTube-видео не запускается у гостя без команды ведущего",
+      "status": "done",
+      "dependsOn": [],
+      "evidence": ["docs/tasks/SS-010.md", "Frontend/js/player.js", "Frontend/js/sync.js", "tests/frontend/youtube-loading.test.mjs", "tests/e2e/youtube-loading.spec.mjs"],
+      "acceptance": [
+        "Первая загрузка оставляет обоих участников на паузе",
+        "Медленный API не запускает независимое видео с нулевой шкалой",
+        "Поздняя готовность восстанавливает актуальное состояние комнаты",
+        "Нативный Playing не отменяет серверную паузу"
+      ],
+      "verification": ["Регрессионные клиентские и браузерные проверки", "npm run check:full", "Настоящий YouTube при доступности"]
+    },
+    {
+      "id": "SS-011",
+      "title": "Ручная громкость фильма и индикация приглушения",
+      "status": "done",
+      "dependsOn": ["SS-006"],
+      "evidence": ["docs/tasks/SS-011.md", "Frontend/js/audio-ducking.js", "Frontend/js/player.js", "tests/e2e/movie-volume.spec.mjs"],
+      "acceptance": [
+        "У каждого участника доступна собственная громкость фильма от 0 до 100",
+        "Выбор сохраняется в браузере, включая ноль",
+        "При речи громкость снижается до 30% выбранного уровня и затем восстанавливается",
+        "Приглушение видно в интерфейсе",
+        "Готовность и смена видео сохраняют уровень громкости"
+      ],
+      "verification": ["Клиентские проверки уровней и хранения", "Браузерная проверка речи через WebRTC", "Настоящий YouTube", "npm run check:full"]
+    },
+    {
+      "id": "HARNESS-002",
+      "title": "Автономная очередь задач и отдельное ревью",
+      "status": "ready",
+      "dependsOn": [
+        "HARNESS-001"
+      ],
+      "acceptance": [
+        "Задачи выполняются в изолированных рабочих копиях",
+        "Ограничены повторные попытки и ресурсы",
+        "Ревью получает diff и реальные отчёты",
+        "Внешние действия соответствуют согласованной авторизации"
+      ],
+      "verification": [
+        "Оценка нескольких реалистичных задач на готовом практическом harness"
+      ]
+    }
+  ]
+}

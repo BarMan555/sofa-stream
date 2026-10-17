@@ -33,6 +33,14 @@ public class RoomParticipant(Guid userId, bool isHost = false)
     /// Gets the SignalR connection identifier for the participant's active websocket connection.
     /// </summary>
     public string? ConnectionId { get; private set; }
+
+    public DateTimeOffset? DisconnectedAt { get; private set; }
+
+    public void MarkDisconnected(DateTimeOffset now)
+    {
+        ConnectionId = null;
+        DisconnectedAt = now;
+    }
     
     /// <summary>
     /// Updates the buffering state of the participant.
@@ -68,5 +76,6 @@ public class RoomParticipant(Guid userId, bool isHost = false)
     public void SetConnectionId(string? connectionId)
     {
         this.ConnectionId = connectionId;
+        if (connectionId is not null) DisconnectedAt = null;
     }
 }

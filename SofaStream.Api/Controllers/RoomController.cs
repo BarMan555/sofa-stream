@@ -1,4 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+using SofaStream.Api.Infrastructure;
+using SofaStream.Infrastructure.Persistence;
+using SofaStream.Application.Rooms.Commands.UpdateVideoDuration;
 using SofaStream.Application.Common.Interfaces;
 using SofaStream.Application.Rooms.Commands.ChangePlaybackState;
 using SofaStream.Application.Rooms.Commands.ChangeVideo;
@@ -20,13 +25,20 @@ namespace SofaStream.Api.Controllers;
 /// <param name="changeVideoHandler">The command handler for changing active video content.</param>
 /// <param name="getRoomStateHandler">The query handler for retrieving room state.</param>
 [ApiController]
+[Authorize]
+[ServiceFilter(typeof(RoomMutationFilter))]
 [Route("api/[controller]")]
 public class RoomController(
     ICommandHandler<CreateRoomCommand, Result<Guid>> createRoomHandler,
     ICommandHandler<ChangePlaybackStateCommand, Result> changePlaybackStateHandler,
     ICommandHandler<ChangeVideoCommand, Result> changeVideoHandler,
-    IQueryHandler<GetRoomStateQuery, Result<RoomStateDto>> getRoomStateHandler) : ControllerBase
+    IQueryHandler<GetRoomStateQuery, Result<RoomStateDto>> getRoomStateHandler,
+    ApplicationDbContext db,
+    RoomConnectionLifecycle lifecycle) : ControllerBase
 {
+    private Guid Actor => ParticipantSession.UserId(User);
+    private Task<bool> IsMember(Guid roomId, CancellationToken token) => db.Set<RoomParticipant>()
+        .AnyAsync(p => p.RoomId == roomId && p.UserId == Actor, token);
     
     /// <summary>
     /// Creates a new synchronized viewing room.
@@ -40,7 +52,8 @@ public class RoomController(
         CancellationToken cancellationToken
     )
     {
-        var command = new CreateRoomCommand(request.Name, request.HostId, request.Theme);
+        if (request.HostId != Actor) return Forbid();
+        var command = new CreateRoomCommand(request.Name, Actor, request.Theme);
         var result = await createRoomHandler.HandleAsync(command, cancellationToken);
         
         return Ok(result.Value);
@@ -60,11 +73,13 @@ public class RoomController(
         CancellationToken cancellationToken
     )
     {
+        if (request.UserId != Actor || !await IsMember(roomId, cancellationToken)) return Forbid();
         var command = new ChangePlaybackStateCommand(
             roomId, 
             request.UserId, 
             request.RequestedState, 
-            request.ClientPosition);
+            request.ClientPosition,
+            request.VideoRevision);
         
         var result = await changePlaybackStateHandler.HandleAsync(command, cancellationToken);
 
@@ -92,7 +107,8 @@ public class RoomController(
         CancellationToken cancellationToken
     )
     {
-        var command = new ReportBufferingCompletedCommand(roomId, request.UserId);
+        if (request.UserId != Actor || !await IsMember(roomId, cancellationToken)) return Forbid();
+        var command = new ReportBufferingCompletedCommand(roomId, request.UserId, request.VideoRevision);
         var result = await reportBufferingCompletedHandler.HandleAsync(command, cancellationToken);
 
         if (result.IsFailure)
@@ -115,6 +131,7 @@ public class RoomController(
         CancellationToken cancellationToken
     )
     {
+        if (!await IsMember(roomId, cancellationToken)) return Forbid();
         var query = new GetRoomStateQuery(roomId);
         var result = await getRoomStateHandler.HandleAsync(query, cancellationToken);
         
@@ -137,6 +154,7 @@ public class RoomController(
         [FromBody] ChangeVideoRequest request,
         CancellationToken cancellationToken)
     {
+        if (request.UserId != Actor || !await IsMember(roomId, cancellationToken)) return Forbid();
         var command = new ChangeVideoCommand(roomId, 
             request.UserId, 
             request.VideoUrl, 
@@ -165,9 +183,28 @@ public class RoomController(
         [FromServices] ICommandHandler<JoinRoomCommand, Result> joinRoomHandler,
         CancellationToken cancellationToken)
     {
+        if (request.UserId != Actor) return Forbid();
+        await lifecycle.ExpireAsync(cancellationToken);
         var result = await joinRoomHandler.HandleAsync(new JoinRoomCommand(roomId, request.UserId), cancellationToken);
         if (result.IsFailure) return BadRequest(result.Error);
         return Ok("Room joined successfully. SignalR broadcast triggered.");
+    }
+
+    [HttpPost("{roomId:guid}/leave")]
+    public async Task<IActionResult> LeaveRoom(Guid roomId)
+    {
+        if (!await lifecycle.LeaveAsync(roomId, Actor)) return Forbid();
+        return Ok();
+    }
+
+    [HttpPost("{roomId:guid}/video/duration")]
+    public async Task<IActionResult> UpdateVideoDuration(Guid roomId, UpdateVideoDurationRequest request,
+        [FromServices] ICommandHandler<UpdateVideoDurationCommand, Result> handler, CancellationToken cancellationToken)
+    {
+        if (request.UserId != Actor || !await IsMember(roomId, cancellationToken)) return Forbid();
+        var result = await handler.HandleAsync(new UpdateVideoDurationCommand(roomId, Actor,
+            request.VideoRevision, request.DurationSeconds), cancellationToken);
+        return result.IsFailure ? BadRequest(result.Error) : Ok();
     }
     
     /// <summary>
@@ -175,6 +212,7 @@ public class RoomController(
     /// </summary>
     /// <returns>The server's current UTC DateTimeOffset.</returns>
     [HttpGet("time")]
+    [AllowAnonymous]
     public IActionResult GetServerTime()
     {
         return Ok(new { serverTimeUtc = DateTimeOffset.UtcNow });
@@ -195,7 +233,7 @@ public record CreateRoomRequest(string Name, Guid HostId, string Theme = "Dark")
 /// <param name="UserId">The ID of the user requesting the change.</param>
 /// <param name="RequestedState">The requested new playback state.</param>
 /// <param name="ClientPosition">The current position of the client's playback.</param>
-public record ChangePlaybackStateRequest(Guid UserId, PlaybackState RequestedState, TimeSpan ClientPosition);
+public record ChangePlaybackStateRequest(Guid UserId, PlaybackState RequestedState, TimeSpan ClientPosition, long VideoRevision = 0);
 
 /// <summary>
 /// Request contract for changing the active video stream.
@@ -216,4 +254,6 @@ public record JoinRoomRequest(Guid UserId);
 /// Request contract for reporting buffering completion.
 /// </summary>
 /// <param name="UserId">The identifier of the user reporting buffering completion.</param>
-public record ReportBufferingCompletedRequest(Guid UserId);
+public record ReportBufferingCompletedRequest(Guid UserId, long VideoRevision = 0);
+
+public record UpdateVideoDurationRequest(Guid UserId, long VideoRevision, double DurationSeconds);

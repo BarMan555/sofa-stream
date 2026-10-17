@@ -78,11 +78,26 @@ public class Room : AggregateRoot
     /// Gets the UTC time when the room state was last modified.
     /// </summary>
     public DateTimeOffset LastUpdatedAt { get; private set; } = DateTimeOffset.UtcNow;
+
+    /// <summary>UTC instant at which CurrentPosition begins advancing; null when not playing.</summary>
+    public DateTimeOffset? PlaybackStartedAt { get; private set; }
     
     /// <summary>
     /// Gets the video currently playing in the room.
     /// </summary>
     public Video? CurrentVideo { get; private set; }
+    public long VideoRevision { get; private set; }
+
+    public Result UpdateVideoDuration(Guid userId, long videoRevision, TimeSpan duration)
+    {
+        var participant = _participants.FirstOrDefault(p => p.UserId == userId);
+        if (participant is null) return Result.Failure(DomainErrors.Room.ParticipantNotFound);
+        if (!participant.IsHost) return Result.Failure(DomainErrors.Room.NotHost);
+        if (CurrentVideo is null || videoRevision != VideoRevision) return Result.Failure(DomainErrors.Room.StaleVideo);
+        if (duration <= TimeSpan.Zero) return Result.Failure(DomainErrors.Room.InvalidDuration);
+        CurrentVideo = CurrentVideo with { Duration = duration };
+        return Result.Success();
+    }
 
     /// <summary>
     /// Changes the current video of the room. Resets playback state and position.
@@ -98,16 +113,21 @@ public class Room : AggregateRoot
             return Result.Failure(DomainErrors.Room.ParticipantNotFound);
         if (!participant.IsHost)
             return Result.Failure(DomainErrors.Room.NotHost);
+        if (newVideo.Duration < TimeSpan.Zero) return Result.Failure(DomainErrors.Room.InvalidDuration);
         
         CurrentVideo = newVideo;
+        VideoRevision++;
+        foreach (var member in _participants) member.SetBufferingState(false);
         CurrentPosition = TimeSpan.Zero;
         LastUpdatedAt = DateTimeOffset.UtcNow;
         State = PlaybackState.Paused;
+        PlaybackStartedAt = null;
         
         AddDomainEvent(new RoomVideoChangedEvent(
             RoomId: Id, 
             Video: CurrentVideo, 
-            TriggeredAt: LastUpdatedAt));
+            TriggeredAt: LastUpdatedAt,
+            VideoRevision: VideoRevision));
 
         AddDomainEvent(new RoomPlaybackStateChangedEvent(
             RoomId: Id, 
@@ -171,6 +191,7 @@ public class Room : AggregateRoot
             return Result.Failure(DomainErrors.Room.ParticipantNotFound);
         
         _participants.Remove(participant);
+        ResumeWhenEveryoneIsReady();
 
         if (participant.IsHost && _participants.Count > 0)
         {
@@ -190,15 +211,15 @@ public class Room : AggregateRoot
     /// <exception cref="InvalidOperationException">Thrown if any participant is currently in a buffering state, preventing synchronization.</exception>
     public Result Play(TimeSpan currentClientPosition)
     {
-        if (CurrentVideo != null && currentClientPosition > CurrentVideo.Duration
+        if (CurrentVideo?.Duration > TimeSpan.Zero && currentClientPosition > CurrentVideo.Duration
             || currentClientPosition < TimeSpan.Zero)
             return Result.Failure(DomainErrors.Room.InvalidPosition);
         
-        var estimatedPosition = CurrentPosition;
+        var now = DateTimeOffset.UtcNow;
         if (State == PlaybackState.Playing)
         {
-            var elapsedSinceLastUpdate = DateTimeOffset.UtcNow - LastUpdatedAt;
-            estimatedPosition = CurrentPosition.Add(elapsedSinceLastUpdate);
+            var estimatedPosition = PlaybackPosition.At(State, CurrentPosition,
+                PlaybackStartedAt ?? LastUpdatedAt, now, CurrentVideo?.Duration);
             
             if (Math.Abs((currentClientPosition - estimatedPosition).TotalSeconds) <= 1.5)
             {
@@ -213,16 +234,16 @@ public class Room : AggregateRoot
         
         State = PlaybackState.Playing;
         CurrentPosition = currentClientPosition;
-        LastUpdatedAt = DateTimeOffset.UtcNow;
+        LastUpdatedAt = now;
         
-        var scheduledFor = LastUpdatedAt.AddSeconds(1);
+        PlaybackStartedAt = LastUpdatedAt.AddSeconds(1);
         
         AddDomainEvent(new RoomPlaybackStateChangedEvent(
             RoomId: Id, 
             NewState: State, 
             CurrentPosition: CurrentPosition, 
             TriggeredAt: LastUpdatedAt,
-            ScheduledFor: scheduledFor));
+            ScheduledFor: PlaybackStartedAt));
         
         return Result.Success();
     }
@@ -233,14 +254,16 @@ public class Room : AggregateRoot
     /// <param name="currentClientPosition">The video position where the pause was initiated.</param>
     public Result Pause(TimeSpan currentClientPosition)
     {
-        if (CurrentVideo != null && currentClientPosition > CurrentVideo.Duration
+        if (CurrentVideo?.Duration > TimeSpan.Zero && currentClientPosition > CurrentVideo.Duration
             || currentClientPosition < TimeSpan.Zero)
             return Result.Failure(DomainErrors.Room.InvalidPosition);
 
+        foreach (var member in _participants) member.SetBufferingState(false);
         if (State == PlaybackState.Paused && Math.Abs((currentClientPosition - CurrentPosition).TotalSeconds) <= 0.1) 
             return Result.Success();
         
         State = PlaybackState.Paused;
+        PlaybackStartedAt = null;
         CurrentPosition = currentClientPosition;
         LastUpdatedAt = DateTimeOffset.UtcNow;
         
@@ -260,9 +283,11 @@ public class Room : AggregateRoot
     /// <param name="userId">The identifier of the participant experiencing buffering.</param>
     /// <param name="currentClientPosition">The playback position where the buffering event occurred.</param>
     /// <exception cref="ArgumentException">Thrown if the user is not a member of the room.</exception>
-    public Result ReportBuffering(Guid userId, TimeSpan currentClientPosition)
+    public Result ReportBuffering(Guid userId, TimeSpan currentClientPosition, long? videoRevision = null)
     {
-        if (CurrentVideo != null && currentClientPosition > CurrentVideo.Duration
+        if (videoRevision is not null && videoRevision != VideoRevision)
+            return Result.Failure(DomainErrors.Room.StaleVideo);
+        if (CurrentVideo?.Duration > TimeSpan.Zero && currentClientPosition > CurrentVideo.Duration
             || currentClientPosition < TimeSpan.Zero)
             return Result.Failure(DomainErrors.Room.InvalidPosition);
         
@@ -271,13 +296,19 @@ public class Room : AggregateRoot
         if(participant == null) 
             return Result.Failure(DomainErrors.Room.ParticipantNotFound);
 
+        // Loading a seeked frame while manually paused must not block the next Play.
+        if (State == PlaybackState.Paused) return Result.Success();
+
         participant.SetBufferingState(isBuffering: true);
         
         if (State == PlaybackState.Playing)
         {
+            var now = DateTimeOffset.UtcNow;
+            var position = PlaybackPosition.At(State, CurrentPosition, PlaybackStartedAt ?? LastUpdatedAt, now, CurrentVideo?.Duration);
             State = PlaybackState.Buffering;
-            CurrentPosition = currentClientPosition;
-            LastUpdatedAt = DateTimeOffset.UtcNow;
+            PlaybackStartedAt = null;
+            CurrentPosition = position;
+            LastUpdatedAt = now;
             
             AddDomainEvent(new RoomPlaybackStateChangedEvent(
                 RoomId: Id, 
@@ -296,8 +327,10 @@ public class Room : AggregateRoot
     /// </summary>
     /// <param name="userId">The identifier of the participant who has recovered from buffering.</param>
     /// <exception cref="ArgumentException">Thrown if the user is not found in the session.</exception>
-    public Result ReportBufferingCompleted(Guid userId)
+    public Result ReportBufferingCompleted(Guid userId, long? videoRevision = null)
     {
+        if (videoRevision is not null && videoRevision != VideoRevision)
+            return Result.Failure(DomainErrors.Room.StaleVideo);
         var participant = _participants.FirstOrDefault(p => p.UserId == userId);
         
         if(participant == null) 
@@ -305,10 +338,17 @@ public class Room : AggregateRoot
         
         participant.SetBufferingState(isBuffering: false);
 
-        if (State == PlaybackState.Buffering && !_participants.Any(p => p.IsBuffering))
+        ResumeWhenEveryoneIsReady();
+        return Result.Success();
+    }
+
+    private void ResumeWhenEveryoneIsReady()
+    {
+        if (State == PlaybackState.Buffering && _participants.Count > 0 && !_participants.Any(p => p.IsBuffering))
         {
             State = PlaybackState.Playing;
             LastUpdatedAt = DateTimeOffset.UtcNow;
+            PlaybackStartedAt = LastUpdatedAt;
             
             AddDomainEvent(new RoomPlaybackStateChangedEvent(
                 RoomId: Id, 
@@ -318,6 +358,5 @@ public class Room : AggregateRoot
                 ScheduledFor: null));
         }
         
-        return Result.Success();
     }
 }

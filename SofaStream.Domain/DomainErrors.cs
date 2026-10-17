@@ -12,6 +12,8 @@ public static class DomainErrors
     /// </summary>
     public static class Room
     {
+        public static readonly Error StaleVideo = new("Room.StaleVideo", "The video changed. Please synchronize the room state again.");
+        public static readonly Error InvalidDuration = new("Room.InvalidDuration", "The video duration must be a finite positive value, or zero while metadata is unknown.");
         /// <summary>
         /// Error indicating that playback cannot start because one or more participants are still buffering.
         /// </summary>

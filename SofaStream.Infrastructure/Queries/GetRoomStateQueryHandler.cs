@@ -14,7 +14,7 @@ namespace SofaStream.Infrastructure.Queries;
 /// Utilizes Dapper for high-performance raw SQL querying, bypassing the EF Core Change Tracker.
 /// </summary>
 /// <param name="dbContext">The database context used to extract the underlying ADO.NET connection.</param>
-public class GetRoomStateQueryHandler(ApplicationDbContext dbContext) : IQueryHandler<GetRoomStateQuery, Result<RoomStateDto>>
+public class GetRoomStateQueryHandler(ApplicationDbContext dbContext, TimeProvider timeProvider) : IQueryHandler<GetRoomStateQuery, Result<RoomStateDto>>
 {
     /// <inheritdoc />
     public async Task<Result<RoomStateDto>> HandleAsync(GetRoomStateQuery query, CancellationToken cancellationToken = default)
@@ -31,6 +31,9 @@ public class GetRoomStateQueryHandler(ApplicationDbContext dbContext) : IQueryHa
                r."CurrentVideo_Duration" AS VideoDuration,
                r."State" AS PlaybackState, 
                r."CurrentPosition",
+               r."LastUpdatedAt",
+               r."PlaybackStartedAt",
+               r."VideoRevision",
                p."UserId", 
                p."IsHost", 
                p."IsBuffering"
@@ -39,9 +42,8 @@ public class GetRoomStateQueryHandler(ApplicationDbContext dbContext) : IQueryHa
            WHERE r."Id" = @RoomId;
            """;
         
-        var flatResult = await connection.QueryAsync<RoomParticipantFlatResult>(
-            sql, 
-            new { RoomId = query.RoomId });
+        var flatResult = await connection.QueryAsync<RoomParticipantFlatResult>(new CommandDefinition(
+            sql, new { RoomId = query.RoomId }, cancellationToken: cancellationToken));
         
         var resultList = flatResult.ToList();
 
@@ -49,6 +51,11 @@ public class GetRoomStateQueryHandler(ApplicationDbContext dbContext) : IQueryHa
             return Result<RoomStateDto>.Failure(DomainErrors.Room.NotFound);
         
         var firstRow = resultList.First();
+        var snapshotAt = timeProvider.GetUtcNow();
+        var playbackState = (PlaybackState)firstRow.PlaybackState;
+        var startedAt = firstRow.PlaybackStartedAt ?? firstRow.LastUpdatedAt;
+        var position = PlaybackPosition.At(playbackState, firstRow.CurrentPosition,
+            startedAt, snapshotAt, firstRow.VideoDuration);
         
         var participants = resultList
             .Where(r => r.UserId.HasValue) // Safeguard for LEFT JOIN returning nulls
@@ -63,11 +70,15 @@ public class GetRoomStateQueryHandler(ApplicationDbContext dbContext) : IQueryHa
             firstRow.Id,
             firstRow.Name,
             // Cast the integer from the DB back to our Domain enum, then to string
-            ((PlaybackState)firstRow.PlaybackState).ToString(),
-            firstRow.CurrentPosition.TotalSeconds,
+            playbackState.ToString(),
+            position.TotalSeconds,
             videoDto,
             participants,
-            firstRow.Theme
+            firstRow.Theme,
+            snapshotAt,
+            firstRow.LastUpdatedAt,
+            playbackState == PlaybackState.Playing && startedAt > snapshotAt ? startedAt : null,
+            firstRow.VideoRevision
         );
         
         return Result<RoomStateDto>.Success(roomState);
@@ -86,6 +97,9 @@ public class GetRoomStateQueryHandler(ApplicationDbContext dbContext) : IQueryHa
         public TimeSpan? VideoDuration { get; set; }
         public int PlaybackState { get; set; }
         public TimeSpan CurrentPosition { get; set; }
+        public DateTimeOffset LastUpdatedAt { get; set; }
+        public DateTimeOffset? PlaybackStartedAt { get; set; }
+        public long VideoRevision { get; set; }
         
         // Nullable because a LEFT JOIN might theoretically return a room with 0 participants
         public Guid? UserId { get; set; }

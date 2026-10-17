@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sofa Stream - Sync & Chill</title>
-    <link rel="stylesheet" href="style.css?v=1.4">
+    <link rel="stylesheet" href="style.css?v=1.10">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
 </head>
 <body class="theme-warm">
@@ -41,7 +41,7 @@
             </h1>
             <span style="color: #9ca3af; font-size: 1rem; font-weight: 400; letter-spacing: 0.5px;">Sync & Chill with friends</span>
         </div>
-        
+
         <div class="menu-stack">
             <button id="btn-menu-create" class="btn-primary btn-large">Create Room</button>
             <button id="btn-menu-join" class="btn-secondary btn-large">Join Room</button>
@@ -76,7 +76,7 @@
     <!-- Settings Form View -->
     <div id="settings-form" class="panel view hidden">
         <h2 id="settings-heading" class="settings-title">Room Settings</h2>
-        
+
         <div class="settings-stack">
             <div class="form-group">
                 <label for="userNameInput">Your Name</label>
@@ -142,21 +142,45 @@
         <!-- Hidden old status badge to prevent JS binding errors -->
         <div id="status" class="status-badge disconnected" style="display: none !important;">Disconnected</div>
 
-        <div id="hostControlsPanel" class="panel" style="display: none;">
-            <h3>Change Video (Host Only)</h3>
-            <div class="media-input-group">
-                <input type="text" id="videoUrlInput" placeholder="Paste YouTube or RuTube URL here..." />
-                <button id="btn-change-video" class="btn-danger">Load Video</button>
-            </div>
-        </div>
+        <div class="room-workspace">
+            <div class="room-watch">
+                <div id="hostControlsPanel" class="panel" style="display: none;">
+                    <h3>Change Video (Host Only)</h3>
+                    <div class="media-input-group">
+                        <input type="text" id="videoUrlInput" placeholder="Paste YouTube or RuTube URL here..." />
+                        <button id="btn-change-video" class="btn-danger">Load Video</button>
+                    </div>
+                </div>
 
-        <div id="theaterContainer">
-            <div class="player-wrapper">
-                <div id="youtubePlayer"></div>
-                <iframe id="rutubePlayer" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" allow="autoplay; encrypted-media" allowfullscreen sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"></iframe>
-                <div id="playerShield"></div>
-            </div>
+                <p id="playerStatus" role="status" hidden></p>
+                <div id="theaterContainer">
+                    <div class="player-wrapper">
+                        <div id="youtubePlayer"></div>
+                        <iframe id="rutubePlayer" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" allow="autoplay; encrypted-media" allowfullscreen sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"></iframe>
+                        <div id="playerShield"></div>
+                    </div>
 
+                    <div class="panel custom-controls-panel">
+                        <input type="range" id="customProgressBar" min="0" max="100" value="0" />
+
+                        <div class="movie-volume-controls">
+                            <label for="customVolumeSlider" class="movie-volume-label">🔊 Volume</label>
+                            <input type="range" id="customVolumeSlider" aria-label="Movie volume" min="0" max="100" step="1" value="100" />
+                            <output id="customVolumeValue" for="customVolumeSlider">100%</output>
+                            <span id="duckingStatus" class="ducking-status" hidden>Speech: 30%</span>
+                        </div>
+
+                        <div class="controls-buttons-row">
+                            <button id="customPlayBtn" class="btn-control btn-play" disabled>▶ Play</button>
+                            <button id="customPauseBtn" class="btn-control btn-pause" disabled>⏸ Pause</button>
+                            <span id="customTimeLabel">00:00 / 00:00</span>
+
+                            <button id="customFullscreenBtn" class="btn-control btn-secondary" style="padding: 10px 14px; margin-left: 10px;">⛶</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <aside id="videoChatDock" class="room-chat-dock" aria-label="Room video chat">
             <!-- Video Chat Overlay Container -->
             <div id="videoChatOverlay" class="video-chat-overlay" style="display: none;">
                 <div id="videoChatHeader" class="video-chat-header">
@@ -189,28 +213,19 @@
                 💬 Room Chat
             </button>
 
-            <div class="panel custom-controls-panel">
-                <input type="range" id="customProgressBar" min="0" max="100" value="0" />
-
-                <div class="controls-buttons-row">
-                    <button id="customPlayBtn" class="btn-control btn-play" disabled>▶ Play</button>
-                    <button id="customPauseBtn" class="btn-control btn-pause" disabled>⏸ Pause</button>
-                    <span id="customTimeLabel">00:00 / 00:00</span>
-
-                    <button id="customFullscreenBtn" class="btn-control btn-secondary" style="padding: 10px 14px; margin-left: 10px;">⛶</button>
-                </div>
-            </div>
+            </aside>
         </div>
     </div>
 </div>
 
-<script src="js/config.js?v=1.7"></script>
-<script src="js/player.js?v=1.7"></script>
-<script src="js/sync.js?v=1.7"></script>
-<script src="js/webrtc.js?v=1.7"></script>
-<script src="js/audio-ducking.js?v=1.7"></script>
-<script src="js/ui.js?v=1.7"></script>
-<script src="js/api.js?v=1.7"></script>
-<script src="app.js?v=1.7"></script>
+<script src="runtime-config.js"></script>
+<script src="js/config.js?v=1.8"></script>
+<script src="js/player.js?v=1.10"></script>
+<script src="js/sync.js?v=1.9"></script>
+<script src="js/webrtc.js?v=1.8"></script>
+<script src="js/audio-ducking.js?v=1.10"></script>
+<script src="js/ui.js?v=1.8"></script>
+<script src="js/api.js?v=1.8"></script>
+<script src="app.js?v=1.10"></script>
 </body>
 </html>

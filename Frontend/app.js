@@ -4,7 +4,13 @@ let videoPlayer = null;
 let syncMachine = null;
 
 function initPlayerAfterAPIReady() {
+    if (!syncMachine) return;
+    if (videoPlayer) {
+        videoPlayer.initializeYoutubePlayer();
+        return;
+    }
     videoPlayer = new UniversalPlayer("youtubePlayer", "rutubePlayer", onPlayerStateChange, () => {
+        window.applyMovieVolume?.();
         syncMachine.setPlayer(videoPlayer);
         if (isHost) syncMachine.setHostStatus(true);
         console.log("FSM: State Machine activated safely after Player Ready.");
@@ -13,12 +19,15 @@ function initPlayerAfterAPIReady() {
         }
     });
     window.videoPlayer = videoPlayer;
+    window.applyMovieVolume?.();
 }
 window.initPlayerAfterAPIReady = initPlayerAfterAPIReady;
 
 function onPlayerStateChange(domainState) {
     if (syncMachine) {
         syncMachine.handlePlayerStateNotification(domainState);
+        if (domainState === PlaybackState.Playing && window.syncVideoDuration)
+            void window.syncVideoDuration().catch(error => console.warn('Video metadata could not be saved:', error));
     }
 }
 
@@ -228,26 +237,8 @@ function setupCustomControls() {
     }
 }
 
-// Fullscreen Reparenting Listener for Video Chat Overlay
-document.addEventListener("fullscreenchange", () => {
-    const overlay = document.getElementById("videoChatOverlay");
-    const restoreBtn = document.getElementById("videoChatRestoreBtn");
-    const theater = document.getElementById("theaterContainer");
-    
-    if (!overlay || !restoreBtn || !theater) return;
-    
-    if (document.fullscreenElement === theater) {
-        theater.appendChild(overlay);
-        theater.appendChild(restoreBtn);
-    } else {
-        document.body.appendChild(overlay);
-        document.body.appendChild(restoreBtn);
-    }
-    
-    if (window.resetOverlayPosition) {
-        window.resetOverlayPosition();
-    }
-});
+// Keep the chat in its room dock outside fullscreen.
+document.addEventListener("fullscreenchange", () => window.placeVideoChat?.());
 
 // Periodic Progress Bar & State Updater Loop
 setInterval(() => {
@@ -257,7 +248,7 @@ setInterval(() => {
     const pauseBtn = document.getElementById('customPauseBtn');
     const progressBar = document.getElementById('customProgressBar');
 
-    if (!currentRoomId || isJoiningRoom) {
+    if (!currentRoomId || isJoiningRoom || !videoPlayer.videoReady) {
         if (playBtn) playBtn.disabled = true;
         if (pauseBtn) pauseBtn.disabled = true;
         return;
@@ -374,8 +365,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     initLayoutActions();
     setupCustomControls();
+    setupMovieVolumeControls();
 
-    if (typeof window.YT !== "undefined" && typeof window.YT.Player === "function" && !window.youtubeBlocked) {
-        initPlayerAfterAPIReady();
-    }
+    initPlayerAfterAPIReady();
 });

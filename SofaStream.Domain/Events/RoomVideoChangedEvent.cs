@@ -14,4 +14,5 @@ namespace SofaStream.Domain.Events;
 public record RoomVideoChangedEvent(
     Guid RoomId,
     Video? Video,
-    DateTimeOffset TriggeredAt) : IDomainEvent;
+    DateTimeOffset TriggeredAt,
+    long VideoRevision = 0) : IDomainEvent;

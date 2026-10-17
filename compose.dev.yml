@@ -1,0 +1,20 @@
+# A separate local database. No production .env, fixed container names, or production volumes.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: sofa_dev
+      POSTGRES_PASSWORD: sofa_local_only
+      POSTGRES_DB: sofa_dev
+    ports:
+      - "127.0.0.1:${SOFASTREAM_DB_PORT:-5433}:5432"
+    volumes:
+      - dev_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sofa_dev -d sofa_dev"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  dev_data:

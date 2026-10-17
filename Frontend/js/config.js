@@ -1,7 +1,7 @@
 // --- Configuration & Global State Management ---
-const API_BASE_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+const API_BASE_URL = window.SOFASTREAM_CONFIG?.apiBaseUrl || ((window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
     ? "http://localhost:5063"
-    : window.location.origin;
+    : window.location.origin);
 
 let appConfig = {
     api: {
@@ -35,7 +35,7 @@ function uuidv4() {
     });
 }
 
-const globalUserId = uuidv4();
+let globalUserId = null;
 let localNickname = "Me";
 let currentRoomId = null;
 let isHost = false;

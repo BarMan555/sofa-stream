@@ -26,7 +26,7 @@ public class ReportBufferingCompletedCommandHandler(IRoomRepository roomReposito
         if (participant == null)
             return Result.Failure(DomainErrors.Room.ParticipantNotFound);
 
-        var operationResult = room.ReportBufferingCompleted(request.UserId);
+        var operationResult = room.ReportBufferingCompleted(request.UserId, request.VideoRevision);
 
         if (operationResult.IsSuccess)
         {

@@ -15,6 +15,7 @@ public class RoomVideoChangedEventHandler(IRoomNotificationService roomNotificat
         await roomNotificationService.NotifyVideoChangedAsync(
             domainEvent.RoomId, 
             domainEvent.Video,  
+            domainEvent.VideoRevision,
             cancellationToken);
     }
 }

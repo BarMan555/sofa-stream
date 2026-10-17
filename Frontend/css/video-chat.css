@@ -1,9 +1,7 @@
 /* --- VIDEO CHAT OVERLAY PREMIUM GLASSMORPHIC DESIGN SYSTEM --- */
 .video-chat-overlay {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    width: 320px;
+    position: static;
+    width: 100%;
     background-color: rgba(21, 20, 25, 0.75);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
@@ -11,7 +9,7 @@
     border-radius: 12px;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65), 
                 inset 0 1px 0 rgba(255, 255, 255, 0.06);
-    z-index: 150;
+    z-index: auto;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -28,7 +26,7 @@
     padding: 10px 14px;
     background-color: rgba(255, 69, 0, 0.08);
     border-bottom: 1px solid rgba(255, 69, 0, 0.15);
-    cursor: move;
+    cursor: default;
 }
 
 .video-chat-title {
@@ -217,9 +215,9 @@
 }
 
 .video-chat-restore-btn {
-    position: fixed;
-    top: 20px;
-    right: 20px;
+    position: static;
+    width: fit-content;
+    max-width: 100%;
     z-index: 155;
     padding: 10px 16px;
     border-radius: 20px;
@@ -256,8 +254,49 @@
 }
 
 #theaterContainer:fullscreen .video-chat-overlay {
-    position: absolute !important;
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 320px;
+    max-width: calc(100% - 32px);
+    max-height: calc(100% - 150px);
+    z-index: 150;
 }
+#theaterContainer:fullscreen .video-chat-header { cursor: move; }
+#theaterContainer:fullscreen .video-grid { min-height: 0; }
+#theaterContainer:fullscreen .video-chat-header,
+#theaterContainer:fullscreen .video-chat-controls { flex-shrink: 0; }
 #theaterContainer:fullscreen .video-chat-restore-btn {
-    position: absolute !important;
+    position: absolute;
+    top: 16px;
+    right: 16px;
+}
+
+/* Keep chat in the room layout; fullscreen alone uses a movable overlay. */
+.container.room-active { max-width: 1280px; }
+.room-workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 20px;
+    align-items: start;
+}
+.room-watch, .room-chat-dock { min-width: 0; }
+.room-chat-dock { width: 100%; }
+.room-nav-header { flex-wrap: wrap; gap: 16px; }
+.room-details { min-width: 0; flex: 1; }
+.room-meta { min-width: 0; }
+.room-title-row, .room-id-row { flex-wrap: wrap; }
+#room-id-value { max-width: 100%; overflow-wrap: anywhere; }
+.btn-leave { flex-shrink: 0; }
+.media-input-group input { min-width: 0; }
+
+@media (max-width: 900px) {
+    .room-workspace { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 520px) {
+    .room-nav-header { padding: 16px; }
+    .room-details { flex-basis: 100%; }
+    .room-nav-header .btn-leave { margin-left: auto; }
+    .media-input-group { flex-direction: column; }
+    .controls-buttons-row { flex-wrap: wrap; gap: 8px; }
 }

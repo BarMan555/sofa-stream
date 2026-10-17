@@ -1,5 +1,10 @@
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.DataProtection;
+using SofaStream.Api.Infrastructure;
+using SofaStream.Application.Rooms.Commands.UpdateVideoDuration;
 using SofaStream.Api.Hubs;
 using SofaStream.Api.Services;
 using SofaStream.Application.Common.Interfaces;
@@ -32,6 +37,16 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddScoped<IRoomRepository, RoomRepository>();
 builder.Services.AddScoped<DomainEventDispatcher>();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddDataProtection().SetApplicationName("SofaStream");
+builder.Services.AddSingleton<ParticipantSession>();
+builder.Services.AddAuthentication(ParticipantSession.Scheme)
+    .AddScheme<AuthenticationSchemeOptions, ParticipantSessionHandler>(ParticipantSession.Scheme, _ => { });
+builder.Services.AddAuthorization();
+builder.Services.AddSingleton<RoomMutationGate>();
+builder.Services.AddScoped<RoomMutationFilter>();
+builder.Services.AddScoped<RoomConnectionLifecycle>();
+builder.Services.AddHostedService<RoomConnectionReaper>();
 
 // Настройка CORS под динамический appsettings
 builder.Services.AddCors(options =>
@@ -56,6 +71,7 @@ builder.Services.AddScoped<ICommandHandler<ChangePlaybackStateCommand, Result>, 
 builder.Services.AddScoped<ICommandHandler<JoinRoomCommand, Result>, JoinRoomCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<LeaveRoomCommand, Result>, LeaveRoomCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<ChangeVideoCommand, Result>, ChangeVideoCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<UpdateVideoDurationCommand, Result>, UpdateVideoDurationCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<ReportBufferingCompletedCommand, Result>, ReportBufferingCompletedCommandHandler>();
 builder.Services.AddScoped<IDomainEventHandler<RoomPlaybackStateChangedEvent>, RoomPlaybackStateChangedEventHandler>();
 builder.Services.AddScoped<IDomainEventHandler<RoomVideoChangedEvent>, RoomVideoChangedEventHandler>();
@@ -65,6 +81,8 @@ builder.Services.AddScoped<IQueryHandler<GetRoomStateQuery, Result<RoomStateDto>
 builder.Services.AddExceptionHandler<SofaStream.Api.Infrastructure.GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 builder.Services.AddControllers();
+builder.Services.AddHealthChecks()
+    .AddCheck<SofaStream.Api.Infrastructure.DatabaseHealthCheck>("postgresql", tags: ["ready"]);
 
 var app = builder.Build();
 
@@ -87,6 +105,7 @@ using (var scope = app.Services.CreateScope())
     {
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
         logger.LogError(ex, "An error occurred while migrating the database.");
+        throw;
     }
 }
 
@@ -104,7 +123,14 @@ if (app.Environment.IsDevelopment())
 
 app.UseRouting();
 app.UseCors();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
-app.MapHub<RoomHub>("/hubs/room");
+app.MapHub<RoomHub>("/hubs/room", options => options.CloseOnAuthenticationExpiration = true);
+app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
+app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check => check.Tags.Contains("ready") });
 
 app.Run();
+
+// Makes the real application entry point available to integration tests.
+public partial class Program;

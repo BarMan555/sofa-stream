@@ -8,4 +8,4 @@ namespace SofaStream.Application.Rooms.Commands.ReportBufferingCompleted;
 /// </summary>
 /// <param name="RoomId">The unique identifier of the synchronized room session.</param>
 /// <param name="UserId">The unique identifier of the participant who recovered from buffering.</param>
-public record ReportBufferingCompletedCommand(Guid RoomId, Guid UserId);
+public record ReportBufferingCompletedCommand(Guid RoomId, Guid UserId, long VideoRevision = 0);

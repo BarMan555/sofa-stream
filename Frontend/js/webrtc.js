@@ -13,22 +13,14 @@ async function startVideoChat() {
     
     const overlay = document.getElementById("videoChatOverlay");
     const restoreBtn = document.getElementById("videoChatRestoreBtn");
-    const theater = document.getElementById("theaterContainer");
-    if (overlay && restoreBtn && theater) {
-        if (document.fullscreenElement !== theater) {
-            document.body.appendChild(overlay);
-            document.body.appendChild(restoreBtn);
-        } else {
-            theater.appendChild(overlay);
-            theater.appendChild(restoreBtn);
-        }
-    }
+    placeVideoChat();
 
     if (overlay) overlay.style.display = "flex";
     if (restoreBtn) restoreBtn.style.display = "none";
     
     await initLocalMedia();
     makeOverlayDraggable();
+    window.resetOverlayPosition?.();
     
     isMinimized = false;
     isAudioMuted = false;
@@ -72,16 +64,12 @@ function stopVideoChat() {
     console.log("WebRTC: Stopping video chat session...");
     const overlay = document.getElementById("videoChatOverlay");
     const restoreBtn = document.getElementById("videoChatRestoreBtn");
-    const theater = document.getElementById("theaterContainer");
     
     if (overlay) overlay.style.display = "none";
     if (restoreBtn) restoreBtn.style.display = "none";
     
-    if (overlay && restoreBtn && theater) {
-        theater.appendChild(overlay);
-        theater.appendChild(restoreBtn);
-    }
-    
+    placeVideoChat();
+
     if (typeof stopDuckingLoop === "function") {
         stopDuckingLoop();
     }
@@ -208,12 +196,26 @@ function generateMockMediaStream() {
     return stream;
 }
 
+function placeVideoChat() {
+    const theater = document.getElementById('theaterContainer');
+    const dock = document.getElementById('videoChatDock');
+    const target = document.fullscreenElement === theater ? theater : dock;
+    const overlay = document.getElementById('videoChatOverlay');
+    const restore = document.getElementById('videoChatRestoreBtn');
+    if (!target || !overlay || !restore) return;
+    target.appendChild(overlay);
+    target.appendChild(restore);
+    window.resetOverlayPosition?.();
+}
+window.placeVideoChat = placeVideoChat;
+
 function makeOverlayDraggable() {
     const overlay = document.getElementById("videoChatOverlay");
     const header = document.getElementById("videoChatHeader");
     const container = document.getElementById("theaterContainer");
     
-    if (!overlay || !header || !container) return;
+    if (!overlay || !header || !container || header.dataset.dragReady) return;
+    header.dataset.dragReady = "true";
     
     let active = false;
     let currentX, currentY, initialX, initialY;
@@ -228,6 +230,7 @@ function makeOverlayDraggable() {
     document.addEventListener("touchmove", drag, { passive: false });
     
     function dragStart(e) {
+        if (document.fullscreenElement !== container || e.target.closest("button")) return;
         if (e.type === "touchstart") {
             initialX = e.touches[0].clientX - xOffset;
             initialY = e.touches[0].clientY - yOffset;
@@ -247,7 +250,7 @@ function makeOverlayDraggable() {
     }
     
     function drag(e) {
-        if (!active) return;
+        if (!active || document.fullscreenElement !== container) return;
         e.preventDefault();
         
         if (e.type === "touchmove") {
@@ -277,13 +280,14 @@ function makeOverlayDraggable() {
         }
         
         const elRect = el.getBoundingClientRect();
-        const defaultLeft = containerWidth - elRect.width - 20;
-        const defaultTop = 20;
+        const defaultLeft = containerWidth - elRect.width - 16;
+        const defaultTop = 16;
         
         const minX = -defaultLeft;
-        const maxX = 20;
+        const maxX = 16;
         const minY = -defaultTop;
-        const maxY = containerHeight - elRect.height - defaultTop;
+        const controlsHeight = container.querySelector(".custom-controls-panel")?.offsetHeight || 120;
+        const maxY = Math.max(minY, containerHeight - elRect.height - defaultTop - controlsHeight - 16);
         
         const clampedX = Math.max(minX, Math.min(maxX, xPos));
         const clampedY = Math.max(minY, Math.min(maxY, yPos));
@@ -297,9 +301,11 @@ function makeOverlayDraggable() {
     }
     
     window.resetOverlayPosition = () => {
+        active = false;
         xOffset = 0; yOffset = 0; currentX = 0; currentY = 0;
         overlay.style.transform = "translate3d(0, 0, 0)";
     };
+    window.addEventListener("resize", window.resetOverlayPosition);
 }
 
 function toggleMinimize() {

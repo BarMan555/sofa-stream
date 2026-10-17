@@ -1,0 +1,18 @@
+.git
+.idea
+.agents
+.agent
+.codex
+**/[Bb]in
+**/[Oo]bj
+# Old Windows output directories can contain a literal backslash on macOS/Linux.
+**/[Bb]in\\*
+**/[Oo]bj\\*
+**/node_modules
+**/artifacts
+**/test-results
+**/playwright-report
+**/.DS_Store
+.env
+.env.*
+!.env.example

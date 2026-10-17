@@ -1,0 +1,27 @@
+{
+  "name": "sofastream-harness",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "doctor": "node scripts/harness.mjs doctor",
+    "dev": "node scripts/harness.mjs dev",
+    "db:stop": "node scripts/harness.mjs db:stop",
+    "check": "node scripts/harness.mjs check",
+    "check:full": "node scripts/harness.mjs check:full",
+    "test:frontend": "node --test tests/frontend/*.test.mjs",
+    "test:harness": "node --test tests/harness/*.test.mjs",
+    "test:integration": "node scripts/harness.mjs test:integration",
+    "test:e2e": "node scripts/harness.mjs test:e2e",
+    "diagnose": "node scripts/harness.mjs diagnose",
+    "browser:install": "playwright install chromium",
+    "report:e2e": "playwright show-report artifacts/playwright-report"
+  },
+  "devDependencies": {
+    "@microsoft/signalr": "8.0.0",
+    "@playwright/test": "1.64.0"
+  }
+}

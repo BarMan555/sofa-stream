@@ -14,4 +14,5 @@ public record ChangePlaybackStateCommand(
     Guid RoomId, 
     Guid UserId,
     PlaybackState RequestedState, 
-    TimeSpan ClientPosition);
+    TimeSpan ClientPosition,
+    long VideoRevision = 0);

@@ -22,3 +22,10 @@ docker-compose-bd-local.yml
 # Системные файлы macOS
 .DS_Store
 **/.DS_Store
+
+# Local harness dependencies and evidence
+node_modules/
+artifacts/
+test-results/
+playwright-report/
+.env.dev

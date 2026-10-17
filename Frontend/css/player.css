@@ -85,6 +85,35 @@
     width: 100%;
 }
 
+.movie-volume-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+.movie-volume-label { flex-shrink: 0; }
+#customVolumeSlider {
+    flex: 1 1 90px;
+    min-width: 60px;
+    max-width: 180px;
+    height: 20px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    accent-color: var(--primary);
+    cursor: pointer;
+}
+#customVolumeSlider:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 3px;
+}
+#customVolumeValue { min-width: 4ch; font-variant-numeric: tabular-nums; }
+.ducking-status { margin-left: auto; color: var(--primary); font-size: 12px; }
+
 .btn-control {
     padding: 10px 20px;
     font-size: 14px;

@@ -25,7 +25,6 @@ namespace SofaStream.Infrastructure.Migrations
             modelBuilder.Entity("SofaStream.Domain.Entities.Room", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<TimeSpan>("CurrentPosition")
@@ -42,6 +41,9 @@ namespace SofaStream.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<DateTimeOffset?>("PlaybackStartedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int>("State")
                         .HasColumnType("integer");
 
@@ -51,6 +53,9 @@ namespace SofaStream.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
                         .HasDefaultValue("Dark");
+
+                    b.Property<long>("VideoRevision")
+                        .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
@@ -68,6 +73,9 @@ namespace SofaStream.Infrastructure.Migrations
                     b.Property<string>("ConnectionId")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset?>("DisconnectedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsBuffering")
                         .HasColumnType("boolean");

@@ -16,7 +16,11 @@ public record RoomStateDto(
     double CurrentPositionSeconds,
     VideoDto? CurrentVideo,
     List<ParticipantDto> Participants,
-    string Theme);
+    string Theme,
+    DateTimeOffset SnapshotAt,
+    DateTimeOffset LastUpdatedAt,
+    DateTimeOffset? ScheduledFor,
+    long VideoRevision = 0);
 
 /// <summary>
 /// Read model representing a participant within a room.

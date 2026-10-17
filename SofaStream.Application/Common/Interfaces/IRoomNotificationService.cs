@@ -36,6 +36,7 @@ public interface IRoomNotificationService
     Task NotifyVideoChangedAsync(
         Guid roomId,
         Video? video,
+        long videoRevision,
         CancellationToken cancellationToken);
 
     /// <summary>

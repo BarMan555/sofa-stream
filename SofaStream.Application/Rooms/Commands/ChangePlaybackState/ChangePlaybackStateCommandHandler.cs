@@ -26,8 +26,10 @@ public class ChangePlaybackStateCommandHandler(IRoomRepository roomRepository)
         if (participant == null)
             return Result.Failure(DomainErrors.Room.ParticipantNotFound);
         
-        if (!participant.IsHost)
+        if (!participant.IsHost && request.RequestedState != PlaybackState.Buffering)
             return Result.Failure(DomainErrors.Room.NotHost);
+        if (request.VideoRevision != room.VideoRevision)
+            return Result.Failure(DomainErrors.Room.StaleVideo);
 
         Result operationResult;
         
@@ -40,7 +42,7 @@ public class ChangePlaybackStateCommandHandler(IRoomRepository roomRepository)
                 operationResult = room.Pause(request.ClientPosition);
                 break;
             case PlaybackState.Buffering:
-                operationResult = room.ReportBuffering(request.UserId, request.ClientPosition);
+                operationResult = room.ReportBuffering(request.UserId, request.ClientPosition, request.VideoRevision);
                 break;
             default:
                 operationResult = Result.Failure(DomainErrors.Room.InvalidPlaybackState);
