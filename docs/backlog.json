@@ -275,6 +275,22 @@
       "verification": ["Клиентские проверки уровней и хранения", "Браузерная проверка речи через WebRTC", "Настоящий YouTube", "npm run check:full"]
     },
     {
+      "id": "SS-012",
+      "title": "Редизайн интерфейса и анимации",
+      "status": "done",
+      "dependsOn": [],
+      "evidence": ["docs/tasks/SS-012.md", "docs/design.md", "Frontend/index.html", "Frontend/css/", "Frontend/js/chat-ui.js", "tests/e2e/interface-redesign.spec.mjs", "tests/e2e/video-chat.spec.mjs", "tests/e2e/room-code.spec.mjs", "SofaStream.IntegrationTests/RoomInviteCodeTests.cs"],
+      "acceptance": [
+        "Главный экран, формы, плеер и видеочат оформлены в едином стиле",
+        "Desktop и mobile не имеют горизонтального скролла и перекрытия управления",
+        "Клавиатура и reduced motion поддерживаются",
+        "Синхронизация, громкость и fullscreen сохраняют работоспособность",
+        "Компактный видеочат поддерживает крупные карточки и сетку четырёх участников, показывает состояния камеры/микрофона и инициалы при выключенной камере",
+        "Приглашение использует короткий уникальный код; UUID совместим с прежним входом, существующие комнаты сохраняются при миграции"
+      ],
+      "verification": ["Визуальная проверка desktop/mobile", "npm run check:full"]
+    },
+    {
       "id": "HARNESS-002",
       "title": "Автономная очередь задач и отдельное ревью",
       "status": "ready",

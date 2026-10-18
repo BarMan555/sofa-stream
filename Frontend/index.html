@@ -1,231 +1,317 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sofa Stream - Sync & Chill</title>
-    <link rel="stylesheet" href="style.css?v=1.10">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
-</head>
-<body class="theme-warm">
-<!-- Princess Theme Sparkles / Glitters -->
-<div class="glitter-star" style="top: 15%; left: 8%; animation: glitter 3s infinite ease-in-out;">✨</div>
-<div class="glitter-star" style="top: 25%; right: 12%; animation: glitter 4s infinite ease-in-out 1s;">✨</div>
-<div class="glitter-star" style="bottom: 20%; left: 15%; animation: glitter 5s infinite ease-in-out 2s;">✨</div>
-<div class="glitter-star" style="bottom: 35%; right: 8%; animation: glitter 3.5s infinite ease-in-out 0.5s;">✨</div>
-<div class="glitter-star" style="top: 50%; left: 85%; animation: glitter 4.5s infinite ease-in-out 1.5s;">✨</div>
-<div class="container">
-    <!-- Main Menu View -->
-    <div id="main-menu" class="panel view">
-        <div class="logo-container" style="display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 24px;">
-            <div class="logo-icon-wrapper" style="position: relative; width: 64px; height: 64px; display: flex; align-items: center; justify-content: center;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 100%; height: 100%; overflow: visible;">
-                    <defs>
-                        <linearGradient id="orange-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#ff6b3d" />
-                            <stop offset="100%" stop-color="#f04b14" />
-                        </linearGradient>
-                    </defs>
-                    <g transform="rotate(-6, 12, 12)">
-                        <g transform="translate(12, 8.5) scale(1.5) translate(-12, -8.5)">
-                            <path d="M4 18v2 M20 18v2" vector-effect="non-scaling-stroke" />
-                            <path d="M20 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3" vector-effect="non-scaling-stroke" />
-                            <path d="M2 16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v1.5a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5V11a2 2 0 0 0-4 0z" fill="none" vector-effect="non-scaling-stroke" />
-                        </g>
-                        <polygon points="10 6 10 11 14.5 8.5" fill="none" stroke="var(--primary)" stroke-width="1.5" stroke-linejoin="round" />
-                    </g>
-                </svg>
-            </div>
-            <h1 style="font-size: 2.5rem; font-weight: 800; color: var(--primary); letter-spacing: -0.5px; margin: 0;">
-                Sofa Stream
-            </h1>
-            <span style="color: #9ca3af; font-size: 1rem; font-weight: 400; letter-spacing: 0.5px;">Sync & Chill with friends</span>
-        </div>
-
-        <div class="menu-stack">
-            <button id="btn-menu-create" class="btn-primary btn-large">Create Room</button>
-            <button id="btn-menu-join" class="btn-secondary btn-large">Join Room</button>
-        </div>
-
-        <div class="about-section">
-            <button id="btn-about" class="btn-about-toggle">About Sofa Stream</button>
-            <div id="about-container" class="about-container hidden">
-                <p>Hi! I'm Boris, and welcome to my first major pet project — Sofa Stream. It allows you to watch YouTube or RuTube videos with your partner or friends, completely in sync! If you have any problems or have suggestions, please contact me using the links below.</p>
-                <div class="developer-contacts" style="margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.1); text-align: left;">
-                    <!-- <h4 style="margin: 0 0 10px 0; color: #fff; font-size: 0.95rem; font-weight: 600; letter-spacing: 0.5px;">Developer Contacts:</h4> -->
-                    <div class="contacts-grid" style="display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem;">
-
-                        <a href="https://t.me/barman_555" target="_blank" style="display: flex; align-items: center; gap: 8px; color: #9ca3af; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#ff6b3d'" onmouseout="this.style.color='#9ca3af'">
-                            <span style="font-size: 1.1rem;">✈️</span> Telegram: @barman_555
-                        </a>
-
-                        <a href="https://github.com/BarMan555" target="_blank" style="display: flex; align-items: center; gap: 8px; color: #9ca3af; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#ff6b3d'" onmouseout="this.style.color='#9ca3af'">
-                            <span style="font-size: 1.1rem;">💻</span> GitHub: github.com/BarMan555
-                        </a>
-
-                        <a href="mailto:boris20033@gmail.com" style="display: flex; align-items: center; gap: 8px; color: #9ca3af; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#ff6b3d'" onmouseout="this.style.color='#9ca3af'">
-                            <span style="font-size: 1.1rem;">✉️</span> Email: boris20033@gmail.com
-                        </a>
-
-                    </div>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="theme-color" content="#161719">
+        <meta name="description" content="Watch YouTube and RuTube in sync with friends, with video chat for up to four people.">
+        <title>SofaStream — Watch videos together</title>
+        <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='14' fill='%23d7f86d'/%3E%3Cpath d='M12 23v-6a4 4 0 0 1 4-4h16a4 4 0 0 1 4 4v6M9 22v11h30V22M13 33v4m22-4v4M9 27h30' fill='none' stroke='%23201c18' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E">
+        <link rel="stylesheet" href="style.css?v=1.17">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js">
+        </script>
+    </head>
+    <body class="theme-dark">
+        <div class="container">
+            <header class="site-header">
+                <div class="wordmark">
+                    <span class="brand-mark" aria-hidden="true">
+                        <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M8 15v-4a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v4M5 15v9h22v-9M5 19h22M8 24v3m16-3v3"/>
+                        </svg>
+                    </span>sofastream<span class="wordmark-dot">.</span>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Settings Form View -->
-    <div id="settings-form" class="panel view hidden">
-        <h2 id="settings-heading" class="settings-title">Room Settings</h2>
-
-        <div class="settings-stack">
-            <div class="form-group">
-                <label for="userNameInput">Your Name</label>
-                <input type="text" id="userNameInput" placeholder="Enter your display name..." />
-            </div>
-
-            <div id="settings-room-name-group" class="form-group">
-                <label for="roomNameInput">Room Name</label>
-                <input type="text" id="roomNameInput" placeholder="e.g. Cozy Movie Night" />
-            </div>
-
-            <div id="settings-room-theme-group" class="form-group">
-                <label>Room Theme</label>
-                <div class="theme-cards-grid">
-                    <div class="theme-card" data-theme="Princess">
-                        <div class="theme-card-preview theme-princess-preview"></div>
-                        <span>Princess Pink</span>
-                    </div>
-                    <div class="theme-card active" data-theme="WarmHome">
-                        <div class="theme-card-preview theme-warm-preview"></div>
-                        <span>Warm Cozy</span>
-                    </div>
-                    <div class="theme-card" data-theme="Dark">
-                        <div class="theme-card-preview theme-dark-preview"></div>
-                        <span>Midnight Dark</span>
-                    </div>
-                </div>
-            </div>
-
-            <div id="settings-room-id-group" class="form-group hidden">
-                <label for="roomIdInput">Room ID</label>
-                <input type="text" id="roomIdInput" placeholder="Enter Room ID to join..." />
-            </div>
-
-
-            <div class="settings-actions">
-                <button id="btn-settings-back" class="btn-secondary">Back</button>
-                <button id="btn-settings-confirm" class="btn-primary">Confirm</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Active Room View -->
-    <div id="room-view" class="view hidden">
-        <header class="room-nav-header">
-            <div class="room-details">
-                <span class="room-icon">🛋️</span>
-                <div class="room-meta">
-                    <div class="room-title-row" style="display: flex; align-items: center; gap: 12px;">
-                        <h2 id="room-name-display" class="room-name">Connecting...</h2>
-                        <span id="participant-count" class="participant-count">👥 1 participant</span>
-                    </div>
-                    <div class="room-id-row" style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
-                        <span class="room-id-label" style="font-size: 11px; color: var(--text-muted); font-weight: 500;">Room ID:</span>
-                        <span id="room-id-value" style="font-family: monospace; font-size: 11px; color: var(--text-muted); font-weight: 600; user-select: all;">...</span>
-                        <button id="btn-copy-id" class="btn-copy" style="background: transparent; border: none; padding: 2px 6px; font-size: 11px; color: var(--primary); cursor: pointer; font-weight: 600; transition: color 0.2s;" title="Copy Room ID">📋 Copy</button>
-                    </div>
-                </div>
-            </div>
-            <button id="btn-leave-room" class="btn-leave">Leave Room</button>
-        </header>
-
-        <!-- Hidden old status badge to prevent JS binding errors -->
-        <div id="status" class="status-badge disconnected" style="display: none !important;">Disconnected</div>
-
-        <div class="room-workspace">
-            <div class="room-watch">
-                <div id="hostControlsPanel" class="panel" style="display: none;">
-                    <h3>Change Video (Host Only)</h3>
-                    <div class="media-input-group">
-                        <input type="text" id="videoUrlInput" placeholder="Paste YouTube or RuTube URL here..." />
-                        <button id="btn-change-video" class="btn-danger">Load Video</button>
-                    </div>
-                </div>
-
-                <p id="playerStatus" role="status" hidden></p>
-                <div id="theaterContainer">
-                    <div class="player-wrapper">
-                        <div id="youtubePlayer"></div>
-                        <iframe id="rutubePlayer" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" allow="autoplay; encrypted-media" allowfullscreen sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"></iframe>
-                        <div id="playerShield"></div>
-                    </div>
-
-                    <div class="panel custom-controls-panel">
-                        <input type="range" id="customProgressBar" min="0" max="100" value="0" />
-
-                        <div class="movie-volume-controls">
-                            <label for="customVolumeSlider" class="movie-volume-label">🔊 Volume</label>
-                            <input type="range" id="customVolumeSlider" aria-label="Movie volume" min="0" max="100" step="1" value="100" />
-                            <output id="customVolumeValue" for="customVolumeSlider">100%</output>
-                            <span id="duckingStatus" class="ducking-status" hidden>Speech: 30%</span>
+            </header>
+            <main id="main-menu" class="view" aria-labelledby="home-title">
+                <div class="home-hero">
+                    <section class="hero-copy">
+                        <h1 id="home-title">Watch videos<br>
+                            <em>together.</em>
+                        </h1>
+                        <p class="hero-description">Watch YouTube and RuTube in sync with friends, with video chat for up to four people.</p>
+                        <div class="menu-stack">
+                            <button id="btn-menu-create" class="btn-primary btn-large">Create Room <span class="create-room-icon" aria-hidden="true">+</span>
+                            </button>
+                            <button id="btn-menu-join" class="btn-secondary btn-large">Join Room <span aria-hidden="true">→</span>
+                            </button>
                         </div>
-
-                        <div class="controls-buttons-row">
-                            <button id="customPlayBtn" class="btn-control btn-play" disabled>▶ Play</button>
-                            <button id="customPauseBtn" class="btn-control btn-pause" disabled>⏸ Pause</button>
-                            <span id="customTimeLabel">00:00 / 00:00</span>
-
-                            <button id="customFullscreenBtn" class="btn-control btn-secondary" style="padding: 10px 14px; margin-left: 10px;">⛶</button>
+                        <p class="hero-footnote">
+                            <span class="tiny-dot">
+                            </span> No account needed.</p>
+                        <div class="supported-platforms">
+                            <span>SUPPORTED PLATFORMS</span>
+                            <span class="platform">
+                                <svg viewBox="0 0 24 18" aria-hidden="true">
+                                    <rect x="1" y="1" width="22" height="16" rx="5" fill="currentColor"/>
+                                    <path d="m10 5 6 4-6 4z" fill="var(--bg-color)"/>
+                                </svg>YouTube</span>
+                            <span class="platform rutube-wordmark">R<span class="tiny-dot">
+                                </span>
+                                <span>RuTube</span>
+                            </span>
+                        </div>
+                    </section>
+                    <div class="hero-art" aria-hidden="true">
+                        <div class="poster-orbits">
+                            <div class="poster-orbit orbit-one"></div>
+                            <div class="poster-orbit orbit-two"></div>
+                        </div>
+                        <div class="cinema-poster">
+                            <img src="assets/night-in.svg" alt="" width="600" height="680" fetchpriority="high">
+                            <div class="poster-topline">
+                                <span>THE SOFASTREAM EXPERIENCE</span>
+                                <span>01 / ∞</span>
+                            </div>
+                            <svg class="poster-title" viewBox="0 0 600 680" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+                                <defs>
+                                    <!-- Same viewBox and circle as assets/night-in.svg keep the overlap aligned at every size. -->
+                                    <clipPath id="poster-sun-clip" clipPathUnits="userSpaceOnUse">
+                                        <circle cx="325" cy="286" r="139"/>
+                                    </clipPath>
+                                    <g id="poster-lettering">
+                                        <text x="44" y="176">A night in,</text>
+                                        <text x="44" y="258" font-style="italic">anywhere.</text>
+                                    </g>
+                                </defs>
+                                <use href="#poster-lettering" fill="#fff9dc"/>
+                                <use href="#poster-lettering" fill="#282035" clip-path="url(#poster-sun-clip)"/>
+                            </svg>
+                            <div class="poster-bottomline">
+                                <span>A GOOD FILM. YOUR FAVOURITE HUMANS.</span>
+                                <span>✳</span>
+                            </div>
+                        </div>
+                        <div class="party-sticker">
+                            <span>✳</span>WATCH PARTY<br>UNLOCKED.</div>
+                        <div class="floating-note">
+                            <span class="note-icon">↔</span>
+                            <div>Different sofas.<br>
+                                <strong>Same moment.</strong>
+                            </div>
+                        </div>
+                        <span class="art-caption">LESS DISTANCE. MORE “ONE MORE EPISODE”.</span>
+                    </div>
+                </div>
+                <section class="how-it-works" aria-label="How it works">
+                    <div class="feature-item">
+                        <span class="feature-number">01</span>
+                        <div>
+                            <h2>Create a room</h2>
+                            <p>Choose a name and a theme.</p>
                         </div>
                     </div>
-                </div>
-            </div>
-            <aside id="videoChatDock" class="room-chat-dock" aria-label="Room video chat">
-            <!-- Video Chat Overlay Container -->
-            <div id="videoChatOverlay" class="video-chat-overlay" style="display: none;">
-                <div id="videoChatHeader" class="video-chat-header">
-                    <span class="video-chat-title">🔊 Room Chat</span>
-                    <div class="video-chat-header-actions">
-                        <button id="btnToggleMinimize" class="btn-chat-icon" title="Toggle Minimize (Grid / Single)">👤</button>
-                        <button id="btnToggleCollapse" class="btn-chat-icon" title="Collapse Completely">➖</button>
-                    </div>
-                </div>
-                <div id="videoGrid" class="video-grid">
-                    <!-- Local Stream Slot -->
-                    <div class="video-slot local-slot" id="slot-local">
-                        <video id="localVideo" autoplay playsinline muted></video>
-                        <div class="video-label">Me (You)</div>
-                        <div class="slot-controls">
-                            <span id="localMicIndicator" class="mic-indicator active">🎙️</span>
-                            <span id="localVideoIndicator" class="video-indicator active">📷</span>
+                    <div class="feature-item">
+                        <span class="feature-number">02</span>
+                        <div>
+                            <h2>Invite friends</h2>
+                            <p>Share the room code. Up to four people.</p>
                         </div>
                     </div>
-                    <!-- Dynamically populated remote stream slots will go here -->
+                    <div class="feature-item">
+                        <span class="feature-number">03</span>
+                        <div>
+                            <h2>Watch in sync</h2>
+                            <p>Paste a video link and press play.</p>
+                        </div>
+                    </div>
+                </section>
+                <footer class="home-footer">
+                    <span>A little project for shared moments.</span>
+                    <button id="btn-about" class="btn-about-toggle" aria-expanded="false" aria-controls="about-container">Made by Boris <span aria-hidden="true">↗</span>
+                    </button>
+                </footer>
+                <div id="about-container" class="about-container hidden">
+                    <p>SofaStream is my pet project for watching YouTube and RuTube with friends. Built for all those nights when you can't share a sofa, but can still share a film.</p>
+                    <div class="developer-contacts">
+                        <a href="https://t.me/barman_555" target="_blank" rel="noopener noreferrer">Telegram ↗</a>
+                        <a href="https://github.com/BarMan555" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+                        <a href="mailto:boris20033@gmail.com">Say hello ↗</a>
+                    </div>
                 </div>
-                <div class="video-chat-controls">
-                    <button id="btnToggleAudio" class="btn-chat-control" title="Toggle Audio">🎤 Mute</button>
-                    <button id="btnToggleVideo" class="btn-chat-control" title="Toggle Video">📷 Disable</button>
+            </main>
+            <main id="settings-form" class="view hidden" aria-labelledby="settings-heading">
+                <div class="settings-intro">
+                    <h2 id="settings-heading" class="settings-title" tabindex="-1">Create a room</h2>
+                    <div class="settings-illustration" aria-hidden="true">
+                        <img src="assets/night-in.svg" alt="" width="600" height="680">
+                    </div>
                 </div>
-            </div>
-
-            <!-- Restore Toggle Button when collapsed completely -->
-            <button id="videoChatRestoreBtn" class="video-chat-restore-btn" style="display: none;" title="Restore Video Chat">
-                💬 Room Chat
-            </button>
-
-            </aside>
+                <div class="panel settings-panel">
+                    <div class="settings-stack">
+                        <div class="form-group">
+                            <label for="userNameInput">Your name</label>
+                            <input type="text" id="userNameInput" placeholder="What should we call you?" autocomplete="nickname">
+                        </div>
+                        <div id="settings-room-name-group" class="form-group">
+                            <label for="roomNameInput">Room name</label>
+                            <input type="text" id="roomNameInput" placeholder="e.g. The Friday night club" autocomplete="off">
+                        </div>
+                        <div id="settings-room-theme-group" class="form-group">
+                            <label id="theme-label">Set the mood</label>
+                            <div class="theme-cards-grid" role="group" aria-labelledby="theme-label">
+                                <button type="button" class="theme-card active" data-theme="Dark" aria-pressed="true">
+                                    <span class="theme-card-preview theme-dark-preview" aria-hidden="true">
+                                        <span class="preview-moon">
+                                        </span>
+                                    </span>
+                                    <span>Night arcade</span>
+                                    <span class="theme-check" aria-hidden="true">✓</span>
+                                </button>
+                                <button type="button" class="theme-card" data-theme="WarmHome" aria-pressed="false">
+                                    <span class="theme-card-preview theme-warm-preview" aria-hidden="true">
+                                        <span class="preview-moon">
+                                        </span>
+                                    </span>
+                                    <span>Golden hour</span>
+                                    <span class="theme-check" aria-hidden="true">✓</span>
+                                </button>
+                                <button type="button" class="theme-card" data-theme="Princess" aria-pressed="false">
+                                    <span class="theme-card-preview theme-princess-preview" aria-hidden="true">
+                                        <span class="preview-moon">
+                                        </span>
+                                    </span>
+                                    <span>Rose club</span>
+                                    <span class="theme-check" aria-hidden="true">✓</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="settings-room-id-group" class="form-group hidden">
+                            <label for="roomIdInput">Room code</label>
+                            <input type="text" id="roomIdInput" placeholder="e.g. K7PM-4XRT" autocomplete="off" autocapitalize="characters" maxlength="64" spellcheck="false">
+                            <span class="input-hint">Ask your host for the 8-character code.</span>
+                        </div>
+                        <div class="settings-actions">
+                            <button id="btn-settings-back" class="btn-secondary">← Back</button>
+                            <button id="btn-settings-confirm" class="btn-primary">Create Room</button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+            <main id="room-view" class="view hidden" aria-labelledby="room-name-display">
+                <header class="room-nav-header">
+                    <div class="room-details">
+                        <div class="room-meta">
+                            <div class="room-title-row">
+                                <h2 id="room-name-display" class="room-name" tabindex="-1">Connecting...</h2>
+                                <span class="participant-count"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6m3 9v-2a6 6 0 0 0-2-4"/></svg><span id="participant-count">1 participant</span></span>
+                            </div>
+                            <div class="room-id-row">
+                                <span class="room-id-label">Room code</span>
+                                <span id="room-id-value">...</span>
+                                <button id="btn-copy-id" class="btn-copy" title="Copy room code" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg><span class="copy-label" aria-live="polite">Copy code</span></button>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="btn-leave-room" class="btn-leave">Leave Room
+                        <svg class="button-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                            <path d="M10 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5M16 7l5 5-5 5M21 12H9"/>
+                        </svg>
+                    </button>
+                </header>
+                <div id="status" class="status-badge disconnected" role="status" style="display: none !important;">Disconnected</div>
+                <div class="room-workspace">
+                    <div class="room-watch">
+                        <div id="hostControlsPanel" class="panel host-panel" style="display: none;">
+                            <div class="host-panel-heading">
+                                <h3>What's on tonight?</h3>
+                                <span class="section-label">HOST CONTROLS</span>
+                            </div>
+                            <div class="media-input-group">
+                                <input type="url" id="videoUrlInput" placeholder="Paste a YouTube or RuTube link..." aria-label="Video URL">
+                                <button id="btn-change-video" class="btn-primary">Load Video
+                                    <svg class="button-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                                        <path d="M12 18H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5M15 17h7m-3.5-3.5v7"/>
+                                        <path d="m9 8 5 3-5 3Z" fill="currentColor" stroke="none"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <p id="playerStatus" role="status" hidden>
+                        </p>
+                        <div id="playerEmptyState" class="player-empty-state">
+                            <span class="empty-orbit" aria-hidden="true">▷</span>
+                            <p class="eyebrow">THE BEST SEAT IS RIGHT HERE</p>
+                            <h3>Something good<br>is about to <em>start.</em>
+                            </h3>
+                            <p id="emptyStateDescription">Add a video link to start your shared movie night.</p>
+                            <div class="empty-platforms">YouTube <span>·</span> RuTube</div>
+                        </div>
+                        <div id="theaterContainer">
+                            <div class="player-wrapper">
+                                <div id="youtubePlayer">
+                                </div>
+                                <iframe id="rutubePlayer" title="RuTube video player" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" allow="autoplay; encrypted-media" allowfullscreen sandbox="allow-scripts allow-same-origin allow-forms allow-presentation">
+                                </iframe>
+                                <div id="playerShield">
+                                </div>
+                            </div>
+                            <div class="panel custom-controls-panel">
+                                <input type="range" id="customProgressBar" aria-label="Video position" min="0" max="100" value="0">
+                                <div class="controls-toolbar">
+                                    <div class="controls-buttons-row">
+                                        <button id="customPlayBtn" class="btn-control btn-play" disabled>▶ Play</button>
+                                        <button id="customPauseBtn" class="btn-control btn-pause" disabled>Ⅱ Pause</button>
+                                        <span id="customTimeLabel">00:00 / 00:00</span>
+                                    </div>
+                                    <div class="movie-volume-controls">
+                                        <label for="customVolumeSlider" class="movie-volume-label">Volume</label>
+                                        <input type="range" id="customVolumeSlider" aria-label="Movie volume" min="0" max="100" step="1" value="100">
+                                        <output id="customVolumeValue" for="customVolumeSlider">100%</output>
+                                        <span id="duckingStatus" class="ducking-status" hidden>Speech: 30%</span>
+                                    </div>
+                                    <button id="customFullscreenBtn" class="btn-control btn-secondary" aria-label="Toggle fullscreen" title="Toggle fullscreen">⛶</button>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="watch-footnote">
+                            <span class="tiny-dot">
+                            </span> Different sofas. Same moment.</p>
+                    </div>
+                    <aside id="videoChatDock" class="room-chat-dock" aria-label="Room video chat">
+                        <div id="videoChatOverlay" class="video-chat-overlay" role="region" aria-labelledby="videoChatTitle" style="display: none;">
+                            <div id="videoChatHeader" class="video-chat-header">
+                                <div class="video-chat-heading"><span id="videoChatTitle" class="video-chat-title">Video chat</span><span id="chatParticipantCount" class="chat-participant-count">1/4</span></div>
+                                <div class="video-chat-header-actions">
+                                    <button id="btnToggleMinimize" class="btn-chat-icon" title="Show video grid" aria-label="Show video grid" aria-pressed="false" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></button>
+                                    <button id="btnToggleCollapse" class="btn-chat-icon" title="Hide video chat" aria-label="Hide video chat" aria-controls="videoChatOverlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+                                </div>
+                            </div>
+                            <div id="videoGrid" class="video-grid">
+                                <div class="video-slot local-slot" id="slot-local">
+                                    <video id="localVideo" autoplay playsinline muted>
+                                    </video>
+                                </div>
+                            </div>
+                            <p id="chatMediaNotice" class="chat-media-notice" role="status" hidden>Camera and microphone aren't available.</p>
+                            <div class="video-chat-controls" role="group" aria-label="Your microphone and camera">
+                                <button id="btnToggleAudio" class="btn-chat-control" aria-label="Microphone" aria-pressed="false" disabled>Mic</button>
+                                <button id="btnToggleVideo" class="btn-chat-control" aria-label="Camera" aria-pressed="false" disabled>Camera</button>
+                            </div>
+                        </div>
+                        <button id="videoChatRestoreBtn" class="video-chat-restore-btn" style="display: none;" title="Show video chat" aria-controls="videoChatOverlay" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="13" height="14" rx="3"/><path d="m16 10 5-3v10l-5-3"/></svg><span>Video chat</span><span id="chatRestoreCount" class="chat-restore-count">1/4</span></button>
+                    </aside>
+                </div>
+            </main>
         </div>
-    </div>
-</div>
-
-<script src="runtime-config.js"></script>
-<script src="js/config.js?v=1.8"></script>
-<script src="js/player.js?v=1.10"></script>
-<script src="js/sync.js?v=1.9"></script>
-<script src="js/webrtc.js?v=1.8"></script>
-<script src="js/audio-ducking.js?v=1.10"></script>
-<script src="js/ui.js?v=1.8"></script>
-<script src="js/api.js?v=1.8"></script>
-<script src="app.js?v=1.10"></script>
-</body>
+        <script src="runtime-config.js">
+        </script>
+        <script src="js/config.js?v=1.12">
+        </script>
+        <script src="js/player.js?v=1.10">
+        </script>
+        <script src="js/sync.js?v=1.9">
+        </script>
+        <script src="js/chat-ui.js?v=1.16">
+        </script>
+        <script src="js/webrtc.js?v=1.16">
+        </script>
+        <script src="js/audio-ducking.js?v=1.10">
+        </script>
+        <script src="js/ui.js?v=1.17">
+        </script>
+        <script src="js/api.js?v=1.17">
+        </script>
+        <script src="app.js?v=1.17">
+        </script>
+    </body>
 </html>

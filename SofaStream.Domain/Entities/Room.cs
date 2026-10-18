@@ -42,6 +42,11 @@ public class Room : AggregateRoot
     /// </summary>
     public Guid Id { get; private set; } = Guid.NewGuid();
 
+    public string InviteCode { get; private set; } = RoomInviteCode.Generate();
+
+    // Used only when inserting a new room encounters the unique code constraint.
+    public void RegenerateInviteCode() => InviteCode = RoomInviteCode.Generate();
+
     /// <summary>
     /// Gets the display name of the room.
     /// </summary>

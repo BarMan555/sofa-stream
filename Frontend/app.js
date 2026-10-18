@@ -37,7 +37,10 @@ function initLayoutActions() {
     if (btnAbout) {
         btnAbout.addEventListener('click', () => {
             const aboutContainer = document.getElementById('about-container');
-            if (aboutContainer) aboutContainer.classList.toggle('hidden');
+            if (aboutContainer) {
+                const expanded = aboutContainer.classList.toggle('hidden') === false;
+                btnAbout.setAttribute('aria-expanded', String(expanded));
+            }
         });
     }
 
@@ -46,7 +49,8 @@ function initLayoutActions() {
         btnMenuCreate.addEventListener('click', () => {
             currentSettingsMode = 'create';
             const heading = document.getElementById('settings-heading');
-            if (heading) heading.innerText = 'Create Room Settings';
+            if (heading) heading.textContent = 'Create a room';
+            document.getElementById('btn-settings-confirm').textContent = 'Create Room';
             
             const rnGroup = document.getElementById('settings-room-name-group');
             const riGroup = document.getElementById('settings-room-id-group');
@@ -64,7 +68,8 @@ function initLayoutActions() {
         btnMenuJoin.addEventListener('click', () => {
             currentSettingsMode = 'join';
             const heading = document.getElementById('settings-heading');
-            if (heading) heading.innerText = 'Join Room Settings';
+            if (heading) heading.textContent = 'Join a room';
+            document.getElementById('btn-settings-confirm').textContent = 'Join Room';
             
             const rnGroup = document.getElementById('settings-room-name-group');
             const riGroup = document.getElementById('settings-room-id-group');
@@ -108,15 +113,19 @@ function initLayoutActions() {
 
     const btnCopyId = document.getElementById('btn-copy-id');
     if (btnCopyId) {
+        const copyLabel = btnCopyId.querySelector('.copy-label');
+        let copyTimer;
         btnCopyId.addEventListener('click', () => {
             const idVal = document.getElementById('room-id-value').textContent;
             navigator.clipboard.writeText(idVal).then(() => {
-                btnCopyId.textContent = "✅ Copied";
-                setTimeout(() => {
-                    btnCopyId.textContent = "📋 Copy";
+                clearTimeout(copyTimer);
+                copyLabel.textContent = 'Copied';
+                copyTimer = setTimeout(() => {
+                    copyLabel.textContent = 'Copy code';
                 }, 2000);
             }).catch(err => {
                 console.error("Failed to copy text:", err);
+                copyLabel.textContent = 'Try again';
             });
         });
     }
@@ -133,8 +142,12 @@ function initLayoutActions() {
     const themeCards = document.querySelectorAll('.theme-card');
     themeCards.forEach(card => {
         card.addEventListener('click', () => {
-            themeCards.forEach(c => c.classList.remove('active'));
+            themeCards.forEach(c => {
+                c.classList.remove('active');
+                c.setAttribute('aria-pressed', 'false');
+            });
             card.classList.add('active');
+            card.setAttribute('aria-pressed', 'true');
             selectedTheme = card.getAttribute('data-theme');
             applyRoomTheme(selectedTheme);
         });
@@ -212,7 +225,7 @@ function setupCustomControls() {
             const duration = videoPlayer.player.getDuration() || 0;
 
             const percentage = (value / duration) * 100 || 0;
-            progressBar.style.background = `linear-gradient(to right, var(--primary) ${percentage}%, #232228 ${percentage}%)`;
+            progressBar.style.background = `linear-gradient(to right, var(--primary) ${percentage}%, var(--panel-border) ${percentage}%)`;
 
             document.getElementById('customTimeLabel').textContent = `${formatTime(value, duration)} / ${formatTime(duration, duration)}`;
         });
@@ -268,7 +281,7 @@ setInterval(() => {
             progressBar.value = currentTime;
 
             const percentage = (currentTime / duration) * 100;
-            progressBar.style.background = `linear-gradient(to right, var(--primary) ${percentage}%, #232228 ${percentage}%)`;
+            progressBar.style.background = `linear-gradient(to right, var(--primary) ${percentage}%, var(--panel-border) ${percentage}%)`;
         }
         document.getElementById('customTimeLabel').textContent = `${formatTime(currentTime, duration)} / ${formatTime(duration, duration)}`;
     }
@@ -334,7 +347,7 @@ document.addEventListener('keydown', (e) => {
     if (progressBar && duration > 0) {
         progressBar.value = localTargetTime;
         const percentage = (localTargetTime / duration) * 100;
-        progressBar.style.background = `linear-gradient(to right, var(--primary) ${percentage}%, #232228 ${percentage}%)`;
+        progressBar.style.background = `linear-gradient(to right, var(--primary) ${percentage}%, var(--panel-border) ${percentage}%)`;
     }
     const timeLabel = document.getElementById('customTimeLabel');
     if (timeLabel && duration > 0) {

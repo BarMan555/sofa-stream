@@ -33,6 +33,11 @@ namespace SofaStream.Infrastructure.Migrations
                     b.Property<Guid>("HostId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("InviteCode")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
                     b.Property<DateTimeOffset>("LastUpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -58,6 +63,9 @@ namespace SofaStream.Infrastructure.Migrations
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("InviteCode")
+                        .IsUnique();
 
                     b.ToTable("Rooms");
                 });

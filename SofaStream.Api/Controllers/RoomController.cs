@@ -14,6 +14,7 @@ using SofaStream.Application.Rooms.Commands.ReportBufferingCompleted;
 using SofaStream.Application.Rooms.Queries.GetRoomState;
 using SofaStream.Domain.Common.Models;
 using SofaStream.Domain.Entities;
+using SofaStream.Domain;
 
 namespace SofaStream.Api.Controllers;
 
@@ -188,6 +189,25 @@ public class RoomController(
         var result = await joinRoomHandler.HandleAsync(new JoinRoomCommand(roomId, request.UserId), cancellationToken);
         if (result.IsFailure) return BadRequest(result.Error);
         return Ok("Room joined successfully. SignalR broadcast triggered.");
+    }
+
+    [HttpPost("code/{code}/join")]
+    public async Task<IActionResult> JoinRoomByCode(string code, JoinRoomRequest request,
+        [FromServices] ICommandHandler<JoinRoomCommand, Result> handler, CancellationToken cancellationToken)
+    {
+        if (request.UserId != Actor) return Forbid();
+        var normalized = RoomInviteCode.Normalize(code);
+        if (normalized is null)
+            return BadRequest(new Error("Room.InvalidCode", "Enter the 8-character room code."));
+
+        await lifecycle.ExpireAsync(cancellationToken);
+        var roomId = await db.Rooms.Where(room => room.InviteCode == normalized)
+            .Select(room => (Guid?)room.Id).SingleOrDefaultAsync(cancellationToken);
+        if (roomId is null)
+            return NotFound(new Error("Room.NotFound", "Room not found. Check the code and try again."));
+
+        var result = await handler.HandleAsync(new JoinRoomCommand(roomId.Value, Actor), cancellationToken);
+        return result.IsFailure ? BadRequest(result.Error) : Ok(new { roomId = roomId.Value });
     }
 
     [HttpPost("{roomId:guid}/leave")]

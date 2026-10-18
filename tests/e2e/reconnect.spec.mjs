@@ -5,6 +5,7 @@ test.use({ interceptHostSocket: true });
 test('a network interruption restores membership, host role and current playback', async ({ roomPages }) => {
   const { host, guest, interruptHostConnection } = roomPages;
   const roomId = await enterRoom(host, guest);
+  const code = await host.locator('#room-id-value').textContent();
   await host.locator('#videoUrlInput').fill('https://www.youtube.com/watch?v=M7lc1UVf-VE');
   await host.locator('#btn-change-video').click();
   await host.waitForFunction(() => !window.syncMachine.isProcessingRemoteEvent && window.videoPlayer.videoReady);
@@ -22,8 +23,9 @@ test('a network interruption restores membership, host role and current playback
   await expect.poll(() => host.evaluate(() => window.connection.state), { timeout: 20000 }).toBe('Connected');
   await expect.poll(() => host.evaluate(() => window.connection.connectionId)).not.toBe(originalConnection);
   await expect(host.locator('#hostControlsPanel')).toBeVisible();
-  await expect(host.locator('#participant-count')).toHaveText('👥 2 participants');
+  await expect(host.locator('#participant-count')).toHaveText('2 participants');
   await expect(host.locator('#status')).toBeHidden();
+  await expect(host.locator('#room-id-value')).toHaveText(code);
   await expect.poll(() => host.evaluate(() => window.videoPlayer.getPlayerState())).toBe(1);
   await expect.poll(async () => Math.abs(await host.evaluate(() => window.videoPlayer.getCurrentTime()) -
     await guest.evaluate(() => window.videoPlayer.getCurrentTime()))).toBeLessThan(0.8);
