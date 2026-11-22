@@ -44,7 +44,7 @@ let lastUiInteractionTime = 0;
 const INTERACTION_GRACE_PERIOD_MS = 2000;
 let activeParticipants = new Set();
 let currentSettingsMode = 'create'; // 'create' or 'join'
-let selectedTheme = 'WarmHome';
+let selectedTheme = 'Dark';
 let serverTimeOffset = 0;
 
 async function syncClockWithServer() {

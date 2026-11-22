@@ -180,12 +180,7 @@ connection.on("OnSignalReceived", async (senderUserId, targetUserId, signalStr) 
             peerNicknames[peerKey] = signal.nickname;
             
             const slot = document.getElementById(`slot-${senderUserId.toLowerCase()}`);
-            if (slot) {
-                const label = slot.querySelector(".video-label");
-                if (label) {
-                    label.innerText = signal.nickname;
-                }
-            }
+            if (slot) window.chatUi?.setName(slot, signal.nickname);
             
             if (signal.audio !== undefined && signal.video !== undefined) {
                 peerMediaStates[peerKey] = { audio: signal.audio, video: signal.video };
@@ -293,10 +288,12 @@ async function createRoom() {
 
 async function joinRoom() {
     try { await ensureParticipantSession(); } catch (error) { alert(error.message); return; }
-    const roomId = document.getElementById('roomIdInput').value.trim();
+    const reference = document.getElementById('roomIdInput').value.trim();
+    const legacyId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(reference);
+    let roomId = legacyId ? reference.toLowerCase() : null;
 
-    if (!roomId) {
-        alert("Please provide a valid Room ID.");
+    if (!reference) {
+        alert("Enter the room code your friend shared.");
         return;
     }
 
@@ -309,14 +306,19 @@ async function joinRoom() {
     const joiningRevision = ++roomLifecycleRevision;
     isJoiningRoom = true;
     try {
-        const joinResponse = await apiFetch(`${API_BASE_URL}/api/room/${roomId}/join`, {
+        const target = legacyId ? roomId : `code/${encodeURIComponent(reference)}`;
+        const joinResponse = await apiFetch(`${API_BASE_URL}/api/room/${target}/join`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userId: globalUserId })
         });
 
+        if (joinResponse.ok && !legacyId) {
+            const joined = await joinResponse.json();
+            roomId = joined.roomId;
+        }
         if (joiningRevision !== roomLifecycleRevision) {
-            if (joinResponse.ok) await apiFetch(`${API_BASE_URL}/api/room/${roomId}/leave`, { method: 'POST' });
+            if (joinResponse.ok && roomId) await apiFetch(`${API_BASE_URL}/api/room/${roomId}/leave`, { method: 'POST' });
             return;
         }
         if (!joinResponse.ok) {
@@ -534,7 +536,10 @@ async function fetchAndSyncCurrentState(roomId, { restorePeers = true } = {}) {
 
         const roomIdValEl = document.getElementById('room-id-value');
         if (roomIdValEl) {
-            roomIdValEl.textContent = roomId;
+            const code = state.inviteCode;
+            roomIdValEl.textContent = code ? `${code.slice(0, 4)}-${code.slice(4)}` : roomId;
+            const copy = document.getElementById('btn-copy-id');
+            if (copy) copy.disabled = false;
         }
         
         if (state.participants) {

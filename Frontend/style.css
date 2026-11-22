@@ -1,9 +1,6 @@
-/* --- Master Stylesheet ---
- * Decomposed into logical modular CSS files inside css/ directory.
- */
-@import 'css/variables.css';
-@import 'css/base.css';
-@import 'css/layout.css';
-@import 'css/player.css?v=1.10';
-@import 'css/video-chat.css?v=1.8';
-@import 'css/themes.css';
+@import 'css/variables.css?v=1.12';
+@import 'css/base.css?v=1.15';
+@import 'css/layout.css?v=1.17';
+@import 'css/player.css?v=1.12';
+@import 'css/video-chat.css?v=1.16';
+@import 'css/themes.css?v=1.12';

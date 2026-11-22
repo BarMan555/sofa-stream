@@ -7,7 +7,7 @@ async function prepareHost(host, request, playbackState) {
   await host.locator('#btn-settings-confirm').click();
   await expect(host.locator('#room-view')).toBeVisible();
   await host.locator('#btnToggleCollapse').click();
-  const roomId = await host.locator('#room-id-value').textContent();
+  const roomId = await host.evaluate(() => currentRoomId);
   await host.locator('#videoUrlInput').fill('https://www.youtube.com/watch?v=M7lc1UVf-VE');
   await host.locator('#btn-change-video').click();
   await host.waitForFunction(() => !window.syncMachine.isProcessingRemoteEvent && window.videoPlayer.currentVideoId === 'M7lc1UVf-VE');

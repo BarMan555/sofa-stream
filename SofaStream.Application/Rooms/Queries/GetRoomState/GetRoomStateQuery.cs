@@ -20,7 +20,8 @@ public record RoomStateDto(
     DateTimeOffset SnapshotAt,
     DateTimeOffset LastUpdatedAt,
     DateTimeOffset? ScheduledFor,
-    long VideoRevision = 0);
+    long VideoRevision = 0,
+    string InviteCode = "");
 
 /// <summary>
 /// Read model representing a participant within a room.

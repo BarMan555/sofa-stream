@@ -46,7 +46,7 @@ test('leaving host promotes the remaining participant in UI and database', async
   await host.locator('#btn-leave-room').click();
   await expect(host.locator('#main-menu')).toBeVisible();
   await expect(guest.locator('#hostControlsPanel')).toBeVisible();
-  await expect(guest.locator('#participant-count')).toHaveText('👥 1 participant');
+  await expect(guest.locator('#participant-count')).toHaveText('1 participant');
   const state = await roomState(guest, roomId);
   expect(state.participants).toHaveLength(1);
   expect(state.participants[0].isHost).toBe(true);

@@ -116,15 +116,17 @@ export async function enterRoom(host, guest, { chatOpen = true } = {}) {
   await host.locator('#roomNameInput').fill('Harness Movie Night');
   await host.locator('#btn-settings-confirm').click();
   await expect(host.locator('#room-view')).toBeVisible();
-  const roomId = await host.locator('#room-id-value').textContent();
+  const code = await host.locator('#room-id-value').textContent();
+  expect(code).toMatch(/^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/);
+  const roomId = await host.evaluate(() => currentRoomId);
   expect(roomId).toMatch(/^[0-9a-f-]{36}$/i);
   await guest.locator('#btn-menu-join').click();
   await guest.locator('#userNameInput').fill('Guest');
-  await guest.locator('#roomIdInput').fill(roomId);
+  await guest.locator('#roomIdInput').fill(code);
   await guest.locator('#btn-settings-confirm').click();
   await expect(guest.locator('#room-view')).toBeVisible();
-  await expect(host.locator('#participant-count')).toHaveText('👥 2 participants');
-  await expect(guest.locator('#participant-count')).toHaveText('👥 2 participants');
+  await expect(host.locator('#participant-count')).toHaveText('2 participants');
+  await expect(guest.locator('#participant-count')).toHaveText('2 participants');
   if (!chatOpen) {
     for (const page of [host, guest]) {
       await page.locator('#btnToggleCollapse').click();

@@ -45,9 +45,10 @@ public class ApplicationDbContext(
 
         var events = entitiesWithEvents.SelectMany(r => r.DomainEvents).ToList();
         
-        entitiesWithEvents.ForEach(r => r.ClearDomainEvents());
-
         var result = await base.SaveChangesAsync(cancellationToken);
+
+        // Keep events available if persistence fails and the insert is retried.
+        entitiesWithEvents.ForEach(r => r.ClearDomainEvents());
 
         await dispatcher.DispatchAsync(events, cancellationToken);
         

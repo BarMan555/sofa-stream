@@ -1,6 +1,7 @@
 // --- UI Authorization & View State Management ---
 
 function switchView(viewId) {
+    const enteringView = document.getElementById(viewId)?.classList.contains('hidden');
     document.querySelector('.container')?.classList.toggle('room-active', viewId === 'room-view');
     const mainMenu = document.getElementById('main-menu');
     const settingsForm = document.getElementById('settings-form');
@@ -16,6 +17,13 @@ function switchView(viewId) {
         if (settingsForm) settingsForm.classList.remove('hidden');
     } else if (viewId === 'room-view') {
         if (roomView) roomView.classList.remove('hidden');
+    }
+
+    if (enteringView) {
+        const focusTarget = viewId === 'settings-form' ? 'settings-heading'
+            : viewId === 'room-view' ? 'room-name-display' : 'btn-menu-create';
+        document.getElementById(focusTarget)?.focus?.({ preventScroll: true });
+        window.scrollTo?.({ top: 0, behavior: 'instant' });
     }
 }
 
@@ -56,17 +64,24 @@ function updateHostUiVisibility() {
     if (hostPanel) {
         hostPanel.style.display = isHost ? 'block' : 'none';
     }
+    const emptyDescription = document.getElementById('emptyStateDescription');
+    if (emptyDescription) emptyDescription.textContent = isHost
+        ? 'Add a video link above to start your shared movie night.'
+        : 'Your host is picking something good. Get comfortable.';
 }
 
 function updateParticipantUi() {
     const el = document.getElementById('participant-count');
     if (el) {
         const count = activeParticipants.size;
-        el.textContent = `👥 ${count} participant${count !== 1 ? 's' : ''}`;
+        el.textContent = `${count} participant${count !== 1 ? 's' : ''}`;
+        window.chatUi?.updateCount(count);
     }
 }
 
 function showPlayerBlock() {
+    const emptyState = document.getElementById('playerEmptyState');
+    if (emptyState) emptyState.hidden = true;
     const theater = document.getElementById('theaterContainer');
     if (theater) {
         theater.style.display = 'flex';
@@ -74,6 +89,8 @@ function showPlayerBlock() {
 }
 
 function hidePlayerBlock() {
+    const emptyState = document.getElementById('playerEmptyState');
+    if (emptyState) emptyState.hidden = false;
     const theater = document.getElementById('theaterContainer');
     if (theater) {
         theater.style.display = 'none';
@@ -102,7 +119,7 @@ function setupFullscreenControls() {
 
     function resetInactivityTimer() {
         clearTimeout(inactivityTimer);
-        if (controlsPanel.matches(':hover')) {
+        if (controlsPanel.matches(':hover, :focus-within')) {
             return;
         }
         inactivityTimer = setTimeout(hideControls, INACTIVITY_DURATION_MS);
@@ -126,43 +143,15 @@ function setupFullscreenControls() {
         resetInactivityTimer();
     });
 
+    controlsPanel.addEventListener('focusin', () => {
+        clearTimeout(inactivityTimer);
+        showControls();
+    });
+    controlsPanel.addEventListener('focusout', resetInactivityTimer);
+
     window.showControls = showControls;
     window.resetInactivityTimer = resetInactivityTimer;
 }
-
-// Click sparkle burst effect inside Princess theme
-document.addEventListener('click', (e) => {
-    if (!document.body.classList.contains('theme-princess')) return;
-    
-    const sparkleCount = 12;
-    const body = document.body;
-    
-    for (let i = 0; i < sparkleCount; i++) {
-        const sparkle = document.createElement('div');
-        sparkle.className = 'click-sparkle';
-        sparkle.innerText = Math.random() > 0.5 ? '✨' : '🌸';
-        
-        const angle = Math.random() * Math.PI * 2;
-        const distance = 40 + Math.random() * 80;
-        const tx = Math.cos(angle) * distance;
-        const ty = Math.sin(angle) * distance;
-        const rot = (Math.random() - 0.5) * 360;
-        
-        sparkle.style.setProperty('--tx', `${tx}px`);
-        sparkle.style.setProperty('--ty', `${ty}px`);
-        sparkle.style.setProperty('--rot', `${rot}deg`);
-        
-        sparkle.style.left = `${e.pageX}px`;
-        sparkle.style.top = `${e.pageY}px`;
-        sparkle.style.animationDelay = `${Math.random() * 0.15}s`;
-        
-        body.appendChild(sparkle);
-        
-        setTimeout(() => {
-            sparkle.remove();
-        }, 1000);
-    }
-});
 
 window.switchView = switchView;
 window.switchTab = switchTab;

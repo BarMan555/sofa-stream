@@ -6,6 +6,7 @@ The Git repository is this directory (with `SofaStream.sln`), not its parent fol
 ## Find the relevant context
 
 - `docs/architecture.md`: ownership of state, layers, HTTP and SignalR contracts.
+- `docs/design.md`: visual direction, themes, motion and UI accessibility.
 - `docs/harness.md`: environment, commands, reports and test boundaries.
 - `docs/workflow.md`: task acceptance, verification selection and handoff.
 - `docs/backlog.json`: identified defects and their desired behavior; open items are not implemented guarantees.
@@ -23,6 +24,9 @@ Read the documents relevant to the task. Keep these instructions short; put deta
 - Choose checks from `docs/workflow.md`. Do not run Docker/browser tests for prose-only changes.
 - Report behavior changed, checks actually run, their evidence paths, and remaining limitations. A process starting or an HTTP 200 alone does not verify synchronization.
 - Prepare a reviewable diff. Commit, push, merge and production deployment require user authorization; existing authorization for the same action remains valid.
+- Start every commit message with the actual task ID in brackets followed by a colon and a space, e.g. `[SS-001]: Fix initial playback synchronization`. Keep the subject concise; add a body only when essential context does not fit in the subject. See `docs/workflow.md`.
+- Deliver task changes to `main` through a GitHub pull request using Squash and merge. Use the task-ID commit format for the PR title and final squash message. Do not push task changes directly to `main`.
+- Every authorized PR merge includes an annotated version tag on the resulting squash commit and deletion of the completed task branch after verifying the remote commit and tag. Follow `docs/workflow.md` for numbering, publication, and cleanup; do not ask separately for these completion steps.
 
 ## Commands
 

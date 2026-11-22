@@ -2,9 +2,10 @@
 let peerConnections = {};
 let localStream = null;
 let mockCanvasAnimationId = null;
-let isMinimized = false;
+let chatGridLayout = 'auto';
 let isAudioMuted = false;
 let isVideoDisabled = false;
+let localMediaUnavailable = false;
 let peerNicknames = {};
 let peerMediaStates = {};
 
@@ -17,24 +18,18 @@ async function startVideoChat() {
 
     if (overlay) overlay.style.display = "flex";
     if (restoreBtn) restoreBtn.style.display = "none";
+    window.chatUi?.decorateParticipant(document.getElementById('slot-local'), localNickname, true);
+    window.chatUi?.setMedia(document.getElementById('slot-local'), true, true);
     
     await initLocalMedia();
     makeOverlayDraggable();
     window.resetOverlayPosition?.();
     
-    isMinimized = false;
-    isAudioMuted = false;
-    isVideoDisabled = false;
-    
-    const btnAudio = document.getElementById("btnToggleAudio");
-    const btnVideo = document.getElementById("btnToggleVideo");
-    if (btnAudio) { btnAudio.innerText = "🎤 Mute"; btnAudio.classList.remove("muted"); }
-    if (btnVideo) { btnVideo.innerText = "📷 Disable"; btnVideo.classList.remove("muted"); }
-    
-    const localMicIndicator = document.getElementById("localMicIndicator");
-    const localVideoIndicator = document.getElementById("localVideoIndicator");
-    if (localMicIndicator) { localMicIndicator.className = "mic-indicator active"; localMicIndicator.innerText = "🎙️"; }
-    if (localVideoIndicator) { localVideoIndicator.className = "video-indicator active"; }
+    chatGridLayout = 'auto';
+    isAudioMuted = localMediaUnavailable;
+    isVideoDisabled = localMediaUnavailable;
+    if (localMediaUnavailable) localStream?.getTracks().forEach(track => { track.enabled = false; });
+    updateLocalChatUi();
     
     const grid = document.getElementById("videoGrid");
     const slots = grid.querySelectorAll(".video-slot:not(.local-slot)");
@@ -43,11 +38,6 @@ async function startVideoChat() {
     updateGridLayout();
     if (typeof startDuckingLoop === "function") {
         startDuckingLoop();
-    }
-
-    const localLabel = document.querySelector("#slot-local .video-label");
-    if (localLabel) {
-        localLabel.innerText = `${localNickname} (You)`;
     }
 
     if (currentRoomId && window.connection) {
@@ -93,14 +83,17 @@ function stopLocalMedia() {
         localStream.getTracks().forEach(track => track.stop());
         localStream = null;
     }
+    window.chatUi?.attachStream(document.getElementById('slot-local'), null);
 }
 
 async function initLocalMedia() {
+    localMediaUnavailable = false;
     try {
         console.log("WebRTC: Requesting camera and microphone permissions...");
         localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
         console.log("WebRTC: Successfully initialized camera and microphone streams.");
     } catch (e) {
+        localMediaUnavailable = true;
         console.warn("WebRTC: Camera/microphone not accessible. Generating glowing canvas mockup...", e);
         localStream = generateMockMediaStream();
     }
@@ -309,23 +302,8 @@ function makeOverlayDraggable() {
 }
 
 function toggleMinimize() {
-    const overlay = document.getElementById("videoChatOverlay");
     const grid = document.getElementById("videoGrid");
-    const btn = document.getElementById("btnToggleMinimize");
-    
-    isMinimized = !isMinimized;
-    if (isMinimized) {
-        overlay.classList.add("minimized");
-        grid.classList.add("single-layout");
-        btn.innerText = "👥";
-        btn.title = "Restore Grid View";
-    } else {
-        overlay.classList.remove("minimized");
-        grid.classList.remove("single-layout");
-        btn.innerText = "👤";
-        btn.title = "Minimize to Single View";
-    }
-    
+    chatGridLayout = grid.classList.contains('single-layout') ? 'grid' : 'large';
     updateGridLayout();
     if (window.resetOverlayPosition) window.resetOverlayPosition();
 }
@@ -335,6 +313,8 @@ function collapseCompletely() {
     const restoreBtn = document.getElementById("videoChatRestoreBtn");
     overlay.style.display = "none";
     restoreBtn.style.display = "flex";
+    restoreBtn.setAttribute('aria-expanded', 'false');
+    restoreBtn.focus({ preventScroll: true });
 }
 
 function restoreCompletely() {
@@ -342,27 +322,18 @@ function restoreCompletely() {
     const restoreBtn = document.getElementById("videoChatRestoreBtn");
     overlay.style.display = "flex";
     restoreBtn.style.display = "none";
+    restoreBtn.setAttribute('aria-expanded', 'true');
+    document.getElementById('btnToggleCollapse')?.focus({ preventScroll: true });
     if (window.resetOverlayPosition) window.resetOverlayPosition();
 }
 
 function toggleAudio() {
-    if (!localStream) return;
+    if (!localStream || localMediaUnavailable) return;
     isAudioMuted = !isAudioMuted;
     
     localStream.getAudioTracks().forEach(track => { track.enabled = !isAudioMuted; });
     
-    const btn = document.getElementById("btnToggleAudio");
-    const indicator = document.getElementById("localMicIndicator");
-    
-    if (isAudioMuted) {
-        btn.innerText = "🎤 Unmute";
-        btn.classList.add("muted");
-        if (indicator) { indicator.className = "mic-indicator muted"; indicator.innerText = "🔇"; }
-    } else {
-        btn.innerText = "🎤 Mute";
-        btn.classList.remove("muted");
-        if (indicator) { indicator.className = "mic-indicator active"; indicator.innerText = "🎙️"; }
-    }
+    updateLocalChatUi();
 
     if (currentRoomId && window.connection) {
         window.connection.invoke("SendSignal", currentRoomId, globalUserId, "all", JSON.stringify({
@@ -374,23 +345,12 @@ function toggleAudio() {
 }
 
 function toggleVideo() {
-    if (!localStream) return;
+    if (!localStream || localMediaUnavailable) return;
     isVideoDisabled = !isVideoDisabled;
     
     localStream.getVideoTracks().forEach(track => { track.enabled = !isVideoDisabled; });
     
-    const btn = document.getElementById("btnToggleVideo");
-    const indicator = document.getElementById("localVideoIndicator");
-    
-    if (isVideoDisabled) {
-        btn.innerText = "📷 Enable";
-        btn.classList.add("muted");
-        if (indicator) indicator.classList.remove("active");
-    } else {
-        btn.innerText = "📷 Disable";
-        btn.classList.remove("muted");
-        if (indicator) indicator.classList.add("active");
-    }
+    updateLocalChatUi();
 
     if (currentRoomId && window.connection) {
         window.connection.invoke("SendSignal", currentRoomId, globalUserId, "all", JSON.stringify({
@@ -399,6 +359,11 @@ function toggleVideo() {
             video: !isVideoDisabled
         })).catch(err => console.error("WebRTC: Error broadcasting video state change", err));
     }
+}
+
+function updateLocalChatUi() {
+    window.chatUi?.setLocalControls(!isAudioMuted, !isVideoDisabled, !localMediaUnavailable);
+    window.chatUi?.setMedia(document.getElementById('slot-local'), !isAudioMuted, !isVideoDisabled, localMediaUnavailable);
 }
 
 async function initiateConnectionsWithExistingParticipants(participants) {
@@ -509,82 +474,27 @@ async function handleCandidate(peerUserId, candidate) {
 
 function displayRemoteStream(peerUserId, remoteStream) {
     let slot = document.getElementById(`slot-${peerUserId.toLowerCase()}`);
-    if (slot) {
-        const video = slot.querySelector("video");
-        if (video && video.srcObject !== remoteStream) {
-            video.srcObject = remoteStream;
-        }
-        return;
+    if (!slot) {
+        if (document.querySelectorAll('.video-slot').length >= 4) return;
+        slot = document.createElement('div');
+        slot.className = 'video-slot';
+        slot.id = `slot-${peerUserId.toLowerCase()}`;
+        const video = document.createElement('video');
+        video.autoplay = true;
+        video.playsInline = true;
+        slot.appendChild(video);
+        document.getElementById('videoGrid').appendChild(slot);
     }
-
-    console.log(`WebRTC: Displaying remote stream for peer: ${peerUserId}`);
-    
-    const totalSlots = document.querySelectorAll(".video-slot").length;
-    if (totalSlots >= 4) {
-        console.warn("WebRTC: Maximum UI camera slots (4) reached, ignoring video stream display.");
-        return;
-    }
-
-    const grid = document.getElementById("videoGrid");
-    slot = document.createElement("div");
-    slot.className = "video-slot";
-    slot.id = `slot-${peerUserId.toLowerCase()}`;
-    
-    const video = document.createElement("video");
-    video.autoplay = true;
-    video.playsinline = true;
-    video.srcObject = remoteStream;
-    
-    const label = document.createElement("div");
-    label.className = "video-label";
-    
-    const cachedNick = peerNicknames[peerUserId.toLowerCase()];
-    label.innerText = cachedNick || `User: ${peerUserId.substring(0, 8)}`;
-    
-    const controls = document.createElement("div");
-    controls.className = "slot-controls";
-    
+    window.chatUi?.decorateParticipant(slot, peerNicknames[peerUserId.toLowerCase()] || 'Guest');
+    window.chatUi?.attachStream(slot, remoteStream);
     const cachedMedia = peerMediaStates[peerUserId.toLowerCase()];
-    const audioActive = cachedMedia ? cachedMedia.audio : true;
-    const videoActive = cachedMedia ? cachedMedia.video : true;
-    
-    const micInd = document.createElement("span");
-    if (audioActive) {
-        micInd.className = "mic-indicator active";
-        micInd.innerText = "🎙️";
-    } else {
-        micInd.className = "mic-indicator muted";
-        micInd.innerText = "🔇";
-    }
-    
-    const vidInd = document.createElement("span");
-    vidInd.className = videoActive ? "video-indicator active" : "video-indicator";
-    vidInd.innerText = "📷";
-    
-    controls.appendChild(micInd);
-    controls.appendChild(vidInd);
-    
-    slot.appendChild(video);
-    slot.appendChild(label);
-    slot.appendChild(controls);
-    
-    grid.appendChild(slot);
+    window.chatUi?.setMedia(slot, cachedMedia?.audio ?? true, cachedMedia?.video ?? true);
     updateGridLayout();
 }
 
 function updateRemoteMediaIndicators(peerUserId, audioActive, videoActive) {
     const slot = document.getElementById(`slot-${peerUserId.toLowerCase()}`);
-    if (slot) {
-        const micInd = slot.querySelector(".mic-indicator");
-        const vidInd = slot.querySelector(".video-indicator");
-        if (micInd) {
-            micInd.className = audioActive ? "mic-indicator active" : "mic-indicator muted";
-            micInd.innerText = audioActive ? "🎙️" : "🔇";
-        }
-        if (vidInd) {
-            vidInd.className = videoActive ? "video-indicator active" : "video-indicator";
-        }
-    }
+    window.chatUi?.setMedia(slot, audioActive, videoActive);
 }
 
 function closePeerConnection(peerUserId) {
@@ -612,11 +522,11 @@ function updateGridLayout() {
     if (!grid) return;
     const slots = grid.querySelectorAll(".video-slot");
     
-    if (slots.length === 1 || slots.length > 2 || grid.classList.contains("single-layout")) {
-        grid.classList.add("single-layout");
-    } else {
-        grid.classList.remove("single-layout");
-    }
+    const large = chatGridLayout === 'large' || (chatGridLayout === 'auto' && slots.length <= 2);
+    grid.classList.toggle('single-layout', large);
+    grid.dataset.count = String(slots.length);
+    window.chatUi?.setLayout(large, slots.length);
+    window.chatUi?.updateCount(Math.max(activeParticipants.size, slots.length));
 }
 
 // Global functions exports

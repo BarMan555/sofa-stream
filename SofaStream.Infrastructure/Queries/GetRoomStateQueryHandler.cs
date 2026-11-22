@@ -26,6 +26,7 @@ public class GetRoomStateQueryHandler(ApplicationDbContext dbContext, TimeProvid
                r."Id", 
                r."Name", 
                r."Theme",
+               r."InviteCode",
                r."CurrentVideo_Url" AS VideoUrl,          
                r."CurrentVideo_Title" AS VideoTitle,     
                r."CurrentVideo_Duration" AS VideoDuration,
@@ -78,7 +79,8 @@ public class GetRoomStateQueryHandler(ApplicationDbContext dbContext, TimeProvid
             snapshotAt,
             firstRow.LastUpdatedAt,
             playbackState == PlaybackState.Playing && startedAt > snapshotAt ? startedAt : null,
-            firstRow.VideoRevision
+            firstRow.VideoRevision,
+            firstRow.InviteCode
         );
         
         return Result<RoomStateDto>.Success(roomState);
@@ -92,6 +94,7 @@ public class GetRoomStateQueryHandler(ApplicationDbContext dbContext, TimeProvid
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string Theme { get; set; } = "Dark";
+        public string InviteCode { get; set; } = string.Empty;
         public string? VideoUrl { get; set; }
         public string? VideoTitle { get; set; }
         public TimeSpan? VideoDuration { get; set; }

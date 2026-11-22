@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 680" fill="none">
+  <defs>
+    <linearGradient id="sky" x1="300" y1="0" x2="300" y2="680" gradientUnits="userSpaceOnUse"><stop stop-color="#514478"/><stop offset=".6" stop-color="#b292d1"/><stop offset="1" stop-color="#e6c7ed"/></linearGradient>
+    <linearGradient id="sun" x1="310" y1="160" x2="310" y2="440" gradientUnits="userSpaceOnUse"><stop stop-color="#e8ff9b"/><stop offset="1" stop-color="#d7f86d"/></linearGradient>
+    <pattern id="grain" width="6" height="6" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".6" fill="#fff" opacity=".07"/><circle cx="4" cy="4" r=".5" fill="#141313" opacity=".1"/></pattern>
+  </defs>
+  <path fill="url(#sky)" d="M0 0h600v680H0z"/>
+  <circle cx="325" cy="286" r="139" fill="url(#sun)"/>
+  <path d="M0 422c93-60 154-55 237-9 92 52 190 42 363-48v315H0z" fill="#79629c"/>
+  <path d="M0 510c144-130 265-95 379-26 81 49 151 46 221 11v185H0z" fill="#46405e"/>
+  <path d="M0 589c134-78 195-72 290-31 114 49 218 34 310-16v138H0z" fill="#292b3c"/>
+  <g fill="#ffdfaf"><circle cx="89" cy="99" r="2"/><circle cx="459" cy="83" r="2.2"/><circle cx="503" cy="204" r="1.5"/><circle cx="150" cy="218" r="1.5"/><circle cx="348" cy="71" r="1.3"/><path d="m120 144 2.5 7 7 2.5-7 2.5-2.5 7-2.5-7-7-2.5 7-2.5zm327 26 2 5.5 5.5 2-5.5 2-2 5.5-2-5.5-5.5-2 5.5-2z"/></g>
+  <path d="M0 657h600v23H0z" fill="#1d2327"/>
+  <g stroke="#151b1f" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M201 565v-35c0-15 12-27 27-27h144c15 0 27 12 27 27v35" fill="#bdabd6"/>
+    <path d="M186 579v-27c0-7 6-13 13-13s13 6 13 13v16h176v-16c0-7 6-13 13-13s13 6 13 13v43H186z" fill="#c6b0ff"/>
+    <path d="M208 598v17m185-17v17M300 509v54"/>
+  </g>
+  <path d="M90 590V444m-38 0h76l-15-43H67z" stroke="#1a2024" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M67 401h46l15 43H52z" fill="#edbb87"/>
+  <ellipse cx="90" cy="598" rx="24" ry="5" fill="#1a2024"/>
+  <path d="M486 604v-67m-19 0h39l-5 24h-29z" fill="#a96f59" stroke="#1a2024" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M486 535c-18-13-24-30-17-40 11 1 18 10 17 25 0-28 10-49 23-48 8 15-2 39-23 55" fill="#3c4942" stroke="#1a2024" stroke-width="4" stroke-linejoin="round"/>
+  <path fill="url(#grain)" d="M0 0h600v680H0z"/>
+</svg>

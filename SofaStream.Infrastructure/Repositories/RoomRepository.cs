@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using SofaStream.Application.Common.Interfaces;
 using SofaStream.Domain.Entities;
 using SofaStream.Infrastructure.Persistence;
@@ -31,6 +32,18 @@ public class RoomRepository(ApplicationDbContext dbContext) : IRoomRepository
     public async Task AddAsync(Room room, CancellationToken cancellationToken)
     {
         await dbContext.Rooms.AddAsync(room, cancellationToken);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        for (var attempt = 0; ; attempt++)
+        {
+            try
+            {
+                await dbContext.SaveChangesAsync(cancellationToken);
+                return;
+            }
+            catch (DbUpdateException error) when (attempt < 4 && error.InnerException is PostgresException
+                { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: "IX_Rooms_InviteCode" })
+            {
+                room.RegenerateInviteCode();
+            }
+        }
     }
 }
