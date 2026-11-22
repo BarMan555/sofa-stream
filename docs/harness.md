@@ -2,20 +2,12 @@
 
 Работайте из Git-корня `SofaStream`, где находятся `SofaStream.sln`, `package.json` и `AGENTS.md`. Эту же папку открывайте в IDE и coding agent.
 
-## Первый запуск
+## Подготовка окружения
 
-Нужны .NET SDK 10.0.102 из `global.json`, Node.js 22 или новее, Docker с Compose v2. SDK выбран точно, чтобы локальная сборка, CI и Docker использовали одну версию с файлами блокировки. При обновлении меняйте также SDK в Dockerfile. Запустите Docker Desktop перед полными проверками.
+Установите .NET SDK из `global.json`, Node.js 22 или новее и выполните `npm ci`. Этого достаточно для `npm run check`. Для локального запуска приложения и интеграционных тестов нужен также запущенный Docker с Compose v2.
 
-```sh
-npm ci
-npm run browser:install
-npm run doctor
-npm run check
-npm run check:full
-```
-
-На Linux для первой установки браузера и системных библиотек используйте `npx playwright install --with-deps chromium` (в CI это отдельный шаг).
-NuGet-зависимости восстанавливаются самим harness. Проверки используют locked mode; отсутствие или рассогласование файла блокировки завершает проверку ошибкой.
+Перед первым запуском браузерных тестов установите Chromium через `npm run browser:install`. На Linux для установки браузера и системных библиотек используйте `npx playwright install --with-deps chromium` (в CI это отдельный шаг).
+Проверки восстанавливают NuGet-зависимости в locked mode. При изменении зависимости обновите файлы блокировки командой `dotnet restore SofaStream.sln --force-evaluate`, а при смене версии SDK согласуйте `global.json` и Dockerfile.
 
 ## Команды
 

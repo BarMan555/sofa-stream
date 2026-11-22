@@ -293,7 +293,7 @@
     {
       "id": "HARNESS-002",
       "title": "Автономная очередь задач и отдельное ревью",
-      "status": "ready",
+      "status": "deferred",
       "dependsOn": [
         "HARNESS-001"
       ],
@@ -306,6 +306,19 @@
       "verification": [
         "Оценка нескольких реалистичных задач на готовом практическом harness"
       ]
+    },
+    {
+      "id": "HARNESS-003",
+      "title": "Минимальный процесс работы с Codex",
+      "status": "done",
+      "dependsOn": ["HARNESS-001"],
+      "evidence": ["AGENTS.md", "docs/harness.md", "docs/workflow.md"],
+      "acceptance": [
+        "Задачу можно начать в чате и выполнить одним агентом",
+        "Запуск и проверки доступны прежними командами",
+        "Правила PR, squash, тегов и удаления веток доступны в инструкции выпуска"
+      ],
+      "verification": ["Локальные ссылки, команды npm и структура бэклога", "git diff --check"]
     }
   ]
 }

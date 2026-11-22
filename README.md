@@ -60,12 +60,12 @@
 ## 🚀 Разработка и проверки
 
 Откройте Git-корень проекта — папку с `SofaStream.sln`, `package.json` и `AGENTS.md`.
-Нужны .NET SDK из `global.json`, Node.js 22+ и запущенный Docker Desktop с Compose v2.
+Задачу для Codex можно написать в чате своими словами. Подойдёт даже короткое описание вроде «У гостя видео само начинает играть при загрузке. Оно должно ждать, пока ведущий нажмёт Play». Порядок работы описан в [инструкции проекта](AGENTS.md).
+
+Для запуска приложения нужны .NET SDK из `global.json`, Node.js 22+ и запущенный Docker с Compose v2.
 
 ```bash
 npm ci
-npm run browser:install
-npm run doctor
 npm run dev
 ```
 
@@ -73,13 +73,11 @@ npm run dev
 
 ```bash
 npm run check          # быстрые проверки без Docker
+npm run browser:install # установить Chromium перед первой полной проверкой
 npm run check:full     # PostgreSQL, SignalR и два браузерных клиента
-npm run diagnose      # диагностика окружения и предыдущего запуска
-npm run report:e2e    # последний браузерный отчёт
 ```
 
-[Runbook harness](docs/harness.md) описывает установку на Linux, порты, диагностику, очистку и границы автоматических тестов.
-[Архитектура](docs/architecture.md), [рабочий цикл](docs/workflow.md) и [очередь задач](docs/backlog.json) задают контекст для дальнейшей разработки.
+[Справочник проверок](docs/harness.md) описывает установку на Linux, порты, диагностику и ручную проверку реальных плееров.
 
 Браузерные тесты используют управляемый плеер и настоящие API, SignalR и PostgreSQL. Совместимость настоящих YouTube/RuTube и видеосвязь между разными сетями проверяются отдельно. В backlog перечислены текущие ограничения синхронизации и сессий.
 
