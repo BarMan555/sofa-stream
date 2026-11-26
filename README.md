@@ -59,28 +59,36 @@
 
 ## 🚀 Разработка и проверки
 
-Откройте Git-корень проекта — папку с `SofaStream.sln`, `package.json` и `AGENTS.md`.
-Нужны .NET SDK из `global.json`, Node.js 22+ и запущенный Docker Desktop с Compose v2.
+Выполняйте команды из папки с `SofaStream.sln`. Для локального запуска нужны .NET SDK из `global.json`, Docker Compose и Python 3.
 
 ```bash
-npm ci
-npm run browser:install
-npm run doctor
-npm run dev
+docker compose -f compose.dev.yml up -d --wait
+ConnectionStrings__DefaultConnection="Host=localhost;Port=${SOFASTREAM_DB_PORT:-5433};Database=sofa_dev;Username=sofa_dev;Password=sofa_local_only" \
+  dotnet run --project SofaStream.Api --launch-profile http
 ```
 
-Откройте http://127.0.0.1:8000. Harness соберёт API, запустит отдельный локальный PostgreSQL и дождётся готовности сервисов. Production `.env` и User Secrets для этого сценария не нужны. Ctrl+C остановит окружение и сохранит данные локальной базы.
+В другом терминале запустите фронтенд и откройте [localhost:8000](http://localhost:8000).
 
 ```bash
-npm run check          # быстрые проверки без Docker
-npm run check:full     # PostgreSQL, SignalR и два браузерных клиента
-npm run diagnose      # диагностика окружения и предыдущего запуска
-npm run report:e2e    # последний браузерный отчёт
+python3 -m http.server 8000 --bind 127.0.0.1 --directory Frontend
 ```
 
-[Runbook harness](docs/harness.md) описывает установку на Linux, порты, диагностику, очистку и границы автоматических тестов.
-[Архитектура](docs/architecture.md), [рабочий цикл](docs/workflow.md) и [очередь задач](docs/backlog.json) задают контекст для дальнейшей разработки.
+Ctrl+C останавливает процессы API и фронтенда. Команда `docker compose -f compose.dev.yml down` останавливает локальную базу с сохранением данных.
 
-Браузерные тесты используют управляемый плеер и настоящие API, SignalR и PostgreSQL. Совместимость настоящих YouTube/RuTube и видеосвязь между разными сетями проверяются отдельно. В backlog перечислены текущие ограничения синхронизации и сессий.
+Если раньше запускали `npm run dev`, прежняя база хранится в томе `sofastream-dev-…_dev_data`. Посмотрите имя тома через `docker volume ls --filter label=com.docker.compose.volume=dev_data` и задайте `COMPOSE_PROJECT_NAME` равным его имени без суффикса `_dev_data` перед запуском и остановкой Compose. Для другого порта базы экспортируйте `SOFASTREAM_DB_PORT` перед запуском Compose и API.
 
-`docker-compose.yml` остаётся конфигурацией для отдельного серверного развёртывания; локальный harness использует `compose.dev.yml`.
+### Тесты
+
+- `dotnet test SofaStream.Tests` запускает быстрые .NET-тесты. `dotnet test SofaStream.sln` включает интеграционные тесты, которые сами поднимают контейнер PostgreSQL.
+- `node --test tests/frontend/*.test.mjs` запускает тесты JavaScript. Нужен Node.js 22 или новее.
+- Для браузерных сценариев выполните `dotnet restore SofaStream.sln --locked-mode`, `npm ci` и `npx playwright install chromium`. Освободите порты API и фронтенда 5063 и 8000. Запустите отдельную базу для тестов, затем Playwright.
+
+```bash
+SOFASTREAM_DB_PORT=5434 docker compose -p sofastream-e2e -f compose.dev.yml up -d --wait
+npx playwright test
+docker compose -p sofastream-e2e -f compose.dev.yml down
+```
+
+Playwright запускает API и фронтенд. Сценарии проверяют синхронизацию с управляемым плеером. Настоящие YouTube/RuTube и звонки между разными сетями проверяются вручную.
+
+Контекст проекта собран в [архитектуре](docs/architecture.md), [дизайне](docs/design.md) и [инструкции для Codex](AGENTS.md).

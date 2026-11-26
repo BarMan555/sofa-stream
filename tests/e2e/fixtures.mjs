@@ -1,9 +1,14 @@
 import { test as base, expect } from '@playwright/test';
 import { fileURLToPath } from 'node:url';
-import { redact } from '../../scripts/lib/runtime.mjs';
 
 const signalr = fileURLToPath(new URL('../../node_modules/@microsoft/signalr/dist/browser/signalr.min.js', import.meta.url));
 const player = fileURLToPath(new URL('./fake-youtube-api.js', import.meta.url));
+
+function redact(value) {
+  return value
+    .replace(/\b(password|pwd|access_token|token|secret)\s*([=:])\s*([^;\s&]+)/gi, '$1$2<redacted>')
+    .replace(/\bBearer\s+\S+/gi, 'Bearer <redacted>');
+}
 
 export const test = base.extend({
   holdGuestPlayerReady: [false, { option: true }],
@@ -13,14 +18,14 @@ export const test = base.extend({
   interceptHostSocket: [false, { option: true }],
   playerWarmup: [false, { option: true }],
   controlledMicrophones: [false, { option: true }],
-  roomPages: async ({ browser, holdGuestPlayerReady, holdGuestVideoReady, holdGuestYoutubeApi, failGuestYoutubeApi, interceptHostSocket, playerWarmup, controlledMicrophones }, use, testInfo) => {
+  roomPages: async ({ browser, baseURL, holdGuestPlayerReady, holdGuestVideoReady, holdGuestYoutubeApi, failGuestYoutubeApi, interceptHostSocket, playerWarmup, controlledMicrophones }, use, testInfo) => {
     const clients = [];
     const logs = [];
     const pageErrors = [];
     let hostSocket;
     let guestApiRoute;
     async function createClient(name) {
-      const context = await browser.newContext({ permissions: ['camera', 'microphone'] });
+      const context = await browser.newContext({ baseURL, permissions: ['camera', 'microphone'] });
       if (controlledMicrophones) await context.addInitScript(() => {
         const getMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
         navigator.mediaDevices.getUserMedia = async constraints => {
@@ -70,7 +75,7 @@ export const test = base.extend({
       page.on('console', message => logs.push({ client: name, type: message.type(), text: redact(message.text()), time: Date.now() }));
       page.on('pageerror', error => pageErrors.push({ client: name, message: error.message }));
       clients.push({ name, context, page });
-      await page.goto(process.env.SOFASTREAM_FRONTEND_URL, { waitUntil: 'domcontentloaded' });
+      await page.goto('/', { waitUntil: 'domcontentloaded' });
       await page.waitForFunction(() => Boolean(window.videoPlayer && window.syncMachine), undefined, { timeout: 10000 });
       return page;
     }

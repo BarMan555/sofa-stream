@@ -79,7 +79,7 @@ test('four participants fit in a grid and a selected layout survives departures'
       const page = await guest.context().newPage();
       extra.push(page);
       page.on('pageerror', error => pageErrors.push(error.message));
-      await page.goto(process.env.SOFASTREAM_FRONTEND_URL);
+      await page.goto('/');
       await page.locator('#btn-menu-join').click();
       await page.locator('#userNameInput').fill(name);
       await page.locator('#roomIdInput').fill(room);

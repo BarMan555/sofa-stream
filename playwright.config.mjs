@@ -1,9 +1,4 @@
 import { defineConfig } from '@playwright/test';
-import path from 'node:path';
-
-const runDirectory = process.env.SOFASTREAM_RUN_DIR || 'artifacts/e2e';
-if (!process.env.SOFASTREAM_FRONTEND_URL || !process.env.SOFASTREAM_API_URL)
-  throw new Error('Run browser tests with npm run test:e2e or npm run check:full.');
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -13,14 +8,27 @@ export default defineConfig({
   workers: 1,
   retries: process.env.CI ? 1 : 0,
   forbidOnly: Boolean(process.env.CI),
-  outputDir: path.join(runDirectory, 'browser-results'),
   reporter: [
     ['list'],
-    ['html', { outputFolder: 'artifacts/playwright-report', open: 'never' }],
-    ['json', { outputFile: path.join(runDirectory, 'browser-results.json') }],
+    ['html', { open: 'never' }],
+  ],
+  webServer: [
+    {
+      command: 'dotnet run --project SofaStream.Api --no-launch-profile --no-restore --urls http://localhost:5063',
+      env: {
+        ConnectionStrings__DefaultConnection: 'Host=localhost;Port=5434;Database=sofa_dev;Username=sofa_dev;Password=sofa_local_only',
+      },
+      url: 'http://localhost:5063/health/ready',
+      timeout: 120000,
+    },
+    {
+      command: 'python3 -m http.server 8000 --bind 127.0.0.1 --directory Frontend',
+      url: 'http://127.0.0.1:8000',
+      stderr: 'ignore',
+    },
   ],
   use: {
-    baseURL: process.env.SOFASTREAM_FRONTEND_URL,
+    baseURL: 'http://localhost:8000',
     browserName: 'chromium',
     launchOptions: { args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] },
   },

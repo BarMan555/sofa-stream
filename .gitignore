@@ -23,7 +23,7 @@ docker-compose-bd-local.yml
 .DS_Store
 **/.DS_Store
 
-# Local harness dependencies and evidence
+# Зависимости Node.js и результаты проверок
 node_modules/
 artifacts/
 test-results/
