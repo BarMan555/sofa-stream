@@ -31,7 +31,7 @@ function setup({ ready = true } = {}) {
   context.window = context;
   vm.createContext(context);
   for (const file of ['sync.js', 'api.js'])
-    vm.runInContext(readFileSync(new URL(`../../Frontend/js/${file}`, import.meta.url), 'utf8'), context);
+    vm.runInContext(readFileSync(new URL(`../../src/Frontend/js/${file}`, import.meta.url), 'utf8'), context);
   const player = {
     currentVideoId: null, getCurrentTime: () => position, getDuration: () => 120, getPlayerState: () => state,
     cueVideo(id, seconds) { this.currentVideoId = id; position = seconds; state = 5; actions.push('cue'); },

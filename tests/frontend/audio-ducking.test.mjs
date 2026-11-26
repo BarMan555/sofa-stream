@@ -59,7 +59,7 @@ function setup({ savedVolume } = {}) {
   vm.createContext(context);
   // Exercise the production ducking module and its real video-chat teardown caller.
   for (const file of ['audio-ducking.js', 'webrtc.js'])
-    vm.runInContext(readFileSync(new URL(`../../Frontend/js/${file}`, import.meta.url), 'utf8'), context);
+    vm.runInContext(readFileSync(new URL(`../../src/Frontend/js/${file}`, import.meta.url), 'utf8'), context);
   function stream(level = 0) {
     const track = { stopped: false, stop() { this.stopped = true; } };
     return { level, track, getAudioTracks: () => [track], getTracks: () => [track] };

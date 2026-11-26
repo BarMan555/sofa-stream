@@ -17,6 +17,6 @@
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />
-    <ProjectReference Include="../SofaStream.Api/SofaStream.Api.csproj" />
+    <ProjectReference Include="../../src/SofaStream.Api/SofaStream.Api.csproj" />
   </ItemGroup>
 </Project>

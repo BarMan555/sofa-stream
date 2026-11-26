@@ -11,7 +11,7 @@ function formatter() {
   const context = { API_BASE_URL: 'http://local', signalR: { HubConnectionBuilder } };
   context.window = context;
   vm.createContext(context);
-  vm.runInContext(readFileSync(new URL('../../Frontend/js/api.js', import.meta.url), 'utf8'), context);
+  vm.runInContext(readFileSync(new URL('../../src/Frontend/js/api.js', import.meta.url), 'utf8'), context);
   return context.playbackTimeSpan;
 }
 

@@ -34,7 +34,7 @@ function setup() {
   context.window = context;
   vm.createContext(context);
   for (const file of ['player.js', 'sync.js'])
-    vm.runInContext(readFileSync(new URL(`../../Frontend/js/${file}`, import.meta.url), 'utf8'), context);
+    vm.runInContext(readFileSync(new URL(`../../src/Frontend/js/${file}`, import.meta.url), 'utf8'), context);
   const player = new context.UniversalPlayer('youtubePlayer', 'rutubePlayer', () => {}, () => {});
   const machine = new context.SyncStateMachine(() => { throw new Error('Initial playback must not send a command.'); });
   player.onStateChangeCallback = state => machine.handlePlayerStateNotification(state);
