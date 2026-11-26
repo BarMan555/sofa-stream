@@ -8,8 +8,6 @@
       "dependsOn": [],
       "evidence": [
         "docs/tasks/HARNESS-001.md",
-        "scripts/harness.mjs",
-        "scripts/lib/runtime.mjs",
         ".github/workflows/dotnet-ci.yml"
       ],
       "acceptance": [
@@ -197,7 +195,8 @@
       "verification": [
         "Автоматические проверки очереди сигналов",
         "Ручные сценарии внешних плееров и разных сетей",
-        "npm run check:full"
+        "node --test tests/frontend/*.test.mjs",
+        "npx playwright test"
       ]
     },
     {
@@ -240,7 +239,7 @@
         "Восстановление больше не выдаёт предупреждение NU1903 по этому бюллетеню"
       ],
       "verification": [
-        "npm run check:full",
+        "dotnet test SofaStream.sln",
         "Контейнерная сборка API"
       ],
       "blockedReason": "Официальные загрузки SDK/NuGet недоступны из локального окружения (DNS/TLS). Проверенной замены SDK и lock-файлов пока нет; NU1903 сохраняется."
@@ -312,13 +311,13 @@
       "title": "Минимальный процесс работы с Codex",
       "status": "done",
       "dependsOn": ["HARNESS-001"],
-      "evidence": ["AGENTS.md", "docs/harness.md", "docs/workflow.md"],
+      "evidence": ["AGENTS.md", ".agents/skills/sofastream-commit/SKILL.md", ".agents/skills/sofastream-pr/SKILL.md", "docs/architecture.md", "docs/design.md"],
       "acceptance": [
-        "Задачу можно начать в чате и выполнить одним агентом",
-        "Запуск и проверки доступны прежними командами",
-        "Правила PR, squash, тегов и удаления веток доступны в инструкции выпуска"
+        "Задачу можно начать в чате с краткой инструкцией AGENTS.md",
+        "Git-коммиты и выпуск через PR описаны двумя навыками",
+        "Запуск и тесты используют стандартные команды инструментов"
       ],
-      "verification": ["Локальные ссылки, команды npm и структура бэклога", "git diff --check"]
+      "verification": ["Локальные ссылки, навыки и структура бэклога", "Стандартные команды запуска и тестов", "git diff --check"]
     }
   ]
 }

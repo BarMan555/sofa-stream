@@ -17,6 +17,18 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: sofa_dev
+          POSTGRES_PASSWORD: sofa_local_only
+          POSTGRES_DB: sofa_dev
+        ports:
+          - "5434:5432"
+        options: >-
+          --health-cmd "pg_isready -U sofa_dev -d sofa_dev"
+          --health-interval 2s --health-timeout 3s --health-retries 30
 
     steps:
       - name: Скачивание кода репозитория
@@ -38,17 +50,25 @@ jobs:
       - name: Установка закреплённых зависимостей
         run: npm ci
 
+      - name: Тесты .NET
+        run: |
+          dotnet restore SofaStream.sln --locked-mode
+          dotnet test SofaStream.sln --no-restore
+
+      - name: Тесты клиента
+        run: node --test tests/frontend/*.test.mjs
+
       - name: Установка браузера и системных библиотек
         run: npx playwright install --with-deps chromium
 
-      - name: Полная проверка теми же командами, что локально
-        run: npm run check:full
+      - name: Браузерные тесты
+        run: npx playwright test
 
       - name: Сохранение результатов и диагностики
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: sofastream-checks
-          path: artifacts/
+          path: playwright-report/
           retention-days: 7
           if-no-files-found: warn
