@@ -14,7 +14,7 @@ function setup(report) {
   };
   context.window = context;
   vm.createContext(context);
-  vm.runInContext(readFileSync(new URL('../../Frontend/js/sync.js', import.meta.url), 'utf8'), context);
+  vm.runInContext(readFileSync(new URL('../../src/Frontend/js/sync.js', import.meta.url), 'utf8'), context);
   const machine = new context.SyncStateMachine(state => { updates.push(state); return report?.(); });
   machine.setPlayer({
     getCurrentTime: () => 60, getPlayerState: () => 3,

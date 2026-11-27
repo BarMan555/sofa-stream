@@ -1,16 +1,16 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SofaStream.Domain", "SofaStream.Domain\SofaStream.Domain.csproj", "{C7695109-CDB1-4CE5-806B-4D757DCB01F6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SofaStream.Domain", "src\SofaStream.Domain\SofaStream.Domain.csproj", "{C7695109-CDB1-4CE5-806B-4D757DCB01F6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SofaStream.Application", "SofaStream.Application\SofaStream.Application.csproj", "{A4C76388-BA42-4761-B10B-BB12B01CE6F7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SofaStream.Application", "src\SofaStream.Application\SofaStream.Application.csproj", "{A4C76388-BA42-4761-B10B-BB12B01CE6F7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SofaStream.Infrastructure", "SofaStream.Infrastructure\SofaStream.Infrastructure.csproj", "{6EB6775C-AA3C-420A-87ED-E1524F863440}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SofaStream.Infrastructure", "src\SofaStream.Infrastructure\SofaStream.Infrastructure.csproj", "{6EB6775C-AA3C-420A-87ED-E1524F863440}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SofaStream.Api", "SofaStream.Api\SofaStream.Api.csproj", "{78503B43-BFB8-4201-A4F5-21C5CD39095A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SofaStream.Api", "src\SofaStream.Api\SofaStream.Api.csproj", "{78503B43-BFB8-4201-A4F5-21C5CD39095A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SofaStream.Tests", "SofaStream.Tests\SofaStream.Tests.csproj", "{C4E13B4A-B381-4023-A7C9-5F86BECA7472}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SofaStream.Tests", "tests\SofaStream.Tests\SofaStream.Tests.csproj", "{C4E13B4A-B381-4023-A7C9-5F86BECA7472}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SofaStream.IntegrationTests", "SofaStream.IntegrationTests\SofaStream.IntegrationTests.csproj", "{5AEA4C87-3BCF-46CC-AB95-9BECE465F068}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SofaStream.IntegrationTests", "tests\SofaStream.IntegrationTests\SofaStream.IntegrationTests.csproj", "{5AEA4C87-3BCF-46CC-AB95-9BECE465F068}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

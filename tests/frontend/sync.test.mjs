@@ -18,7 +18,7 @@ function setup(host = true) {
   };
   context.window = context;
   vm.createContext(context);
-  vm.runInContext(readFileSync(new URL('../../Frontend/js/sync.js', import.meta.url), 'utf8'), context);
+  vm.runInContext(readFileSync(new URL('../../src/Frontend/js/sync.js', import.meta.url), 'utf8'), context);
   const player = {
     getCurrentTime: () => 0, getPlayerState: () => 1,
     play() { actions.push('play'); }, pause() { actions.push('pause'); },

@@ -22,7 +22,7 @@ services:
   backend:
     build:
       context: .
-      dockerfile: SofaStream.Api/Dockerfile
+      dockerfile: src/SofaStream.Api/Dockerfile
     container_name: sofastream-backend
     restart: always
     ports:

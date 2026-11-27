@@ -29,11 +29,11 @@
       "status": "done",
       "dependsOn": [],
       "evidence": [
-        "SofaStream.Api/Controllers/RoomController.cs",
-        "SofaStream.Api/Hubs/RoomHub.cs",
+        "src/SofaStream.Api/Controllers/RoomController.cs",
+        "src/SofaStream.Api/Hubs/RoomHub.cs",
         "docs/tasks/SS-001.md",
-        "SofaStream.Api/Infrastructure/ParticipantSession.cs",
-        "SofaStream.IntegrationTests/SessionSecurityTests.cs"
+        "src/SofaStream.Api/Infrastructure/ParticipantSession.cs",
+        "tests/SofaStream.IntegrationTests/SessionSecurityTests.cs"
       ],
       "acceptance": [
         "Клиент не может выполнять команды от имени чужого UserId",
@@ -55,11 +55,11 @@
         "SS-004"
       ],
       "evidence": [
-        "Frontend/js/api.js",
-        "SofaStream.Api/Hubs/RoomHub.cs",
+        "src/Frontend/js/api.js",
+        "src/SofaStream.Api/Hubs/RoomHub.cs",
         "docs/tasks/SS-002.md",
-        "SofaStream.Api/Infrastructure/RoomConnectionLifecycle.cs",
-        "SofaStream.IntegrationTests/ReconnectionTests.cs",
+        "src/SofaStream.Api/Infrastructure/RoomConnectionLifecycle.cs",
+        "tests/SofaStream.IntegrationTests/ReconnectionTests.cs",
         "tests/e2e/reconnect.spec.mjs"
       ],
       "acceptance": [
@@ -80,11 +80,11 @@
         "SS-001"
       ],
       "evidence": [
-        "Frontend/js/sync.js",
-        "SofaStream.Application/Rooms/Commands/ChangePlaybackState/ChangePlaybackStateCommandHandler.cs",
-        "SofaStream.Domain/Entities/Room.cs",
+        "src/Frontend/js/sync.js",
+        "src/SofaStream.Application/Rooms/Commands/ChangePlaybackState/ChangePlaybackStateCommandHandler.cs",
+        "src/SofaStream.Domain/Entities/Room.cs",
         "docs/tasks/SS-003.md",
-        "SofaStream.IntegrationTests/GroupBufferingTests.cs",
+        "tests/SofaStream.IntegrationTests/GroupBufferingTests.cs",
         "tests/frontend/group-buffering.test.mjs",
         "tests/e2e/group-buffering.spec.mjs"
       ],
@@ -106,11 +106,11 @@
       "dependsOn": [],
       "evidence": [
         "docs/tasks/SS-004.md",
-        "SofaStream.Domain/Entities/PlaybackPosition.cs",
-        "SofaStream.Infrastructure/Queries/GetRoomStateQueryHandler.cs",
-        "Frontend/js/sync.js",
-        "Frontend/js/player.js",
-        "SofaStream.IntegrationTests/LateJoinTests.cs",
+        "src/SofaStream.Domain/Entities/PlaybackPosition.cs",
+        "src/SofaStream.Infrastructure/Queries/GetRoomStateQueryHandler.cs",
+        "src/Frontend/js/sync.js",
+        "src/Frontend/js/player.js",
+        "tests/SofaStream.IntegrationTests/LateJoinTests.cs",
         "tests/frontend/player-readiness.test.mjs",
         "tests/e2e/late-join.spec.mjs"
       ],
@@ -134,10 +134,10 @@
       "status": "done",
       "dependsOn": [],
       "evidence": [
-        "Frontend/js/api.js",
-        "SofaStream.Domain/Entities/Room.cs",
+        "src/Frontend/js/api.js",
+        "src/SofaStream.Domain/Entities/Room.cs",
         "docs/tasks/SS-005.md",
-        "SofaStream.Application/Rooms/Commands/UpdateVideoDuration/UpdateVideoDurationCommand.cs",
+        "src/SofaStream.Application/Rooms/Commands/UpdateVideoDuration/UpdateVideoDurationCommand.cs",
         "tests/e2e/long-video.spec.mjs"
       ],
       "acceptance": [
@@ -157,7 +157,7 @@
       "status": "done",
       "dependsOn": [],
       "evidence": [
-        "Frontend/js/audio-ducking.js",
+        "src/Frontend/js/audio-ducking.js",
         "docs/tasks/SS-006.md",
         "tests/frontend/audio-ducking.test.mjs",
         "tests/e2e/audio-ducking.spec.mjs"
@@ -183,8 +183,8 @@
         "SS-002"
       ],
       "evidence": [
-        "Frontend/js/webrtc.js",
-        "Frontend/js/player.js"
+        "src/Frontend/js/webrtc.js",
+        "src/Frontend/js/player.js"
       ],
       "acceptance": [
         "ICE-кандидаты до remote description сохраняются и применяются",
@@ -205,8 +205,8 @@
       "status": "done",
       "dependsOn": [],
       "evidence": [
-        "Frontend/css/video-chat.css",
-        "Frontend/index.html",
+        "src/Frontend/css/video-chat.css",
+        "src/Frontend/index.html",
         "tests/e2e/fixtures.mjs",
         "docs/tasks/SS-008.md",
         "tests/e2e/chat-layout.spec.mjs"
@@ -227,9 +227,9 @@
       "status": "blocked",
       "dependsOn": [],
       "evidence": [
-        "SofaStream.IntegrationTests/packages.lock.json",
+        "tests/SofaStream.IntegrationTests/packages.lock.json",
         "global.json",
-        "SofaStream.Api/Dockerfile",
+        "src/SofaStream.Api/Dockerfile",
         "docs/tasks/SS-006.md",
         "docs/tasks/SS-009.md"
       ],
@@ -249,7 +249,7 @@
       "title": "Первое YouTube-видео не запускается у гостя без команды ведущего",
       "status": "done",
       "dependsOn": [],
-      "evidence": ["docs/tasks/SS-010.md", "Frontend/js/player.js", "Frontend/js/sync.js", "tests/frontend/youtube-loading.test.mjs", "tests/e2e/youtube-loading.spec.mjs"],
+      "evidence": ["docs/tasks/SS-010.md", "src/Frontend/js/player.js", "src/Frontend/js/sync.js", "tests/frontend/youtube-loading.test.mjs", "tests/e2e/youtube-loading.spec.mjs"],
       "acceptance": [
         "Первая загрузка оставляет обоих участников на паузе",
         "Медленный API не запускает независимое видео с нулевой шкалой",
@@ -263,7 +263,7 @@
       "title": "Ручная громкость фильма и индикация приглушения",
       "status": "done",
       "dependsOn": ["SS-006"],
-      "evidence": ["docs/tasks/SS-011.md", "Frontend/js/audio-ducking.js", "Frontend/js/player.js", "tests/e2e/movie-volume.spec.mjs"],
+      "evidence": ["docs/tasks/SS-011.md", "src/Frontend/js/audio-ducking.js", "src/Frontend/js/player.js", "tests/e2e/movie-volume.spec.mjs"],
       "acceptance": [
         "У каждого участника доступна собственная громкость фильма от 0 до 100",
         "Выбор сохраняется в браузере, включая ноль",
@@ -278,7 +278,7 @@
       "title": "Редизайн интерфейса и анимации",
       "status": "done",
       "dependsOn": [],
-      "evidence": ["docs/tasks/SS-012.md", "docs/design.md", "Frontend/index.html", "Frontend/css/", "Frontend/js/chat-ui.js", "tests/e2e/interface-redesign.spec.mjs", "tests/e2e/video-chat.spec.mjs", "tests/e2e/room-code.spec.mjs", "SofaStream.IntegrationTests/RoomInviteCodeTests.cs"],
+      "evidence": ["docs/tasks/SS-012.md", "docs/design.md", "src/Frontend/index.html", "src/Frontend/css/", "src/Frontend/js/chat-ui.js", "tests/e2e/interface-redesign.spec.mjs", "tests/e2e/video-chat.spec.mjs", "tests/e2e/room-code.spec.mjs", "tests/SofaStream.IntegrationTests/RoomInviteCodeTests.cs"],
       "acceptance": [
         "Главный экран, формы, плеер и видеочат оформлены в едином стиле",
         "Desktop и mobile не имеют горизонтального скролла и перекрытия управления",
@@ -288,6 +288,24 @@
         "Приглашение использует короткий уникальный код; UUID совместим с прежним входом, существующие комнаты сохраняются при миграции"
       ],
       "verification": ["Визуальная проверка desktop/mobile", "npm run check:full"]
+    },
+    {
+      "id": "SS-013",
+      "title": "Перенос исходников и тестов в src и tests",
+      "status": "done",
+      "dependsOn": [],
+      "evidence": ["SofaStream.sln", "README.md", "playwright.config.mjs", "src/SofaStream.Api/Dockerfile"],
+      "acceptance": [
+        "Проекты приложения и фронтенд лежат в src/",
+        "Тестовые проекты .NET, тесты JavaScript и сценарии Playwright лежат в tests/",
+        "Решение, Docker, проверки и команды в README используют актуальные пути"
+      ],
+      "verification": [
+        "dotnet test SofaStream.sln",
+        "node --test tests/frontend/*.test.mjs",
+        "npx playwright test --list и npx playwright test tests/e2e/room.spec.mjs",
+        "docker build -f src/SofaStream.Api/Dockerfile ."
+      ]
     },
     {
       "id": "HARNESS-002",

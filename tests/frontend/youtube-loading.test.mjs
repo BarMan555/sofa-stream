@@ -23,7 +23,7 @@ function setup() {
   };
   context.window = context;
   vm.createContext(context);
-  vm.runInContext(readFileSync(new URL('../../Frontend/js/player.js', import.meta.url), 'utf8'), context);
+  vm.runInContext(readFileSync(new URL('../../src/Frontend/js/player.js', import.meta.url), 'utf8'), context);
   context.initPlayerAfterAPIReady = () => {
     if (!context.videoPlayer)
       context.videoPlayer = new context.UniversalPlayer('youtubePlayer', 'rutubePlayer', () => {}, () => {});

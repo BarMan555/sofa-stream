@@ -22,9 +22,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SofaStream.Domain\SofaStream.Domain.csproj" />
-    <ProjectReference Include="..\SofaStream.Application\SofaStream.Application.csproj" />
-    <ProjectReference Include="..\SofaStream.Infrastructure\SofaStream.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\SofaStream.Domain\SofaStream.Domain.csproj" />
+    <ProjectReference Include="..\..\src\SofaStream.Application\SofaStream.Application.csproj" />
+    <ProjectReference Include="..\..\src\SofaStream.Infrastructure\SofaStream.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

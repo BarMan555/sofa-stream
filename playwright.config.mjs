@@ -14,7 +14,7 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: 'dotnet run --project SofaStream.Api --no-launch-profile --no-restore --urls http://localhost:5063',
+      command: 'dotnet run --project src/SofaStream.Api --no-launch-profile --no-restore --urls http://localhost:5063',
       env: {
         ConnectionStrings__DefaultConnection: 'Host=localhost;Port=5434;Database=sofa_dev;Username=sofa_dev;Password=sofa_local_only',
       },
@@ -22,7 +22,7 @@ export default defineConfig({
       timeout: 120000,
     },
     {
-      command: 'python3 -m http.server 8000 --bind 127.0.0.1 --directory Frontend',
+      command: 'python3 -m http.server 8000 --bind 127.0.0.1 --directory src/Frontend',
       url: 'http://127.0.0.1:8000',
       stderr: 'ignore',
     },

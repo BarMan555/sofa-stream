@@ -29,7 +29,7 @@ test('leaving during reconnect discards the late restore and releases its HTTP a
   };
   context.window = context;
   vm.createContext(context);
-  vm.runInContext(readFileSync(new URL('../../Frontend/js/api.js', import.meta.url), 'utf8'), context);
+  vm.runInContext(readFileSync(new URL('../../src/Frontend/js/api.js', import.meta.url), 'utf8'), context);
   vm.runInContext('participantSession = { token: "test-only" };', context);
   const restoring = callbacks.restored();
   await context.leaveRoom();

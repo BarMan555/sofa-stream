@@ -59,18 +59,20 @@
 
 ## 🚀 Разработка и проверки
 
+В [`src/`](src/) находятся API, остальные проекты .NET и фронтенд. В [`tests/`](tests/) лежат оба тестовых проекта .NET, тесты JavaScript и браузерные сценарии Playwright.
+
 Выполняйте команды из папки с `SofaStream.sln`. Для локального запуска нужны .NET SDK из `global.json`, Docker Compose и Python 3.
 
 ```bash
 docker compose -f compose.dev.yml up -d --wait
 ConnectionStrings__DefaultConnection="Host=localhost;Port=${SOFASTREAM_DB_PORT:-5433};Database=sofa_dev;Username=sofa_dev;Password=sofa_local_only" \
-  dotnet run --project SofaStream.Api --launch-profile http
+  dotnet run --project src/SofaStream.Api --launch-profile http
 ```
 
 В другом терминале запустите фронтенд и откройте [localhost:8000](http://localhost:8000).
 
 ```bash
-python3 -m http.server 8000 --bind 127.0.0.1 --directory Frontend
+python3 -m http.server 8000 --bind 127.0.0.1 --directory src/Frontend
 ```
 
 Ctrl+C останавливает процессы API и фронтенда. Команда `docker compose -f compose.dev.yml down` останавливает локальную базу с сохранением данных.
@@ -79,7 +81,7 @@ Ctrl+C останавливает процессы API и фронтенда. К
 
 ### Тесты
 
-- `dotnet test SofaStream.Tests` запускает быстрые .NET-тесты. `dotnet test SofaStream.sln` включает интеграционные тесты, которые сами поднимают контейнер PostgreSQL.
+- `dotnet test tests/SofaStream.Tests` запускает быстрые .NET-тесты. `dotnet test SofaStream.sln` включает интеграционные тесты, которые сами поднимают контейнер PostgreSQL.
 - `node --test tests/frontend/*.test.mjs` запускает тесты JavaScript. Нужен Node.js 22 или новее.
 - Для браузерных сценариев выполните `dotnet restore SofaStream.sln --locked-mode`, `npm ci` и `npx playwright install chromium`. Освободите порты API и фронтенда 5063 и 8000. Запустите отдельную базу для тестов, затем Playwright.
 
