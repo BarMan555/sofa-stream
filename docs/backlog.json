@@ -308,6 +308,17 @@
       ]
     },
     {
+      "id": "SS-014",
+      "title": "Добавить скриншоты интерфейса в README",
+      "status": "done",
+      "dependsOn": ["SS-012"],
+      "evidence": ["README.md", "docs/screenshots/"],
+      "acceptance": [
+        "В README видны главная страница, комната просмотра, создание комнаты и вход по коду"
+      ],
+      "verification": ["Проверка PNG и относительных ссылок из README", "git diff --check"]
+    },
+    {
       "id": "HARNESS-002",
       "title": "Автономная очередь задач и отдельное ревью",
       "status": "deferred",
